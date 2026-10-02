@@ -213,10 +213,12 @@ impl GitRunner {
 
         cmd.env("GIT_TERMINAL_PROMPT", "0");
         cmd.env("GIT_PAGER", "cat");
+        cmd.env("GIT_EDITOR", "true");
         cmd.env("LC_ALL", "C");
 
         cmd.arg("-c").arg("core.quotepath=false");
         cmd.arg("-c").arg("color.ui=false");
+        cmd.arg("-c").arg("core.editor=true");
 
         cmd.current_dir(repo_path);
 
@@ -314,6 +316,7 @@ impl GitRunner {
         // Required standard environment variables
         cmd.env("GIT_TERMINAL_PROMPT", "0");
         cmd.env("GIT_PAGER", "cat");
+        cmd.env("GIT_EDITOR", "true");
         cmd.env("LC_ALL", "C");
         if is_read {
             cmd.env("GIT_OPTIONAL_LOCKS", "0");
@@ -322,6 +325,7 @@ impl GitRunner {
         // Standard configuration flags to guarantee stable machine parsing
         cmd.arg("-c").arg("core.quotepath=false");
         cmd.arg("-c").arg("color.ui=false");
+        cmd.arg("-c").arg("core.editor=true");
 
         if let Some(path) = repo_path {
             cmd.current_dir(path);

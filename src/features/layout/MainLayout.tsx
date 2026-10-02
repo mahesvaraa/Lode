@@ -2,14 +2,14 @@ import React, { useEffect } from "react";
 import { Header } from "./Header";
 import { Sidebar } from "./Sidebar";
 import { StateBanner } from "./StateBanner";
-import { Splitter, EmptyState } from "@/ui";
+import { Splitter } from "@/ui";
 import { ChangesView } from "@/features/changes/ChangesView";
 import { HistoryView } from "@/features/history/HistoryView";
+import { ConflictsView } from "@/features/conflicts/ConflictsView";
 import { useUiStore } from "@/store/uiStore";
 import { useRepoStore } from "@/store/repoStore";
 import { useStatusStore } from "@/store/statusStore";
 import { listenToRepoChanged } from "@/api/client";
-import { t } from "@/lib/i18n";
 
 export const MainLayout: React.FC = () => {
   const activeView = useUiStore((s) => s.activeView);
@@ -104,12 +104,7 @@ export const MainLayout: React.FC = () => {
 
           {activeView === "hist" && <HistoryView />}
 
-          {activeView === "conf" && (
-            <EmptyState
-              title={t.sidebar.conflicts}
-              description="Конфликтов нет. Трёхпанельный редактор разрешения конфликтов будет реализован на Этапе 6."
-            />
-          )}
+          {activeView === "conf" && <ConflictsView />}
         </main>
       </div>
     </div>

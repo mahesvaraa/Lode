@@ -14,6 +14,7 @@ import type { RepoRefs } from "./types/repo_refs";
 import type { RepoState } from "./types/repo_state";
 import type { Remote } from "./types/remote";
 import type { PullMode } from "./types/pull_mode";
+import type { ParsedConflictFile } from "./types/parsed_conflict_file";
 
 export async function checkGit(): Promise<GitInfo> {
   return invoke<GitInfo>("check_git");
@@ -228,6 +229,50 @@ export async function push(
     branch: branch || null,
     setUpstream,
     forceWithLease,
+  });
+}
+
+// Conflict API
+export async function getConflictFile(
+  repoPath: string,
+  path: string
+): Promise<ParsedConflictFile> {
+  return invoke<ParsedConflictFile>("get_conflict_file", { repoPath, path });
+}
+
+export async function resolveConflictFile(
+  repoPath: string,
+  path: string,
+  content: string
+): Promise<void> {
+  return invoke<void>("resolve_conflict_file", { repoPath, path, content });
+}
+
+export async function resolveConflictChoice(
+  repoPath: string,
+  path: string,
+  choice: string
+): Promise<void> {
+  return invoke<void>("resolve_conflict_choice", { repoPath, path, choice });
+}
+
+export async function regenerateConflictDiff3(
+  repoPath: string,
+  path: string
+): Promise<ParsedConflictFile> {
+  return invoke<ParsedConflictFile>("regenerate_conflict_diff3", {
+    repoPath,
+    path,
+  });
+}
+
+export async function continueOperation(
+  repoPath: string,
+  message?: string
+): Promise<RepoState> {
+  return invoke<RepoState>("continue_operation", {
+    repoPath,
+    message: message || null,
   });
 }
 

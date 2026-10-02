@@ -85,6 +85,12 @@ pub fn run() {
             commands::remote::fetch_all,
             commands::remote::pull,
             commands::remote::push,
+            // Conflict commands
+            commands::conflict::get_conflict_file,
+            commands::conflict::resolve_conflict_file,
+            commands::conflict::resolve_conflict_choice,
+            commands::conflict::regenerate_conflict_diff3,
+            commands::conflict::continue_operation,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -133,5 +139,9 @@ mod tests {
         // Remote types
         git::parse::Remote::export().expect("Failed to export Remote");
         git::parse::PullMode::export().expect("Failed to export PullMode");
+
+        // Conflict types
+        git::conflict::ConflictBlock::export().expect("Failed to export ConflictBlock");
+        git::conflict::ParsedConflictFile::export().expect("Failed to export ParsedConflictFile");
     }
 }

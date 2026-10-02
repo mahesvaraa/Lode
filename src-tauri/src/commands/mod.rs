@@ -1,5 +1,6 @@
 pub mod branch;
 pub mod commit;
+pub mod conflict;
 pub mod diff;
 pub mod git_check;
 pub mod log;
