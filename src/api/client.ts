@@ -8,6 +8,8 @@ import type { RepoDetails } from "./types/repo_details";
 import type { RepoStatus } from "./types/repo_status";
 import type { FileDiff } from "./types/file_diff";
 import type { RepoChangedEvent } from "./types/repo_changed_event";
+import type { Commit } from "./types/commit";
+import type { CommitDetails } from "./types/commit_details";
 
 export async function checkGit(): Promise<GitInfo> {
   return invoke<GitInfo>("check_git");
@@ -51,6 +53,29 @@ export async function getCommitDiff(
   filePath: string
 ): Promise<FileDiff> {
   return invoke<FileDiff>("get_commit_diff", { repoPath, commitHash, filePath });
+}
+
+export async function getCommits(
+  repoPath: string,
+  skip: number,
+  limit: number,
+  branch?: string,
+  search?: string
+): Promise<Commit[]> {
+  return invoke<Commit[]>("get_commits", {
+    repoPath,
+    skip,
+    limit,
+    branch: branch || null,
+    search: search || null,
+  });
+}
+
+export async function getCommitDetails(
+  repoPath: string,
+  hash: string
+): Promise<CommitDetails> {
+  return invoke<CommitDetails>("get_commit_details", { repoPath, hash });
 }
 
 export async function stageFile(repoPath: string, path: string): Promise<void> {

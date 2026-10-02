@@ -48,6 +48,8 @@ pub fn run() {
             commands::status::get_status,
             commands::diff::get_diff,
             commands::diff::get_commit_diff,
+            commands::log::get_commits,
+            commands::log::get_commit_details,
             commands::staging::stage_file,
             commands::staging::unstage_file,
             commands::staging::stage_all,
@@ -91,5 +93,12 @@ mod tests {
 
         // Watcher event
         watcher::RepoChangedEvent::export().expect("Failed to export RepoChangedEvent");
+
+        // Log types
+        git::parse::RefKind::export().expect("Failed to export RefKind");
+        git::parse::RefChip::export().expect("Failed to export RefChip");
+        git::parse::Commit::export().expect("Failed to export Commit");
+        git::parse::CommitFile::export().expect("Failed to export CommitFile");
+        git::parse::CommitDetails::export().expect("Failed to export CommitDetails");
     }
 }

@@ -3,6 +3,7 @@ import { Header } from "./Header";
 import { Sidebar } from "./Sidebar";
 import { Splitter, EmptyState } from "@/ui";
 import { ChangesView } from "@/features/changes/ChangesView";
+import { HistoryView } from "@/features/history/HistoryView";
 import { useUiStore } from "@/store/uiStore";
 import { useRepoStore } from "@/store/repoStore";
 import { useStatusStore } from "@/store/statusStore";
@@ -99,12 +100,7 @@ export const MainLayout: React.FC = () => {
         >
           {activeView === "chg" && <ChangesView />}
 
-          {activeView === "hist" && (
-            <EmptyState
-              title={t.sidebar.history}
-              description={`Репозиторий ${currentRepo?.name} открыт. История коммитов и граф будут реализованы на Этапе 3.`}
-            />
-          )}
+          {activeView === "hist" && <HistoryView />}
 
           {activeView === "conf" && (
             <EmptyState
