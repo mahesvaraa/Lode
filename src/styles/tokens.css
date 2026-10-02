@@ -1,0 +1,138 @@
+@import "../assets/fonts/fonts.css";
+
+/* Base variables & Light theme (default) */
+:root {
+  --bg: #f6f6f4;
+  --bg2: #ecece9;
+  --bg3: #e2e2de;
+  --line: #d8d8d3;
+  --tx: #25262a;
+  --mut: #6f7178;
+  --acc: #4f5bd5;
+  --pur: #9a5fd0;
+  --add: #1f8a3b;
+  --del: #c93c37;
+  --addbg: rgba(31, 138, 59, 0.12);
+  --delbg: rgba(201, 60, 55, 0.11);
+  --sel: rgba(79, 91, 213, 0.12);
+
+  /* 8-color branch palette (accessible, high contrast) */
+  --branch-0: #4f5bd5;
+  --branch-1: #9a5fd0;
+  --branch-2: #0284c7;
+  --branch-3: #c25e00;
+  --branch-4: #1f8a3b;
+  --branch-5: #db2777;
+  --branch-6: #0369a1;
+  --branch-7: #b45309;
+
+  /* Typography */
+  --font-ui: "Geist", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, Menlo, Monaco, Consolas, "Courier New", monospace;
+  --font-size-xs: 11px;
+  --font-size-sm: 12px;
+  --font-size-base: 13px;
+  --font-size-md: 14px;
+  --font-size-lg: 16px;
+  --line-height-base: 1.45;
+
+  /* Sizing & Spacing */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  --radius-sm: 4px;
+  --radius-base: 6px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-full: 9999px;
+
+  --header-height: 42px;
+  --row-height: 34px;
+  --sidebar-default-width: 210px;
+  --details-default-width: 400px;
+}
+
+/* System dark mode preference */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15161a;
+    --bg2: #1b1c21;
+    --bg3: #24262c;
+    --line: #2b2d34;
+    --tx: #d9dbe1;
+    --mut: #80838d;
+    --acc: #8c97ff;
+    --pur: #c39bff;
+    --add: #4cc26a;
+    --del: #ff6b66;
+    --addbg: rgba(76, 194, 106, 0.13);
+    --delbg: rgba(255, 107, 102, 0.13);
+    --sel: rgba(140, 151, 255, 0.13);
+
+    --branch-0: #8c97ff;
+    --branch-1: #c39bff;
+    --branch-2: #5ec8e5;
+    --branch-3: #e09f53;
+    --branch-4: #4cc26a;
+    --branch-5: #f472b6;
+    --branch-6: #38bdf8;
+    --branch-7: #fbbf24;
+  }
+}
+
+/* Explicit dark theme */
+:root[data-theme="dark"] {
+  --bg: #15161a;
+  --bg2: #1b1c21;
+  --bg3: #24262c;
+  --line: #2b2d34;
+  --tx: #d9dbe1;
+  --mut: #80838d;
+  --acc: #8c97ff;
+  --pur: #c39bff;
+  --add: #4cc26a;
+  --del: #ff6b66;
+  --addbg: rgba(76, 194, 106, 0.13);
+  --delbg: rgba(255, 107, 102, 0.13);
+  --sel: rgba(140, 151, 255, 0.13);
+
+  --branch-0: #8c97ff;
+  --branch-1: #c39bff;
+  --branch-2: #5ec8e5;
+  --branch-3: #e09f53;
+  --branch-4: #4cc26a;
+  --branch-5: #f472b6;
+  --branch-6: #38bdf8;
+  --branch-7: #fbbf24;
+}
+
+/* Explicit light theme */
+:root[data-theme="light"] {
+  --bg: #f6f6f4;
+  --bg2: #ecece9;
+  --bg3: #e2e2de;
+  --line: #d8d8d3;
+  --tx: #25262a;
+  --mut: #6f7178;
+  --acc: #4f5bd5;
+  --pur: #9a5fd0;
+  --add: #1f8a3b;
+  --del: #c93c37;
+  --addbg: rgba(31, 138, 59, 0.12);
+  --delbg: rgba(201, 60, 55, 0.11);
+  --sel: rgba(79, 91, 213, 0.12);
+
+  --branch-0: #4f5bd5;
+  --branch-1: #9a5fd0;
+  --branch-2: #0284c7;
+  --branch-3: #c25e00;
+  --branch-4: #1f8a3b;
+  --branch-5: #db2777;
+  --branch-6: #0369a1;
+  --branch-7: #b45309;
+}

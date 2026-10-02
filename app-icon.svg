@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <rect width="1024" height="1024" rx="224" fill="#15161a"/>
+  <!-- Main commit trunk line -->
+  <line x1="360" y1="200" x2="360" y2="824" stroke="#8c97ff" stroke-width="64" stroke-linecap="round"/>
+  <!-- Branch line -->
+  <path d="M 360 480 C 360 620, 664 560, 664 700 L 664 824" fill="none" stroke="#c39bff" stroke-width="64" stroke-linecap="round"/>
+  <!-- Branch commit node -->
+  <circle cx="664" cy="700" r="76" fill="#15161a" stroke="#c39bff" stroke-width="52"/>
+  <!-- Trunk commit nodes -->
+  <circle cx="360" cy="340" r="76" fill="#15161a" stroke="#8c97ff" stroke-width="52"/>
+  <circle cx="360" cy="620" r="76" fill="#15161a" stroke="#8c97ff" stroke-width="52"/>
+</svg>

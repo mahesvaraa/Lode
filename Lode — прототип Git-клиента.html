@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lode — прототип Git-клиента</title>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f6f6f4;--bg2:#ecece9;--bg3:#e2e2de;--line:#d8d8d3;--tx:#25262a;--mut:#6f7178;--acc:#4f5bd5;--pur:#9a5fd0;--add:#1f8a3b;--del:#c93c37;--addbg:rgba(31,138,59,.12);--delbg:rgba(201,60,55,.11);--sel:rgba(79,91,213,.12)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#15161a;--bg2:#1b1c21;--bg3:#24262c;--line:#2b2d34;--tx:#d9dbe1;--mut:#80838d;--acc:#8c97ff;--pur:#c39bff;--add:#4cc26a;--del:#ff6b66;--addbg:rgba(76,194,106,.13);--delbg:rgba(255,107,102,.13);--sel:rgba(140,151,255,.13)}}
+:root[data-theme="dark"]{--bg:#15161a;--bg2:#1b1c21;--bg3:#24262c;--line:#2b2d34;--tx:#d9dbe1;--mut:#80838d;--acc:#8c97ff;--pur:#c39bff;--add:#4cc26a;--del:#ff6b66;--addbg:rgba(76,194,106,.13);--delbg:rgba(255,107,102,.13);--sel:rgba(140,151,255,.13)}
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*,*:before,*:after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--tx);font:13px/1.45 Geist,system-ui,-apple-system,"Segoe UI",sans-serif;overflow:hidden}
+button{font:inherit;color:inherit;background:var(--bg3);border:1px solid var(--line);border-radius:6px;padding:4px 10px;cursor:pointer}
+button:hover{border-color:var(--mut)}button:focus-visible,.row:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+button.p{background:var(--acc);border-color:var(--acc);color:var(--bg);font-weight:500}
+button:disabled{opacity:.4;cursor:default}
+.mono,pre,.hash{font-family:"Geist Mono",ui-monospace,Menlo,Consolas,monospace;font-size:12px}
+.app{height:100%;display:grid;grid-template-rows:42px 1fr}
+header{display:flex;align-items:center;gap:8px;padding:0 12px;background:var(--bg2);border-bottom:1px solid var(--line)}
+.dots{display:flex;gap:6px;margin-right:8px}.dots i{width:10px;height:10px;border-radius:50%;background:var(--bg3);border:1px solid var(--line)}
+.sp{flex:1}.chip{display:inline-block;padding:0 7px;border-radius:10px;font-size:11px;line-height:18px;background:var(--sel);color:var(--acc);margin-right:4px;white-space:nowrap}
+.chip.h{background:var(--acc);color:var(--bg)}.chip.t{background:var(--bg3);color:var(--mut)}
+.body{display:grid;grid-template-columns:210px 1fr;min-height:0}
+aside{background:var(--bg2);border-right:1px solid var(--line);padding:10px 8px;overflow:auto}
+aside h6{margin:14px 8px 4px;font-size:11px;font-weight:500;color:var(--mut)}
+.nav{display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:6px;cursor:pointer;color:var(--mut)}
+.nav:hover{background:var(--bg3)}.nav.on{background:var(--sel);color:var(--tx)}
+.nav b{margin-left:auto;font-weight:500;font-size:11px;background:var(--bg3);border-radius:9px;padding:0 6px;color:var(--tx)}
+.nav b.w{background:var(--del);color:#fff}
+main{min-width:0;min-height:0;display:flex}
+.col{display:flex;flex-direction:column;min-width:0;min-height:0}
+.list{flex:1;overflow:auto}
+.row{display:flex;align-items:center;height:34px;padding-right:12px;cursor:pointer;gap:10px;white-space:nowrap}
+.row:hover{background:var(--bg2)}.row.on{background:var(--sel)}
+.row .m{flex:1;overflow:hidden;text-overflow:ellipsis}.row .x{color:var(--mut)}
+.det{width:min(400px,45%);border-left:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+.pad{padding:12px 14px}.det h3{margin:0 0 4px;font-size:14px;font-weight:600}
+.files{padding:6px 8px;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.f{display:flex;gap:8px;padding:3px 6px;border-radius:5px;cursor:pointer;align-items:center}.f:hover{background:var(--bg2)}.f.on{background:var(--sel)}
+.st{width:14px;font-weight:600}.st.M{color:var(--acc)}.st.A{color:var(--add)}.st.D{color:var(--del)}
+.diff{flex:1;overflow:auto;padding:6px 0}.diff div{display:flex;white-space:pre;min-width:max-content}
+.diff .n{width:34px;text-align:right;padding-right:8px;color:var(--mut);flex:none;user-select:none}
+.diff .a{background:var(--addbg)}.diff .d{background:var(--delbg)}.diff .h{color:var(--mut);padding:4px 0 4px 10px}
+.ch{width:300px;border-right:1px solid var(--line);display:flex;flex-direction:column}
+textarea{width:100%;height:70px;resize:none;background:var(--bg2);color:var(--tx);border:1px solid var(--line);border-radius:6px;padding:8px;font:inherit}
+.cf{display:grid;grid-template-columns:1fr 1fr 1.15fr;flex:1;min-height:0}
+.cf>div{border-left:1px solid var(--line);display:flex;flex-direction:column;min-width:0}.cf>div:first-child{border:0}
+.cf h5{margin:0;padding:8px 12px;font-weight:500;border-bottom:1px solid var(--line);display:flex;gap:8px;align-items:center}
+.cf pre{margin:0;padding:10px 0;overflow:auto;flex:1}.cf pre span{display:block;padding:0 12px;white-space:pre}
+.o{background:var(--sel)}.t{background:rgba(154,95,208,.14)}.mk{color:var(--del);opacity:.8}
+.bar{display:flex;gap:8px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)}
+.ai{padding:20px 28px;overflow:auto;flex:1}.ai pre{white-space:pre-wrap;line-height:1.6;max-width:820px;background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:16px 20px;font-size:12.5px}
+.mut{color:var(--mut)}
+@media(max-width:760px){.body{grid-template-columns:1fr}aside{display:none}.det{display:none}.ch{width:200px}}
+main{flex:1}.ell{flex:1;overflow:hidden;text-overflow:ellipsis}.bar{flex-wrap:wrap}
+input:not([type]),select{background:var(--bg2);color:var(--tx);border:1px solid var(--line);border-radius:6px;padding:4px 8px;font:inherit}
+input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+button.dg{color:var(--del)}button.dg:hover{border-color:var(--del)}
+.diff .h{align-items:center;gap:6px;padding:4px 10px;color:var(--mut)}.diff .h button{padding:0 8px;font-size:11px}.diff .h.sg{background:var(--sel);color:var(--tx)}
+.ban{display:flex;align-items:center;gap:10px;padding:8px 14px;background:var(--delbg);border-bottom:1px solid var(--line)}
+.sc{position:fixed;inset:0;background:rgba(0,0,0,.35);display:flex;justify-content:center;align-items:flex-start;padding-top:14vh;z-index:9}
+.md,.pl{background:var(--bg2);border:1px solid var(--line);border-radius:10px;width:min(440px,92vw);padding:18px}.md h3{margin:0 0 6px;font-size:14px}.md p{margin:0 0 16px;color:var(--mut)}
+.pl{padding:8px;width:min(520px,92vw)}.pl input{width:100%;margin-bottom:6px}
+.tt{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--tx);color:var(--bg);padding:7px 14px;border-radius:8px;opacity:0;pointer-events:none;transition:opacity .15s;z-index:10}.tt.on{opacity:1}
+.em{padding:40px;text-align:center;color:var(--mut)}.cl{width:230px;border-right:1px solid var(--line);padding:8px}
+.pv{background:var(--bg2);border:1px solid var(--line);border-radius:6px;padding:10px;margin:0 0 12px}.ct.w{color:var(--del)}
+@media(prefers-reduced-motion:reduce){.tt{transition:none}}
+</style></head><body>
+<div class="app">
+<header><div class="dots"><i></i><i></i><i></i></div><b>lode</b><span class="mut">/</span><span>design-system</span><span class="chip h" id="hb">main</span>
+<span class="sp"></span><button onclick="toast('Fetch --all --prune: новых коммитов нет')">Fetch</button><button onclick="toast('Pull --ff-only: получено 2 коммита')">Pull ↓2</button><button class="p" onclick="toast('Push: отправлен 1 коммит')">Push ↑1</button><button onclick="pal()" title="Палитра команд">Ctrl K</button><button id="th" title="Тема">◐</button></header>
+<div class="body"><aside id="side"></aside><div class="col" style="flex:1;min-width:0"><div id="bn"></div><main id="main"></main></div></div></div>
+<div id="ov"></div><div id="ts" class="tt"></div><script>
+const $=s=>document.querySelector(s),esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const col=n=>n?'var(--pur)':'var(--acc)',x=n=>14+n*16;
+const C=[{l:0,p:[0],m:1,h:'a3f9c21',s:"Merge branch 'feature/diff-view'",b:['main','HEAD'],a:'Анна',d:'сегодня'},
+{l:1,p:[0,1],h:'7be02d4',s:'Add side-by-side diff renderer',b:['feature/diff-view'],a:'Илья',d:'сегодня'},
+{l:0,p:[0,1],h:'c18e5a0',s:'Fix: stash pop on empty list',a:'Анна',d:'вчера'},
+{l:1,p:[0,1],h:'42d9f77',s:'Syntax highlighting via Shiki',a:'Илья',d:'вчера'},
+{l:0,p:[0,1],h:'9f1a3bc',s:'Refactor git service layer',a:'Анна',d:'30 сен'},
+{l:1,p:[0],m:0,end:1,h:'e55c801',s:'Scaffold diff panel',a:'Илья',d:'29 сен'},
+{l:0,p:[0],h:'01ab9de',s:'Init Tauri project',b:['v0.1'],a:'Анна',d:'28 сен'}];
+function graph(c,i){let s='';c.p.forEach(n=>{if(n!=c.l)s+=`<line x1="${x(n)}" y1="0" x2="${x(n)}" y2="34" stroke="${col(n)}"/>`});
+s+=`<line x1="${x(c.l)}" y1="${i?0:17}" x2="${x(c.l)}" y2="${c.end||i==C.length-1?17:34}" stroke="${col(c.l)}"/>`;
+if(c.m!=null)s+=`<path d="M${x(c.l)} 17C${x(c.l)} 28 ${x(c.m)} 24 ${x(c.m)} 34" fill="none" stroke="${col(c.m)}"/>`;
+return `<svg width="52" height="34" style="flex:none" stroke-width="1.5">${s}<circle cx="${x(c.l)}" cy="17" r="4.5" fill="${col(c.l)}" stroke="var(--bg)"/></svg>`}
+let V='hist',sel=0,q='',msg='',amend=false,SV='src/git/service.ts',cur=SV,cfi=0,mg=true,op='merge',br='main',hs=[false,false],AF,tt,pm=[];
+let F=[{n:SV,s:'M',st:0},{n:'src/ui/DiffView.tsx',s:'A',st:0},{n:'src/styles/tokens.css',s:'M',st:1},{n:'README.md',s:'M',st:0}];
+let CF=[{n:SV,t:'UU',r:null,ok:0},{n:'src/legacy/runner.ts',t:'DU',r:null,ok:0}];
+const H=[{h:'@@ -42,7 +42,11 @@ export class GitService',l:[[' ',42,42,'  async status(repo: string) {'],['-',43,'','    const out = await run(["status"]);'],['+','',43,'    const out = await run(["status", "--porcelain=v2", "-z"], {'],['+','',44,'      cwd: repo,'],['+','',45,'    });'],[' ',44,46,'    return parseStatus(out);'],[' ',45,47,'  }']]},
+{h:'@@ -88,3 +92,3 @@ export class GitService',l:[[' ',88,92,'  async diff(repo: string, path: string) {'],['-',89,'','    return run(["diff", path]);'],['+','',93,'    return run(["diff", "--patch", "--no-ext-diff", "--", path], { cwd: repo });'],[' ',90,94,'  }']]}];
+const part=f=>f.n==SV&&!f.st&&hs.some(Boolean),inS=f=>f.st||part(f),hon=i=>cur==SV&&(F[0]&&F[0].st||hs[i]);
+const dv=st=>'<div class="diff mono">'+H.map((k,i)=>`<div class="h ${st&&hon(i)?'sg':''}"><span style="flex:1">${esc(k.h)}</span>${st?`<button onclick="hk(${i})">${hon(i)?'Убрать из индекса':'В индекс'}</button><button class="dg" onclick="dis(${i})">Сбросить</button>`:''}</div>`+k.l.map(r=>`<div class="${r[0]=='+'?'a':r[0]=='-'?'d':''}"><span class="n">${r[1]}</span><span class="n">${r[2]}</span><span>${r[0]} ${esc(r[3])}</span></div>`).join('')).join('')+'</div>';
+const pick=n=>{cur=n;render()},go=v=>{V=v;render()};
+function toast(m){const e=$('#ts');e.textContent=m;e.className='tt on';clearTimeout(tt);tt=setTimeout(()=>e.className='tt',2600)}
+const cl=()=>{$('#ov').innerHTML=''};
+function ask(t,x,ok,fn){AF=fn;$('#ov').innerHTML=`<div class="sc" onclick="if(event.target==this)cl()"><div class="md"><h3>${esc(t)}</h3><p>${esc(x)}</p><div style="display:flex;gap:8px;justify-content:flex-end"><button onclick="cl()">Отмена</button><button class="dg" id="ok" onclick="cl();AF()">${esc(ok)}</button></div></div></div>`;$('#ok').focus()}
+const co=n=>{br=/^[0-9a-f]{7}$/.test(n)?'detached '+n:n;toast('Переключились на '+n);render()};
+const CMD=[['Открыть: История',()=>go('hist')],['Открыть: Изменения',()=>go('chg')],['Открыть: Конфликты',()=>go('conf')],['Добавить всё в индекс',()=>{F.forEach(f=>f.st=1);hs=[false,false];go('chg')}],['Fetch',()=>toast('Fetch --all --prune: новых коммитов нет')],['Pull',()=>toast('Pull --ff-only: получено 2 коммита')],['Push',()=>toast('Push: отправлен 1 коммит')],['Создать ветку…',()=>toast('git switch -c: ввод имени пока не реализован')],['Переключить тему',()=>$('#th').click()]];
+function pal(){$('#ov').innerHTML='<div class="sc" onclick="if(event.target==this)cl()"><div class="pl"><input id="pi" placeholder="Команда…" oninput="pf(this.value)" onkeydown="if(event.key==\'Enter\'&&pm[0]){cl();pm[0][1]()}"><div id="pr"></div></div></div>';pf('');$('#pi').focus()}
+function pf(v){pm=CMD.filter(c=>c[0].toLowerCase().includes(v.toLowerCase()));$('#pr').innerHTML=pm.map((c,i)=>`<div class="f ${i?'':'on'}" onclick="cl();CMD[${CMD.indexOf(c)}][1]()">${c[0]}</div>`).join('')}
+function side(){const nc=mg?CF.filter(f=>!f.ok).length:0,nv=(k,t,b,w)=>`<div class="nav ${V==k?'on':''}" onclick="go('${k}')">${t}${b?`<b class="${w?'w':''}">${b}</b>`:''}</div>`,bn=(n,e)=>`<div class="nav ${br==n?'on':''}" onclick="co('${n}')" style="${br==n?'color:var(--tx)':''}">${br==n?'● ':''}${n}${e?`<span class="mut" style="margin-left:auto">${e}</span>`:''}</div>`;
+$('#side').innerHTML=nv('hist','История')+nv('chg','Изменения',F.length)+nv('conf','Конфликты',nc,1)+'<h6>Ветки</h6>'+bn('main','↑1 ↓2')+bn('feature/diff-view')+bn('fix/stash-empty')+'<h6>Remote</h6><div class="nav">origin/main</div><div class="nav">origin/dev</div><h6>Теги</h6><div class="nav">v0.1</div><h6>Stash</h6><div class="nav">wip: tokens <b>1</b></div>'}
+function bnr(){if(!mg){$('#bn').innerHTML='';return}const n=CF.filter(f=>!f.ok).length;$('#bn').innerHTML=`<div class="ban"><b>${op=='merge'?'Идёт merge: feature/diff-view → main':'Идёт rebase на origin/main · шаг 2 из 3'}</b><span class="mut">${n?'конфликтов: '+n:'все конфликты решены'}</span><span class="sp"></span><button onclick="go('conf')">К конфликтам</button><button class="p" ${n?'disabled':''} onclick="mg=false;toast(op+' завершён');render()">Продолжить</button><button class="dg" onclick="ask('Отменить '+op+'?','Шаги и ручные правки конфликтов будут отброшены, репозиторий вернётся к состоянию до операции.','Отменить '+op,()=>{mg=false;toast(op+' отменён');render()})">Отменить</button></div>`}
+function hist(){const R=C.map((r,i)=>[r,i]).filter(([r])=>!q||(r.s+r.a+r.h+(r.b||[]).join(' ')).toLowerCase().includes(q.toLowerCase())),c=C[sel]||C[0],h=c.h;
+return `<div class="col" style="flex:1"><div class="bar"><input id="q" placeholder="Поиск: сообщение, автор, хеш" value="${esc(q)}" oninput="q=this.value;render(2)" style="flex:1"><span class="mut">${R.length} из ${C.length}</span></div><div class="list">${R.map(([r,i])=>`<div class="row ${i==sel?'on':''}" tabindex="0" onclick="sel=${i};render()">${q?'<span style="width:12px"></span>':graph(r,i)}<span class="m">${esc(r.s)} ${(r.b||[]).map(b=>`<span class="chip ${b=='HEAD'?'h':b[0]=='v'?'t':''}">${b}</span>`).join('')}</span><span class="x">${r.a}</span><span class="x" style="width:60px">${r.d}</span><span class="hash x">${r.h}</span></div>`).join('')||'<div class="em">Ничего не найдено</div>'}</div></div>
+<div class="det"><div class="pad"><h3>${esc(c.s)}</h3><div class="mut">${c.a} · ${c.d} · <span class="hash">${h}</span></div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px"><button onclick="co('${h}')">Checkout</button><button onclick="toast('Cherry-pick ${h}: применён')">Cherry-pick</button><button onclick="toast('Revert ${h}: создан коммит')">Revert</button><button class="dg" onclick="ask('Reset --hard на ${h}?','Незакоммиченные изменения и коммиты выше будут потеряны. Вернуть можно через reflog: git reset --hard ORIG_HEAD.','Сбросить',()=>toast('HEAD → ${h}'))">Reset --hard</button></div></div>
+<div class="files">${[{n:SV,s:'M'},{n:'src/ui/DiffView.tsx',s:'A'}].map(f=>`<div class="f ${cur==f.n?'on':''}" onclick="pick('${f.n}')"><span class="st ${f.s}">${f.s}</span><span class="mono ell">${f.n}</span></div>`).join('')}</div>${dv(0)}</div>`}
+function chg(){const u=F.filter(f=>!f.st),s=F.filter(inS),sub=msg.split('\n')[0].length,can=(s.length||amend)&&msg.trim();
+const rw=(f,b)=>`<div class="f ${cur==f.n?'on':''}" onclick="pick('${f.n}')"><span class="st ${f.s}">${f.s}</span><span class="mono ell">${f.n}</span>${b&&part(f)?'<span class="chip t">частично</span>':''}<button style="padding:0 7px" onclick="event.stopPropagation();tg('${f.n}')">${b?'−':'+'}</button></div>`,
+sec=(t,a,l,v,b)=>`<div class="pad" style="padding-bottom:4px;display:flex;align-items:center"><b>${t}</b><span class="mut" style="margin-left:6px">${a.length}</span><span class="sp"></span>${a.length?`<button onclick="F.forEach(f=>f.st=${v});hs=[false,false];render()">${l}</button>`:''}</div>`+a.map(f=>rw(f,b)).join('');
+return `<div class="ch"><div class="list">${sec('Не в индексе',u,'Добавить все',1,0)}${sec('В индексе',s,'Убрать все',0,1)}${F.length?'':'<div class="em">Нет изменений. Внесите правки в рабочем каталоге — они появятся здесь.</div>'}</div>
+<div class="pad" style="border-top:1px solid var(--line)"><textarea id="msg" placeholder="Сообщение коммита" oninput="msg=this.value;render(1)">${esc(msg)}</textarea><div style="display:flex;align-items:center;gap:10px;margin-top:6px"><span class="mut ct ${sub>72?'w':''}">${sub}/72</span><label class="mut" style="flex:1"><input type="checkbox" ${amend?'checked':''} onchange="amend=this.checked;render(1)"> Изменить последний</label></div><div style="display:flex;margin-top:8px"><span class="mut sp">${s.length?s.length+' файл(а) в индексе':'Добавьте файлы в индекс'}</span><button class="p" ${can?'':'disabled'} onclick="cm()">${amend?'Изменить коммит':'Закоммитить'}</button></div></div></div>
+<div class="col" style="flex:1"><div class="bar"><b class="mono" style="flex:1">${cur||'Файл не выбран'}</b>${cur?`<button class="dg" onclick="ask('Сбросить файл?','Все изменения в ${cur} будут потеряны безвозвратно.','Сбросить',()=>{F=F.filter(f=>f.n!=cur);cur=F[0]?F[0].n:'';toast('Изменения сброшены');render()})">Сбросить файл</button>`:''}</div>${cur?dv(cur==SV):'<div class="em">Выберите файл, чтобы увидеть изменения</div>'}</div>`}
+const tg=n=>{const f=F.find(f=>f.n==n);f.st=f.st||part(f)?0:1;hs=[false,false];render()};
+function hk(i){if(F[0].st){F[0].st=0;hs=[true,true]}hs[i]=!hs[i];if(hs.every(Boolean)){F[0].st=1;hs=[false,false]}render()}
+function dis(i){ask('Сбросить блок?','Изменения этого блока в рабочем каталоге будут потеряны безвозвратно.','Сбросить',()=>{H.splice(i,1);hs.splice(i,1);if(!H.length){F=F.filter(f=>f.n!=SV);cur=F[0]?F[0].n:''}toast('Блок сброшен');render()})}
+function cm(){if(mg&&CF.some(f=>!f.ok)){toast('Сначала разрешите конфликты');return}const t=msg.split('\n')[0].trim(),a=amend;if(!(F.some(inS)||a)||!t)return;
+if(a)C[0].s=t;else{const o=C[0];o.b=(o.b||[]).filter(b=>b!='HEAD'&&b!='main');C.unshift({l:0,p:[0],h:Math.random().toString(16).slice(2,9),s:t,b:['main','HEAD'],a:'Вы',d:'сейчас'})}
+F=F.filter(f=>!inS(f));hs=[false,false];msg='';amend=false;sel=0;if(!F.find(f=>f.n==cur))cur=F[0]?F[0].n:'';toast(a?'Коммит изменён':'Коммит создан: '+t);render()}
+function conf(){if(!mg)return '<div class="em">Конфликтов нет. Репозиторий в обычном состоянии.</div>';
+const f=CF[cfi],m=op=='merge',L1=m?'Текущая ветка (main)':'Основа (origin/main)',L2=m?'Вливаемая (feature/diff-view)':'Ваш коммит 7be02d4',
+bt=(k,t)=>`<button ${f.ok?'disabled':''} class="${f.r==k?'p':''}" onclick="CF[cfi].r='${k}';render()">${t}</button>`,
+mkb=`<button class="p" ${f.r&&!f.ok?'':'disabled'} onclick="mk()">${f.ok?'Решён':'Отметить решённым'}</button>`,
+sl=`<select onchange="op=this.value;render()"><option value="merge" ${m?'selected':''}>merge</option><option value="rebase" ${m?'':'selected'}>rebase</option></select>`,
+ls=`<div class="cl">${CF.map((c,i)=>`<div class="f ${i==cfi?'on':''}" onclick="cfi=${i};render()"><span class="st ${c.ok?'A':'D'}">${c.ok?'✓':'!'}</span><span class="mono ell">${c.n}</span><span class="chip t">${c.t}</span></div>`).join('')}<div class="mut" style="padding:10px 8px;font-size:12px">${m?'При merge «левое» — это текущая ветка.':'При rebase стороны меняются местами. Подписи подстраиваются, чтобы вы не выбрали не ту.'}</div></div>`;
+if(f.t=='DU')return ls+`<div class="col" style="flex:1"><div class="bar"><b class="mono">${f.n}</b><span class="chip t">DU</span><span class="sp"></span>${bt('keep','Оставить файл')}${bt('del','Удалить файл')}${mkb}</div><div class="pad"><p>Удалён: <b>${L1}</b>. Изменён: <b>${L2}</b>. Выберите, что сделать с файлом.</p><pre class="pv mono">+ export function runGit(args: string[]) {\n+   return spawn("git", args, { windowsHide: true });\n+ }</pre><p class="mut">${f.r=='keep'?'Файл будет сохранён с изменениями из второй стороны.':f.r=='del'?'Файл будет удалён (git rm).':'Решение не выбрано.'}</p></div></div>`;
+const O=['const timeout = 5000;',"return run(['status','--porcelain=v2'], { timeout });"],T=['const timeout = cfg.gitTimeout;',"return run(['status','-z'], { timeout, cwd });"],r=f.r,ch=r=='a'?O:r=='b'?T:r=='ab'?[...O,...T]:r=='ba'?[...T,...O]:null,S=a=>a.map(t=>`<span>${esc('  '+t)}</span>`).join(''),
+res='<span>async status(cwd: string) {</span>'+(ch?S(ch):`<span class="mk">&lt;&lt;&lt;&lt;&lt;&lt;&lt; ${m?'main':'origin/main'}</span>${S(O)}<span class="mk">=======</span>${S(T)}<span class="mk">&gt;&gt;&gt;&gt;&gt;&gt;&gt; ${m?'feature/diff-view':'7be02d4'}</span>`)+'<span>}</span>';
+return ls+`<div class="col" style="flex:1"><div class="bar"><b class="mono">${f.n}</b><span class="chip t">UU</span>${sl}<span class="sp"></span>${bt('a','Взять левое')}${bt('b','Взять правое')}${bt('ab','Лево → право')}${bt('ba','Право → лево')}<button ${r&&!f.ok?'':'disabled'} onclick="CF[cfi].r=null;render()">Откатить</button>${mkb}</div>
+<div class="cf mono"><div><h5>${L1}</h5><pre><span>async status(cwd: string) {</span><span class="o">${esc('  '+O[0])}</span><span class="o">${esc('  '+O[1])}</span><span>}</span></pre></div><div><h5 style="color:var(--pur)">${L2}</h5><pre><span>async status(cwd: string) {</span><span class="t">${esc('  '+T[0])}</span><span class="t">${esc('  '+T[1])}</span><span>}</span></pre></div><div><h5>Результат ${f.ok?'<span class="chip" style="color:var(--add)">решён</span>':ch?'':'<span class="chip" style="color:var(--del)">есть маркеры</span>'}</h5><pre>${res}</pre></div></div></div>`}
+function mk(){const c=CF[cfi];c.ok=1;toast('git add '+c.n);const n=CF.findIndex(c=>!c.ok);if(n>=0)cfi=n;render()}
+function render(k){side();bnr();$('#hb').textContent=br;$('#main').innerHTML=V=='hist'?hist():V=='chg'?chg():conf();const t=k==1?$('#msg'):k==2?$('#q'):0;if(t){t.focus();t.setSelectionRange(t.value.length,t.value.length)}}
+addEventListener('keydown',e=>{const c=e.ctrlKey||e.metaKey;if(c&&e.key=='k'){e.preventDefault();pal()}else if(e.key=='Escape')cl();else if(c&&'123'.includes(e.key)&&e.key.length==1){e.preventDefault();go(['hist','chg','conf'][e.key-1])}else if(c&&e.key=='Enter'&&V=='chg')cm()});
+
+$('#th').onclick=()=>{const r=document.documentElement,d=r.dataset.theme?r.dataset.theme=='dark':matchMedia('(prefers-color-scheme:dark)').matches;r.dataset.theme=d?'light':'dark'};
+render();
+</script></body></html>
