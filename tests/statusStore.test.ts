@@ -31,4 +31,12 @@ describe("statusStore and helpers", () => {
     store.setShowFullDiff(true);
     expect(useStatusStore.getState().showFullDiff).toBe(true);
   });
+
+  it("handles operationError and clearOperationError", () => {
+    useStatusStore.setState({ operationError: "pre-commit hook failed" });
+    expect(useStatusStore.getState().operationError).toBe("pre-commit hook failed");
+
+    useStatusStore.getState().clearOperationError();
+    expect(useStatusStore.getState().operationError).toBeNull();
+  });
 });

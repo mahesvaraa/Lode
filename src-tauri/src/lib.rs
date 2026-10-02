@@ -48,6 +48,17 @@ pub fn run() {
             commands::status::get_status,
             commands::diff::get_diff,
             commands::diff::get_commit_diff,
+            commands::staging::stage_file,
+            commands::staging::unstage_file,
+            commands::staging::stage_all,
+            commands::staging::unstage_all,
+            commands::staging::stage_hunk,
+            commands::staging::unstage_hunk,
+            commands::staging::stage_lines,
+            commands::staging::unstage_lines,
+            commands::staging::discard_lines,
+            commands::staging::discard_file,
+            commands::commit::create_commit,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

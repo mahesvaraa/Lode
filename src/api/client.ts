@@ -53,6 +53,81 @@ export async function getCommitDiff(
   return invoke<FileDiff>("get_commit_diff", { repoPath, commitHash, filePath });
 }
 
+export async function stageFile(repoPath: string, path: string): Promise<void> {
+  return invoke<void>("stage_file", { repoPath, path });
+}
+
+export async function unstageFile(repoPath: string, path: string): Promise<void> {
+  return invoke<void>("unstage_file", { repoPath, path });
+}
+
+export async function stageAll(repoPath: string): Promise<void> {
+  return invoke<void>("stage_all", { repoPath });
+}
+
+export async function unstageAll(repoPath: string): Promise<void> {
+  return invoke<void>("unstage_all", { repoPath });
+}
+
+export async function stageHunk(
+  repoPath: string,
+  path: string,
+  hunkIndex: number
+): Promise<void> {
+  return invoke<void>("stage_hunk", { repoPath, path, hunkIndex });
+}
+
+export async function unstageHunk(
+  repoPath: string,
+  path: string,
+  hunkIndex: number
+): Promise<void> {
+  return invoke<void>("unstage_hunk", { repoPath, path, hunkIndex });
+}
+
+export async function stageLines(
+  repoPath: string,
+  path: string,
+  hunkIndex: number,
+  lineIndices: number[]
+): Promise<void> {
+  return invoke<void>("stage_lines", { repoPath, path, hunkIndex, lineIndices });
+}
+
+export async function unstageLines(
+  repoPath: string,
+  path: string,
+  hunkIndex: number,
+  lineIndices: number[]
+): Promise<void> {
+  return invoke<void>("unstage_lines", { repoPath, path, hunkIndex, lineIndices });
+}
+
+export async function discardLines(
+  repoPath: string,
+  path: string,
+  hunkIndex: number,
+  lineIndices: number[]
+): Promise<void> {
+  return invoke<void>("discard_lines", { repoPath, path, hunkIndex, lineIndices });
+}
+
+export async function discardFile(
+  repoPath: string,
+  path: string,
+  isUntracked: boolean
+): Promise<void> {
+  return invoke<void>("discard_file", { repoPath, path, isUntracked });
+}
+
+export async function createCommit(
+  repoPath: string,
+  message: string,
+  amend: boolean
+): Promise<string> {
+  return invoke<string>("create_commit", { repoPath, message, amend });
+}
+
 export async function listenToRepoChanged(
   callback: (event: RepoChangedEvent) => void
 ): Promise<UnlistenFn> {

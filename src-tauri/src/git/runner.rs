@@ -2,6 +2,7 @@ use std::path::{Path, PathBuf};
 use std::process::Stdio;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
+use tokio::io::AsyncWriteExt;
 use tokio::process::Command;
 use tokio::time::timeout;
 use serde::{Deserialize, Serialize};
@@ -195,6 +196,96 @@ impl GitRunner {
         let lock = self.queue.get_lock(repo_path).await;
         let _guard = lock.lock().await;
         self.run_inner(Some(repo_path), args, false, WRITE_TIMEOUT).await
+    }
+
+    /// Execute a write git command with data sent via stdin (guarded by repo mutex)
+    pub async fn run_write_stdin(
+        &self,
+        repo_path: &Path,
+        args: &[&str],
+        input: &[u8],
+    ) -> Result<GitOutput, AppError> {
+        let lock = self.queue.get_lock(repo_path).await;
+        let _guard = lock.lock().await;
+
+        let git_bin = self.resolve_git_executable().await?;
+        let mut cmd = Command::new(git_bin);
+
+        cmd.env("GIT_TERMINAL_PROMPT", "0");
+        cmd.env("GIT_PAGER", "cat");
+        cmd.env("LC_ALL", "C");
+
+        cmd.arg("-c").arg("core.quotepath=false");
+        cmd.arg("-c").arg("color.ui=false");
+
+        cmd.current_dir(repo_path);
+
+        for arg in args {
+            cmd.arg(arg);
+        }
+
+        configure_command_platform(&mut cmd);
+        cmd.stdin(Stdio::piped());
+        cmd.stdout(Stdio::piped());
+        cmd.stderr(Stdio::piped());
+
+        let start = Instant::now();
+
+        let mut child = cmd.spawn().map_err(|e| {
+            AppError::new(
+                ErrorKind::Io,
+                format!("Не удалось запустить процесс git: {e}"),
+                None,
+            )
+        })?;
+
+        if let Some(mut stdin) = child.stdin.take() {
+            stdin.write_all(input).await.map_err(|e| {
+                AppError::new(
+                    ErrorKind::Io,
+                    format!("Ошибка записи во входной поток git: {e}"),
+                    None,
+                )
+            })?;
+            stdin.shutdown().await.map_err(|e| {
+                AppError::new(
+                    ErrorKind::Io,
+                    format!("Ошибка закрытия входного потока git: {e}"),
+                    None,
+                )
+            })?;
+        }
+
+        let output = match timeout(WRITE_TIMEOUT, child.wait_with_output()).await {
+            Ok(res) => res.map_err(|e| {
+                AppError::new(
+                    ErrorKind::Io,
+                    format!("Ошибка чтения вывода git: {e}"),
+                    None,
+                )
+            })?,
+            Err(_) => {
+                return Err(AppError::new(
+                    ErrorKind::Io,
+                    format!("Таймаут выполнения команды git ({:?})", WRITE_TIMEOUT),
+                    None,
+                ));
+            }
+        };
+
+        let duration_ms = start.elapsed().as_millis() as u64;
+
+        if !output.status.success() {
+            let stderr_str = String::from_utf8_lossy(&output.stderr);
+            return Err(AppError::from_git_stderr(&stderr_str, output.status.code()));
+        }
+
+        Ok(GitOutput {
+            stdout: output.stdout,
+            stderr: String::from_utf8_lossy(&output.stderr).to_string(),
+            exit_code: output.status.code().unwrap_or(0),
+            duration_ms,
+        })
     }
 
     async fn run_inner(
