@@ -14,6 +14,7 @@ pub enum ErrorKind {
     GitNotFound,
     GitVersionTooOld,
     InvalidPath,
+    InvalidBranchName,
     Io,
     Unknown,
 }

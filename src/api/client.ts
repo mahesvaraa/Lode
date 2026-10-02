@@ -10,6 +10,8 @@ import type { FileDiff } from "./types/file_diff";
 import type { RepoChangedEvent } from "./types/repo_changed_event";
 import type { Commit } from "./types/commit";
 import type { CommitDetails } from "./types/commit_details";
+import type { RepoRefs } from "./types/repo_refs";
+import type { RepoState } from "./types/repo_state";
 
 export async function checkGit(): Promise<GitInfo> {
   return invoke<GitInfo>("check_git");
@@ -76,6 +78,82 @@ export async function getCommitDetails(
   hash: string
 ): Promise<CommitDetails> {
   return invoke<CommitDetails>("get_commit_details", { repoPath, hash });
+}
+
+export async function getRefs(repoPath: string): Promise<RepoRefs> {
+  return invoke<RepoRefs>("get_refs", { repoPath });
+}
+
+export async function getRepoState(repoPath: string): Promise<RepoState> {
+  return invoke<RepoState>("get_repo_state", { repoPath });
+}
+
+export async function createBranch(
+  repoPath: string,
+  name: string,
+  startPoint?: string,
+  switchTo: boolean = false
+): Promise<void> {
+  return invoke<void>("create_branch", {
+    repoPath,
+    name,
+    startPoint: startPoint || null,
+    switchTo,
+  });
+}
+
+export async function switchBranch(repoPath: string, name: string): Promise<void> {
+  return invoke<void>("switch_branch", { repoPath, name });
+}
+
+export async function renameBranch(
+  repoPath: string,
+  oldName: string,
+  newName: string
+): Promise<void> {
+  return invoke<void>("rename_branch", { repoPath, oldName, newName });
+}
+
+export async function deleteBranch(
+  repoPath: string,
+  name: string,
+  force: boolean = false
+): Promise<void> {
+  return invoke<void>("delete_branch", { repoPath, name, force });
+}
+
+export async function createTag(
+  repoPath: string,
+  name: string,
+  targetHash?: string,
+  message?: string
+): Promise<void> {
+  return invoke<void>("create_tag", {
+    repoPath,
+    name,
+    targetHash: targetHash || null,
+    message: message || null,
+  });
+}
+
+export async function deleteTag(repoPath: string, name: string): Promise<void> {
+  return invoke<void>("delete_tag", { repoPath, name });
+}
+
+export async function mergeBranch(
+  repoPath: string,
+  branchOrRef: string,
+  noFf: boolean = false
+): Promise<RepoState> {
+  return invoke<RepoState>("merge_branch", {
+    repoPath,
+    branchOrRef,
+    noFf,
+  });
+}
+
+export async function abortMerge(repoPath: string): Promise<RepoState> {
+  return invoke<RepoState>("abort_merge", { repoPath });
 }
 
 export async function stageFile(repoPath: string, path: string): Promise<void> {

@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { Header } from "./Header";
 import { Sidebar } from "./Sidebar";
+import { StateBanner } from "./StateBanner";
 import { Splitter, EmptyState } from "@/ui";
 import { ChangesView } from "@/features/changes/ChangesView";
 import { HistoryView } from "@/features/history/HistoryView";
@@ -75,6 +76,7 @@ export const MainLayout: React.FC = () => {
       }}
     >
       <Header />
+      <StateBanner />
 
       <div
         style={{
