@@ -288,6 +288,19 @@ impl GitRunner {
         })
     }
 
+    /// Execute a remote git command (fetch/pull/push) with write mutex
+    pub async fn run_remote(
+        &self,
+        repo_path: &Path,
+        args: &[&str],
+    ) -> Result<GitOutput, AppError> {
+        let lock = self.queue.get_lock(repo_path).await;
+        let _guard = lock.lock().await;
+
+        const REMOTE_TIMEOUT: Duration = Duration::from_secs(600);
+        self.run_inner(Some(repo_path), args, false, REMOTE_TIMEOUT).await
+    }
+
     async fn run_inner(
         &self,
         repo_path: Option<&Path>,

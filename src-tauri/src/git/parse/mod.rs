@@ -1,6 +1,7 @@
 pub mod diff;
 pub mod log;
 pub mod refs;
+pub mod remote;
 pub mod status;
 
 pub use diff::{parse_unified_diff, DiffHunk, DiffLine, DiffLineKind, FileDiff};
@@ -9,6 +10,7 @@ pub use log::{
     RefKind,
 };
 pub use refs::{parse_git_refs, GitRef, GitRefKind, RepoRefs};
+pub use remote::{mask_remote_url, parse_git_remotes, PullMode, Remote};
 pub use status::{
     parse_status_porcelain_v2, BranchInfo, FileStatusKind, RepoStatus, StatusItem,
 };

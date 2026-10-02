@@ -5,6 +5,8 @@ import { useRepoStore } from "@/store/repoStore";
 import { useStatusStore } from "@/store/statusStore";
 import { useRefsStore } from "@/store/refsStore";
 import { useHistoryStore } from "@/store/historyStore";
+import { useRemoteStore } from "@/store/remoteStore";
+import { RemoteModal } from "@/features/remote/RemoteModal";
 import { t } from "@/lib/i18n";
 import type { GitRef } from "@/api/types/git_ref";
 
@@ -47,13 +49,17 @@ export const Sidebar: React.FC = () => {
   const [newTagMessage, setNewTagMessage] = useState("");
 
   const [tagToDelete, setTagToDelete] = useState<GitRef | null>(null);
+  const [showRemoteModal, setShowRemoteModal] = useState(false);
+
+  const loadRemotes = useRemoteStore((s) => s.loadRemotes);
 
   useEffect(() => {
     if (currentRepo) {
       loadRefs(currentRepo.path);
       loadRepoState(currentRepo.path);
+      loadRemotes(currentRepo.path);
     }
-  }, [currentRepo, loadRefs, loadRepoState]);
+  }, [currentRepo, loadRefs, loadRepoState, loadRemotes]);
 
   const refreshAll = async () => {
     if (!currentRepo) return;
@@ -62,6 +68,7 @@ export const Sidebar: React.FC = () => {
       loadStatus(currentRepo.path),
       loadRepoState(currentRepo.path),
       loadHistory(currentRepo.path),
+      loadRemotes(currentRepo.path),
     ]);
   };
 
@@ -364,18 +371,36 @@ export const Sidebar: React.FC = () => {
       </div>
 
       {/* Remote Branches Section */}
-      <h6
+      <div
         style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
           margin: "16px 8px 6px",
-          fontSize: "var(--font-size-xs)",
-          fontWeight: 600,
-          textTransform: "uppercase",
-          letterSpacing: "0.5px",
-          color: "var(--mut)",
         }}
       >
-        {t.sidebar.remotes}
-      </h6>
+        <h6
+          style={{
+            margin: 0,
+            fontSize: "var(--font-size-xs)",
+            fontWeight: 600,
+            textTransform: "uppercase",
+            letterSpacing: "0.5px",
+            color: "var(--mut)",
+          }}
+        >
+          {t.sidebar.remotes}
+        </h6>
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => setShowRemoteModal(true)}
+          style={{ padding: "1px 6px", fontSize: "11px" }}
+          title="Управление удалёнными репозиториями"
+        >
+          ⚙
+        </Button>
+      </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
         {refs?.remote_branches.length === 0 ? (
@@ -605,6 +630,12 @@ export const Sidebar: React.FC = () => {
           Вы уверены, что хотите удалить тег <b>{tagToDelete?.name}</b>?
         </p>
       </Modal>
+
+      {/* Remote Management Modal */}
+      <RemoteModal
+        isOpen={showRemoteModal}
+        onClose={() => setShowRemoteModal(false)}
+      />
     </aside>
   );
 };

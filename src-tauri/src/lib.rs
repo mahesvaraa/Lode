@@ -76,6 +76,15 @@ pub fn run() {
             commands::branch::delete_tag,
             commands::branch::merge_branch,
             commands::branch::abort_merge,
+            // Remote commands
+            commands::remote::list_remotes,
+            commands::remote::add_remote,
+            commands::remote::remove_remote,
+            commands::remote::rename_remote,
+            commands::remote::set_remote_url,
+            commands::remote::fetch_all,
+            commands::remote::pull,
+            commands::remote::push,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -120,5 +129,9 @@ mod tests {
         git::parse::RepoRefs::export().expect("Failed to export RepoRefs");
         git::state::RepoStateKind::export().expect("Failed to export RepoStateKind");
         git::state::RepoState::export().expect("Failed to export RepoState");
+
+        // Remote types
+        git::parse::Remote::export().expect("Failed to export Remote");
+        git::parse::PullMode::export().expect("Failed to export PullMode");
     }
 }

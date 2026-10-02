@@ -15,6 +15,7 @@ pub enum ErrorKind {
     GitVersionTooOld,
     InvalidPath,
     InvalidBranchName,
+    PushRejected,
     Io,
     Unknown,
 }
@@ -75,11 +76,18 @@ impl AppError {
             ErrorKind::LockFile
         } else if trimmed.contains("Could not resolve host") || trimmed.contains("Network is unreachable") {
             ErrorKind::NetworkUnavailable
+        } else if trimmed.contains("[rejected]")
+            || trimmed.contains("Updates were rejected")
+            || trimmed.contains("failed to push some refs")
+        {
+            ErrorKind::PushRejected
         } else {
             ErrorKind::Unknown
         };
 
-        let message = if let Some(first_line) = trimmed.lines().next() {
+        let message = if kind == ErrorKind::PushRejected {
+            "Отклонено сервером: удалённая ветка содержит коммиты, которых нет локально. Сначала выполните pull.".to_string()
+        } else if let Some(first_line) = trimmed.lines().next() {
             if let Some(msg) = first_line.strip_prefix("fatal: ") {
                 msg.to_string()
             } else if let Some(msg) = first_line.strip_prefix("error: ") {

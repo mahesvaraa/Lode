@@ -12,6 +12,8 @@ import type { Commit } from "./types/commit";
 import type { CommitDetails } from "./types/commit_details";
 import type { RepoRefs } from "./types/repo_refs";
 import type { RepoState } from "./types/repo_state";
+import type { Remote } from "./types/remote";
+import type { PullMode } from "./types/pull_mode";
 
 export async function checkGit(): Promise<GitInfo> {
   return invoke<GitInfo>("check_git");
@@ -154,6 +156,79 @@ export async function mergeBranch(
 
 export async function abortMerge(repoPath: string): Promise<RepoState> {
   return invoke<RepoState>("abort_merge", { repoPath });
+}
+
+// Remote API
+export async function listRemotes(repoPath: string): Promise<Remote[]> {
+  return invoke<Remote[]>("list_remotes", { repoPath });
+}
+
+export async function addRemote(
+  repoPath: string,
+  name: string,
+  url: string
+): Promise<void> {
+  return invoke<void>("add_remote", { repoPath, name, url });
+}
+
+export async function removeRemote(
+  repoPath: string,
+  name: string
+): Promise<void> {
+  return invoke<void>("remove_remote", { repoPath, name });
+}
+
+export async function renameRemote(
+  repoPath: string,
+  oldName: string,
+  newName: string
+): Promise<void> {
+  return invoke<void>("rename_remote", { repoPath, oldName, newName });
+}
+
+export async function setRemoteUrl(
+  repoPath: string,
+  name: string,
+  url: string
+): Promise<void> {
+  return invoke<void>("set_remote_url", { repoPath, name, url });
+}
+
+export async function fetchAll(
+  repoPath: string,
+  prune: boolean = true
+): Promise<string> {
+  return invoke<string>("fetch_all", { repoPath, prune });
+}
+
+export async function pull(
+  repoPath: string,
+  remote?: string,
+  branch?: string,
+  mode?: PullMode
+): Promise<string> {
+  return invoke<string>("pull", {
+    repoPath,
+    remote: remote || null,
+    branch: branch || null,
+    mode: mode || null,
+  });
+}
+
+export async function push(
+  repoPath: string,
+  remote?: string,
+  branch?: string,
+  setUpstream: boolean = false,
+  forceWithLease: boolean = false
+): Promise<string> {
+  return invoke<string>("push", {
+    repoPath,
+    remote: remote || null,
+    branch: branch || null,
+    setUpstream,
+    forceWithLease,
+  });
 }
 
 export async function stageFile(repoPath: string, path: string): Promise<void> {
