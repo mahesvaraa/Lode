@@ -2,8 +2,11 @@ import React, { useEffect } from "react";
 import { Header } from "./Header";
 import { Sidebar } from "./Sidebar";
 import { Splitter, EmptyState } from "@/ui";
+import { ChangesView } from "@/features/changes/ChangesView";
 import { useUiStore } from "@/store/uiStore";
 import { useRepoStore } from "@/store/repoStore";
+import { useStatusStore } from "@/store/statusStore";
+import { listenToRepoChanged } from "@/api/client";
 import { t } from "@/lib/i18n";
 
 export const MainLayout: React.FC = () => {
@@ -11,9 +14,29 @@ export const MainLayout: React.FC = () => {
   const setActiveView = useUiStore((s) => s.setActiveView);
   const sidebarWidth = useUiStore((s) => s.sidebarWidth);
   const setSidebarWidth = useUiStore((s) => s.setSidebarWidth);
-  const currentRepo = useRepoStore((s) => s.currentRepo);
 
-  // Keyboard navigation: Ctrl/Cmd+1/2/3, etc.
+  const currentRepo = useRepoStore((s) => s.currentRepo);
+  const loadStatus = useStatusStore((s) => s.loadStatus);
+
+  // Load status and listen to repo:changed events from backend file watcher
+  useEffect(() => {
+    if (!currentRepo) return;
+
+    loadStatus(currentRepo.path);
+
+    let unlistenFn: (() => void) | undefined;
+    listenToRepoChanged((_event) => {
+      loadStatus(currentRepo.path);
+    }).then((unlisten) => {
+      unlistenFn = unlisten;
+    }).catch(console.error);
+
+    return () => {
+      if (unlistenFn) unlistenFn();
+    };
+  }, [currentRepo, loadStatus]);
+
+  // Keyboard navigation: Ctrl/Cmd+1/2/3
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const isCmdOrCtrl = e.metaKey || e.ctrlKey;
@@ -74,17 +97,12 @@ export const MainLayout: React.FC = () => {
             backgroundColor: "var(--bg)",
           }}
         >
+          {activeView === "chg" && <ChangesView />}
+
           {activeView === "hist" && (
             <EmptyState
               title={t.sidebar.history}
               description={`Репозиторий ${currentRepo?.name} открыт. История коммитов и граф будут реализованы на Этапе 3.`}
-            />
-          )}
-
-          {activeView === "chg" && (
-            <EmptyState
-              title={t.sidebar.changes}
-              description="Рабочая копия чистая. Просмотр статуса и diff будет реализован на Этапе 1."
             />
           )}
 

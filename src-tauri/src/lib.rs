@@ -7,6 +7,7 @@ pub mod watcher;
 use git::{GitRunner, RepoQueue};
 use settings::SettingsManager;
 use tauri::Manager;
+use watcher::RepoWatcher;
 
 pub fn run() {
     tauri::Builder::default()
@@ -14,13 +15,12 @@ pub fn run() {
         .setup(|app| {
             let queue = RepoQueue::new();
             let runner = GitRunner::new(queue);
+            let watcher = RepoWatcher::new(app.handle().clone());
             let settings_manager = match SettingsManager::new(app.handle()) {
                 Ok(mgr) => mgr,
                 Err(e) => {
                     eprintln!("Failed to initialize settings manager: {e}");
-                    return Err(Box::new(std::io::Error::other(
-                        e.to_string(),
-                    )));
+                    return Err(Box::new(std::io::Error::other(e.to_string())));
                 }
             };
 
@@ -33,6 +33,7 @@ pub fn run() {
             }
 
             app.manage(runner);
+            app.manage(watcher);
             app.manage(settings_manager);
 
             Ok(())
@@ -44,6 +45,9 @@ pub fn run() {
             commands::git_check::save_theme,
             commands::git_check::remove_recent_repo,
             commands::repo::open_repo,
+            commands::status::get_status,
+            commands::diff::get_diff,
+            commands::diff::get_commit_diff,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -61,5 +65,20 @@ mod tests {
         git::GitInfo::export().expect("Failed to export GitInfo");
         settings::AppSettings::export().expect("Failed to export AppSettings");
         commands::repo::RepoDetails::export().expect("Failed to export RepoDetails");
+
+        // Status types
+        git::parse::FileStatusKind::export().expect("Failed to export FileStatusKind");
+        git::parse::BranchInfo::export().expect("Failed to export BranchInfo");
+        git::parse::StatusItem::export().expect("Failed to export StatusItem");
+        git::parse::RepoStatus::export().expect("Failed to export RepoStatus");
+
+        // Diff types
+        git::parse::DiffLineKind::export().expect("Failed to export DiffLineKind");
+        git::parse::DiffLine::export().expect("Failed to export DiffLine");
+        git::parse::DiffHunk::export().expect("Failed to export DiffHunk");
+        git::parse::FileDiff::export().expect("Failed to export FileDiff");
+
+        // Watcher event
+        watcher::RepoChangedEvent::export().expect("Failed to export RepoChangedEvent");
     }
 }

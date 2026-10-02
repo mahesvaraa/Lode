@@ -1,0 +1,25 @@
+diff --git a/src/service.ts b/src/service.ts
+index e69de29..4b825dc 100644
+--- a/src/service.ts
++++ b/src/service.ts
+@@ -42,3 +42,4 @@ export class GitService
+   async status() {
+-    return run(["status"]);
++    const out = await run(["status", "--porcelain=v2"]);
++    return out;
+   }
+diff --git a/docs/old guide.md b/docs/new manual.md
+similarity index 95%
+rename from docs/old guide.md
+rename to docs/new manual.md
+index 1234567..89abcde 100644
+--- a/docs/old guide.md
++++ b/docs/new manual.md
+@@ -1,2 +1,2 @@
+ # Documentation
+-Legacy text
++Updated text
+diff --git a/assets/icon.png b/assets/icon.png
+new file mode 100644
+index 0000000..f7a8b9c
+Binary files /dev/null and b/assets/icon.png differ

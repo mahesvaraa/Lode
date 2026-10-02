@@ -1,0 +1,9 @@
+# branch.oid a3f9c21074e892c57b8a7b1234567890abcdef12
+# branch.head main
+# branch.upstream origin/main
+# branch.ab +1 -2
+1 MM N... 100644 100644 100644 e69de29 e69de29 src/git/service.ts
+1 A. N... 000000 100644 100644 0000000 e69de29 src/ui/DiffView.tsx
+1 .M N... 100644 100644 100644 e69de29 e69de29 src/styles/tokens.css
+1 .D N... 100644 100644 000000 e69de29 0000000 README.md
+? untracked_file.txt

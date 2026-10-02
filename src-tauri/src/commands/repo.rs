@@ -6,6 +6,7 @@ use ts_rs::TS;
 use crate::error::{AppError, ErrorKind};
 use crate::git::GitRunner;
 use crate::settings::SettingsManager;
+use crate::watcher::RepoWatcher;
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "../../src/api/types/repo_details.ts")]
@@ -20,6 +21,7 @@ pub async fn open_repo(
     path: String,
     runner: State<'_, GitRunner>,
     settings: State<'_, SettingsManager>,
+    watcher: State<'_, RepoWatcher>,
 ) -> Result<RepoDetails, AppError> {
     let raw_path = PathBuf::from(&path);
     if !raw_path.exists() {
@@ -63,7 +65,6 @@ pub async fn open_repo(
     let current_branch = branch_output.ok().map(|o| {
         let b = String::from_utf8_lossy(&o.stdout).trim().to_string();
         if b == "HEAD" {
-            // Detached HEAD
             "detached".to_string()
         } else {
             b
@@ -77,6 +78,9 @@ pub async fn open_repo(
 
     let final_path_str = toplevel_path.to_string_lossy().to_string();
     let _ = settings.add_recent_repo(&final_path_str);
+
+    // Start watching repository
+    watcher.watch_repo(&toplevel_path).await;
 
     Ok(RepoDetails {
         path: final_path_str,
