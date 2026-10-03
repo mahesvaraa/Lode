@@ -4,6 +4,15 @@ version = "0.1.0"
 description = "A minimal, fast desktop Git client"
 authors = ["Lode Contributors"]
 edition = "2021"
+default-run = "lode"
+
+[[bin]]
+name = "lode"
+path = "src/main.rs"
+
+[[bin]]
+name = "rebase_helper"
+path = "src/bin/rebase_helper.rs"
 
 [lib]
 name = "lode_lib"
