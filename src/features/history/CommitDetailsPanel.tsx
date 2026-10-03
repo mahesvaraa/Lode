@@ -1,7 +1,13 @@
-import React from "react";
-import { EmptyState, Skeleton, Splitter } from "@/ui";
+import React, { useState } from "react";
+import { Button, EmptyState, Modal, Skeleton, Splitter } from "@/ui";
 import { useHistoryStore } from "@/store/historyStore";
 import { useRepoStore } from "@/store/repoStore";
+import { useStatusStore } from "@/store/statusStore";
+import { useRefsStore } from "@/store/refsStore";
+import { useUiStore } from "@/store/uiStore";
+import { useToastStore } from "@/store/toastStore";
+import { cherryPick, revertCommit, resetRepo } from "@/api/client";
+import { BlameModal } from "./BlameModal";
 import type { CommitFile } from "@/api/types/commit_file";
 
 export const CommitDetailsPanel: React.FC = () => {
@@ -15,8 +21,104 @@ export const CommitDetailsPanel: React.FC = () => {
   const fileDiff = useHistoryStore((s) => s.commitFileDiff);
   const isLoadingFileDiff = useHistoryStore((s) => s.isLoadingFileDiff);
   const selectCommit = useHistoryStore((s) => s.selectCommit);
+  const loadHistory = useHistoryStore((s) => s.loadInitial);
 
-  const [panelSplit, setPanelSplit] = React.useState(260);
+  const loadStatus = useStatusStore((s) => s.loadStatus);
+  const loadRepoState = useRefsStore((s) => s.loadRepoState);
+  const loadRefs = useRefsStore((s) => s.loadRefs);
+  const setActiveView = useUiStore((s) => s.setActiveView);
+  const showToast = useToastStore((s) => s.showToast);
+
+  const [panelSplit, setPanelSplit] = useState(280);
+  const [blameFilePath, setBlameFilePath] = useState<string | null>(null);
+
+  // Commit operation modals
+  const [showCherryPickModal, setShowCherryPickModal] = useState(false);
+  const [cherryPickParent, setCherryPickParent] = useState(1);
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [resetMode, setResetMode] = useState<"soft" | "mixed" | "hard">("mixed");
+  const [isOperating, setIsOperating] = useState(false);
+
+  const refreshAll = async () => {
+    if (!currentRepo) return;
+    await Promise.all([
+      loadStatus(currentRepo.path),
+      loadRepoState(currentRepo.path),
+      loadRefs(currentRepo.path),
+      loadHistory(currentRepo.path),
+    ]);
+  };
+
+  const handleCherryPick = async (parent?: number) => {
+    if (!currentRepo || !details) return;
+    setIsOperating(true);
+    try {
+      await cherryPick(currentRepo.path, details.commit.hash, parent);
+      await refreshAll();
+      showToast(`Коммит ${details.commit.hash.slice(0, 7)} успешно перенесён (cherry-pick)`);
+    } catch (err: unknown) {
+      const errObj = err as { message?: string };
+      showToast(errObj.message || "Конфликт при cherry-pick", "error");
+      await refreshAll();
+      setActiveView("conf");
+    } finally {
+      setIsOperating(false);
+      setShowCherryPickModal(false);
+    }
+  };
+
+  const handleRevert = async () => {
+    if (!currentRepo || !details) return;
+    setIsOperating(true);
+    try {
+      await revertCommit(currentRepo.path, details.commit.hash);
+      await refreshAll();
+      showToast(`Коммит ${details.commit.hash.slice(0, 7)} отменён (revert)`);
+    } catch (err: unknown) {
+      const errObj = err as { message?: string };
+      showToast(errObj.message || "Конфликт при revert", "error");
+      await refreshAll();
+      setActiveView("conf");
+    } finally {
+      setIsOperating(false);
+    }
+  };
+
+  const handleReset = async () => {
+    if (!currentRepo || !details) return;
+    setIsOperating(true);
+    try {
+      await resetRepo(currentRepo.path, details.commit.hash, resetMode);
+      await refreshAll();
+      setShowResetModal(false);
+      if (resetMode === "hard") {
+        showToast(
+          "Ветка сброшена (hard reset). Для отмены: git reset --hard ORIG_HEAD",
+          "info",
+          6000,
+          {
+            label: "Отменить",
+            onClick: async () => {
+              try {
+                await resetRepo(currentRepo.path, "ORIG_HEAD", "hard");
+                await refreshAll();
+                showToast("Сброс отменён (ORIG_HEAD)");
+              } catch {
+                showToast("Не удалось восстановить ORIG_HEAD", "error");
+              }
+            },
+          }
+        );
+      } else {
+        showToast(`Ветка сброшена (${resetMode} reset)`);
+      }
+    } catch (err: unknown) {
+      const errObj = err as { message?: string };
+      showToast(errObj.message || "Ошибка сброса ветки", "error");
+    } finally {
+      setIsOperating(false);
+    }
+  };
 
   if (!selectedHash) {
     return (
@@ -151,6 +253,44 @@ export const CommitDetailsPanel: React.FC = () => {
               </div>
             )}
           </div>
+
+          {/* Commit Action Buttons */}
+          <div style={{ display: "flex", gap: "6px", marginTop: "10px" }}>
+            <Button
+              size="sm"
+              variant="default"
+              disabled={isOperating}
+              onClick={() => {
+                if (commit.parents.length > 1) {
+                  setCherryPickParent(1);
+                  setShowCherryPickModal(true);
+                } else {
+                  handleCherryPick();
+                }
+              }}
+              title="Применить этот коммит к текущей ветке (cherry-pick)"
+            >
+              Cherry-pick
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              disabled={isOperating}
+              onClick={handleRevert}
+              title="Создать новый коммит, отменяющий изменения этого коммита (revert)"
+            >
+              Revert
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              disabled={isOperating}
+              onClick={() => setShowResetModal(true)}
+              title="Сбросить текущую ветку на этот коммит (reset)"
+            >
+              Reset ветку сюда...
+            </Button>
+          </div>
         </div>
 
         {/* Files List in this commit */}
@@ -214,6 +354,19 @@ export const CommitDetailsPanel: React.FC = () => {
                     <span style={{ color: "var(--mut)" }}> (было {file.old_path})</span>
                   )}
                 </span>
+
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setBlameFilePath(file.path);
+                  }}
+                  style={{ padding: "1px 6px", fontSize: "11px", height: "20px" }}
+                  title="Показать построчный blame и историю файла"
+                >
+                  Blame
+                </Button>
               </div>
             );
           })}
@@ -337,6 +490,114 @@ export const CommitDetailsPanel: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Blame / History Modal */}
+      {blameFilePath && (
+        <BlameModal
+          isOpen={true}
+          onClose={() => setBlameFilePath(null)}
+          filePath={blameFilePath}
+          onSelectCommit={(hash) => {
+            if (currentRepo) selectCommit(currentRepo.path, hash);
+          }}
+        />
+      )}
+
+      {/* Cherry-Pick Parent Selection Modal */}
+      <Modal
+        isOpen={showCherryPickModal}
+        onClose={() => setShowCherryPickModal(false)}
+        title="Выбор родителя для Cherry-pick"
+        confirmLabel="Применить"
+        onConfirm={() => handleCherryPick(cherryPickParent)}
+      >
+        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+          <p style={{ margin: 0, fontSize: "12px", color: "var(--tx)", lineHeight: 1.5 }}>
+            Этот коммит является слиянием (merge) и имеет несколько родителей. Укажите, относительно какого родителя применить изменения (-m):
+          </p>
+          <div style={{ display: "flex", gap: "12px" }}>
+            {details?.commit.parents.map((p, idx) => {
+              const num = idx + 1;
+              return (
+                <label key={p} style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer" }}>
+                  <input
+                    type="radio"
+                    name="cherryPickParent"
+                    checked={cherryPickParent === num}
+                    onChange={() => setCherryPickParent(num)}
+                  />
+                  <span className="mono" style={{ fontSize: "12px" }}>
+                    Родитель {num} ({p.slice(0, 7)})
+                  </span>
+                </label>
+              );
+            })}
+          </div>
+        </div>
+      </Modal>
+
+      {/* Reset Modal */}
+      <Modal
+        isOpen={showResetModal}
+        onClose={() => setShowResetModal(false)}
+        title={`Сброс текущей ветки на ${details?.commit.hash.slice(0, 7)}`}
+        confirmLabel="Сбросить ветку"
+        isDanger={resetMode === "hard"}
+        onConfirm={handleReset}
+      >
+        <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+          <p style={{ margin: 0, fontSize: "12px", color: "var(--tx)", lineHeight: 1.5 }}>
+            Выберите режим сброса указателя текущей ветки:
+          </p>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            <label style={{ display: "flex", alignItems: "flex-start", gap: "8px", cursor: "pointer" }}>
+              <input
+                type="radio"
+                name="resetMode"
+                checked={resetMode === "soft"}
+                onChange={() => setResetMode("soft")}
+              />
+              <div>
+                <b style={{ fontSize: "12px" }}>Soft (--soft)</b>
+                <div style={{ fontSize: "11px", color: "var(--mut)" }}>
+                  Указатель ветки перемещается. Все изменения остаются подготовленными в индексе (staged).
+                </div>
+              </div>
+            </label>
+
+            <label style={{ display: "flex", alignItems: "flex-start", gap: "8px", cursor: "pointer" }}>
+              <input
+                type="radio"
+                name="resetMode"
+                checked={resetMode === "mixed"}
+                onChange={() => setResetMode("mixed")}
+              />
+              <div>
+                <b style={{ fontSize: "12px" }}>Mixed (--mixed, по умолчанию)</b>
+                <div style={{ fontSize: "11px", color: "var(--mut)" }}>
+                  Указатель ветки перемещается, индекс сбрасывается. Все изменения остаются в рабочей копии как незакоммиченные.
+                </div>
+              </div>
+            </label>
+
+            <label style={{ display: "flex", alignItems: "flex-start", gap: "8px", cursor: "pointer" }}>
+              <input
+                type="radio"
+                name="resetMode"
+                checked={resetMode === "hard"}
+                onChange={() => setResetMode("hard")}
+              />
+              <div>
+                <b style={{ fontSize: "12px", color: "var(--del)" }}>Hard (--hard, ОПАСНО)</b>
+                <div style={{ fontSize: "11px", color: "var(--del)" }}>
+                  ВНИМАНИЕ: Все незакоммиченные изменения и коммиты впереди этой точки будут сброшены. Восстановление возможно через команду git reset --hard ORIG_HEAD в reflog.
+                </div>
+              </div>
+            </label>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

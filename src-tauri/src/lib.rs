@@ -91,6 +91,18 @@ pub fn run() {
             commands::conflict::resolve_conflict_choice,
             commands::conflict::regenerate_conflict_diff3,
             commands::conflict::continue_operation,
+            // Ops commands (Stash, cherry-pick, revert, reset, blame, file history)
+            commands::ops::list_stashes,
+            commands::ops::stash_save,
+            commands::ops::stash_apply,
+            commands::ops::stash_pop,
+            commands::ops::stash_drop,
+            commands::ops::stash_show_diff,
+            commands::ops::cherry_pick,
+            commands::ops::revert_commit,
+            commands::ops::reset_repo,
+            commands::ops::get_blame,
+            commands::ops::get_file_history,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -143,5 +155,9 @@ mod tests {
         // Conflict types
         git::conflict::ConflictBlock::export().expect("Failed to export ConflictBlock");
         git::conflict::ParsedConflictFile::export().expect("Failed to export ParsedConflictFile");
+
+        // Stash & Blame types
+        git::parse::StashItem::export().expect("Failed to export StashItem");
+        git::parse::BlameLine::export().expect("Failed to export BlameLine");
     }
 }

@@ -15,6 +15,8 @@ import type { RepoState } from "./types/repo_state";
 import type { Remote } from "./types/remote";
 import type { PullMode } from "./types/pull_mode";
 import type { ParsedConflictFile } from "./types/parsed_conflict_file";
+import type { StashItem } from "./types/stash_item";
+import type { BlameLine } from "./types/blame_line";
 
 export async function checkGit(): Promise<GitInfo> {
   return invoke<GitInfo>("check_git");
@@ -273,6 +275,97 @@ export async function continueOperation(
   return invoke<RepoState>("continue_operation", {
     repoPath,
     message: message || null,
+  });
+}
+
+// Stage 7: Stash, Cherry-pick, Revert, Reset, Blame, File History
+export async function listStashes(repoPath: string): Promise<StashItem[]> {
+  return invoke<StashItem[]>("list_stashes", { repoPath });
+}
+
+export async function stashSave(
+  repoPath: string,
+  message?: string,
+  includeUntracked: boolean = true
+): Promise<string> {
+  return invoke<string>("stash_save", {
+    repoPath,
+    message: message || null,
+    includeUntracked,
+  });
+}
+
+export async function stashApply(
+  repoPath: string,
+  selector: string
+): Promise<void> {
+  return invoke<void>("stash_apply", { repoPath, selector });
+}
+
+export async function stashPop(
+  repoPath: string,
+  selector: string
+): Promise<void> {
+  return invoke<void>("stash_pop", { repoPath, selector });
+}
+
+export async function stashDrop(
+  repoPath: string,
+  selector: string
+): Promise<void> {
+  return invoke<void>("stash_drop", { repoPath, selector });
+}
+
+export async function stashShowDiff(
+  repoPath: string,
+  selector: string
+): Promise<string> {
+  return invoke<string>("stash_show_diff", { repoPath, selector });
+}
+
+export async function cherryPick(
+  repoPath: string,
+  commitHash: string,
+  parentNumber?: number
+): Promise<void> {
+  return invoke<void>("cherry_pick", {
+    repoPath,
+    commitHash,
+    parentNumber: parentNumber || null,
+  });
+}
+
+export async function revertCommit(
+  repoPath: string,
+  commitHash: string
+): Promise<void> {
+  return invoke<void>("revert_commit", { repoPath, commitHash });
+}
+
+export async function resetRepo(
+  repoPath: string,
+  targetRef: string,
+  mode: "soft" | "mixed" | "hard"
+): Promise<void> {
+  return invoke<void>("reset_repo", { repoPath, targetRef, mode });
+}
+
+export async function getBlame(
+  repoPath: string,
+  path: string
+): Promise<BlameLine[]> {
+  return invoke<BlameLine[]>("get_blame", { repoPath, path });
+}
+
+export async function getFileHistory(
+  repoPath: string,
+  path: string,
+  limit?: number
+): Promise<Commit[]> {
+  return invoke<Commit[]>("get_file_history", {
+    repoPath,
+    path,
+    limit: limit || null,
   });
 }
 

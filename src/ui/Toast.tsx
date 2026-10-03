@@ -3,6 +3,7 @@ import { useToastStore } from "@/store/toastStore";
 
 export const ToastContainer: React.FC = () => {
   const toasts = useToastStore((s) => s.toasts);
+  const removeToast = useToastStore((s) => s.removeToast);
 
   if (toasts.length === 0) return null;
 
@@ -35,9 +36,32 @@ export const ToastContainer: React.FC = () => {
             boxShadow: "none",
             pointerEvents: "auto",
             animation: "fadeIn 0.15s ease-out",
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
           }}
         >
-          {t.message}
+          <span>{t.message}</span>
+          {t.action && (
+            <button
+              onClick={() => {
+                t.action?.onClick();
+                removeToast(t.id);
+              }}
+              style={{
+                backgroundColor: "var(--acc)",
+                color: "#fff",
+                border: "none",
+                borderRadius: "var(--radius-base)",
+                padding: "2px 8px",
+                fontSize: "11px",
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+            >
+              {t.action.label}
+            </button>
+          )}
         </div>
       ))}
     </div>

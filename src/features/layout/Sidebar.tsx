@@ -6,7 +6,9 @@ import { useStatusStore } from "@/store/statusStore";
 import { useRefsStore } from "@/store/refsStore";
 import { useHistoryStore } from "@/store/historyStore";
 import { useRemoteStore } from "@/store/remoteStore";
+import { useStashStore } from "@/store/stashStore";
 import { RemoteModal } from "@/features/remote/RemoteModal";
+import { StashModal } from "@/features/stash/StashModal";
 import { t } from "@/lib/i18n";
 import type { GitRef } from "@/api/types/git_ref";
 
@@ -50,16 +52,20 @@ export const Sidebar: React.FC = () => {
 
   const [tagToDelete, setTagToDelete] = useState<GitRef | null>(null);
   const [showRemoteModal, setShowRemoteModal] = useState(false);
+  const [showStashModal, setShowStashModal] = useState(false);
 
   const loadRemotes = useRemoteStore((s) => s.loadRemotes);
+  const stashes = useStashStore((s) => s.stashes);
+  const loadStashes = useStashStore((s) => s.loadStashes);
 
   useEffect(() => {
     if (currentRepo) {
       loadRefs(currentRepo.path);
       loadRepoState(currentRepo.path);
       loadRemotes(currentRepo.path);
+      loadStashes(currentRepo.path);
     }
-  }, [currentRepo, loadRefs, loadRepoState, loadRemotes]);
+  }, [currentRepo, loadRefs, loadRepoState, loadRemotes, loadStashes]);
 
   const refreshAll = async () => {
     if (!currentRepo) return;
@@ -69,6 +75,7 @@ export const Sidebar: React.FC = () => {
       loadRepoState(currentRepo.path),
       loadHistory(currentRepo.path),
       loadRemotes(currentRepo.path),
+      loadStashes(currentRepo.path),
     ]);
   };
 
@@ -503,6 +510,88 @@ export const Sidebar: React.FC = () => {
         )}
       </div>
 
+      {/* Stash Section */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          margin: "16px 8px 6px",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          <h6
+            style={{
+              margin: 0,
+              fontSize: "var(--font-size-xs)",
+              fontWeight: 600,
+              textTransform: "uppercase",
+              letterSpacing: "0.5px",
+              color: "var(--mut)",
+            }}
+          >
+            Stash
+          </h6>
+          {stashes.length > 0 && (
+            <b
+              style={{
+                fontSize: "10px",
+                backgroundColor: "var(--bg3)",
+                color: "var(--tx)",
+                borderRadius: "9px",
+                padding: "0 5px",
+                lineHeight: "14px",
+              }}
+            >
+              {stashes.length}
+            </b>
+          )}
+        </div>
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => setShowStashModal(true)}
+          style={{ padding: "1px 6px", fontSize: "11px" }}
+          title="Управление Stash"
+        >
+          {stashes.length > 0 ? "Открыть" : "+"}
+        </Button>
+      </div>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+        {stashes.length === 0 ? (
+          <div style={{ padding: "3px 8px", fontSize: "var(--font-size-xs)", color: "var(--mut)" }}>
+            (нет сохранённых)
+          </div>
+        ) : (
+          stashes.slice(0, 5).map((s) => (
+            <div
+              key={s.selector}
+              onClick={() => setShowStashModal(true)}
+              className="row"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "3px 8px",
+                fontSize: "var(--font-size-sm)",
+                color: "var(--mut)",
+                cursor: "pointer",
+                borderRadius: "var(--radius-base)",
+              }}
+              title={s.message}
+            >
+              <b className="mono" style={{ fontSize: "11px", color: "var(--acc)" }}>
+                {s.selector}
+              </b>
+              <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {s.message}
+              </span>
+            </div>
+          ))
+        )}
+      </div>
+
       {/* Create Branch Modal */}
       <Modal
         isOpen={showCreateBranch}
@@ -635,6 +724,12 @@ export const Sidebar: React.FC = () => {
       <RemoteModal
         isOpen={showRemoteModal}
         onClose={() => setShowRemoteModal(false)}
+      />
+
+      {/* Stash Management Modal */}
+      <StashModal
+        isOpen={showStashModal}
+        onClose={() => setShowStashModal(false)}
       />
     </aside>
   );
