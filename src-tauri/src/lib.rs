@@ -103,6 +103,9 @@ pub fn run() {
             commands::ops::reset_repo,
             commands::ops::get_blame,
             commands::ops::get_file_history,
+            // Rebase commands
+            commands::rebase::get_rebase_todo_list,
+            commands::rebase::start_interactive_rebase,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -159,5 +162,9 @@ mod tests {
         // Stash & Blame types
         git::parse::StashItem::export().expect("Failed to export StashItem");
         git::parse::BlameLine::export().expect("Failed to export BlameLine");
+
+        // Rebase types
+        git::rebase::RebaseActionKind::export().expect("Failed to export RebaseActionKind");
+        git::rebase::RebaseTodoItem::export().expect("Failed to export RebaseTodoItem");
     }
 }

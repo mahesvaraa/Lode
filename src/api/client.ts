@@ -17,6 +17,7 @@ import type { PullMode } from "./types/pull_mode";
 import type { ParsedConflictFile } from "./types/parsed_conflict_file";
 import type { StashItem } from "./types/stash_item";
 import type { BlameLine } from "./types/blame_line";
+import type { RebaseTodoItem } from "./types/rebase_todo_item";
 
 export async function checkGit(): Promise<GitInfo> {
   return invoke<GitInfo>("check_git");
@@ -366,6 +367,26 @@ export async function getFileHistory(
     repoPath,
     path,
     limit: limit || null,
+  });
+}
+
+// Stage 8: Interactive Rebase
+export async function getRebaseTodoList(
+  repoPath: string,
+  baseRef: string
+): Promise<RebaseTodoItem[]> {
+  return invoke<RebaseTodoItem[]>("get_rebase_todo_list", { repoPath, baseRef });
+}
+
+export async function startInteractiveRebase(
+  repoPath: string,
+  baseRef: string,
+  items: RebaseTodoItem[]
+): Promise<RepoState> {
+  return invoke<RepoState>("start_interactive_rebase", {
+    repoPath,
+    baseRef,
+    items,
   });
 }
 

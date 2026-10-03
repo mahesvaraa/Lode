@@ -8,6 +8,7 @@ import { useUiStore } from "@/store/uiStore";
 import { useToastStore } from "@/store/toastStore";
 import { cherryPick, revertCommit, resetRepo } from "@/api/client";
 import { BlameModal } from "./BlameModal";
+import { InteractiveRebaseModal } from "@/features/rebase/InteractiveRebaseModal";
 import type { CommitFile } from "@/api/types/commit_file";
 
 export const CommitDetailsPanel: React.FC = () => {
@@ -37,6 +38,7 @@ export const CommitDetailsPanel: React.FC = () => {
   const [cherryPickParent, setCherryPickParent] = useState(1);
   const [showResetModal, setShowResetModal] = useState(false);
   const [resetMode, setResetMode] = useState<"soft" | "mixed" | "hard">("mixed");
+  const [showInteractiveRebase, setShowInteractiveRebase] = useState(false);
   const [isOperating, setIsOperating] = useState(false);
 
   const refreshAll = async () => {
@@ -289,6 +291,15 @@ export const CommitDetailsPanel: React.FC = () => {
               title="Сбросить текущую ветку на этот коммит (reset)"
             >
               Reset ветку сюда...
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              disabled={isOperating}
+              onClick={() => setShowInteractiveRebase(true)}
+              title="Интерактивный rebase от этого коммита (rebase -i)"
+            >
+              Rebase -i...
             </Button>
           </div>
         </div>
@@ -598,6 +609,14 @@ export const CommitDetailsPanel: React.FC = () => {
           </div>
         </div>
       </Modal>
+      {/* Interactive Rebase Modal */}
+      {showInteractiveRebase && details && (
+        <InteractiveRebaseModal
+          isOpen={true}
+          onClose={() => setShowInteractiveRebase(false)}
+          baseRef={details.commit.hash}
+        />
+      )}
     </div>
   );
 };

@@ -303,12 +303,37 @@ impl GitRunner {
         self.run_inner(Some(repo_path), args, false, REMOTE_TIMEOUT).await
     }
 
+    /// Execute a git write command with custom environment variables
+    pub async fn run_write_env(
+        &self,
+        repo_path: &Path,
+        args: &[&str],
+        extra_envs: &[(&str, &str)],
+    ) -> Result<GitOutput, AppError> {
+        let lock = self.queue.get_lock(repo_path).await;
+        let _guard = lock.lock().await;
+
+        const WRITE_TIMEOUT: Duration = Duration::from_secs(120);
+        self.run_inner_env(Some(repo_path), args, false, WRITE_TIMEOUT, extra_envs).await
+    }
+
     async fn run_inner(
         &self,
         repo_path: Option<&Path>,
         args: &[&str],
         is_read: bool,
         timeout_dur: Duration,
+    ) -> Result<GitOutput, AppError> {
+        self.run_inner_env(repo_path, args, is_read, timeout_dur, &[]).await
+    }
+
+    async fn run_inner_env(
+        &self,
+        repo_path: Option<&Path>,
+        args: &[&str],
+        is_read: bool,
+        timeout_dur: Duration,
+        extra_envs: &[(&str, &str)],
     ) -> Result<GitOutput, AppError> {
         let git_bin = self.resolve_git_executable().await?;
         let mut cmd = Command::new(git_bin);
@@ -322,10 +347,18 @@ impl GitRunner {
             cmd.env("GIT_OPTIONAL_LOCKS", "0");
         }
 
+        // Apply custom extra environment variables (can override GIT_EDITOR / GIT_SEQUENCE_EDITOR)
+        for (k, v) in extra_envs {
+            cmd.env(k, v);
+        }
+
         // Standard configuration flags to guarantee stable machine parsing
         cmd.arg("-c").arg("core.quotepath=false");
         cmd.arg("-c").arg("color.ui=false");
-        cmd.arg("-c").arg("core.editor=true");
+        let has_custom_editor = extra_envs.iter().any(|(k, _)| *k == "GIT_EDITOR");
+        if !has_custom_editor {
+            cmd.arg("-c").arg("core.editor=true");
+        }
 
         if let Some(path) = repo_path {
             cmd.current_dir(path);

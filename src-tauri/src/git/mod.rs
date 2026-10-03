@@ -2,6 +2,7 @@ pub mod conflict;
 pub mod parse;
 pub mod patch;
 pub mod queue;
+pub mod rebase;
 pub mod runner;
 pub mod state;
 
