@@ -9,11 +9,20 @@ interface UiState {
   sidebarWidth: number;
   detailsWidth: number;
   activeView: ActiveView;
+  isCommandPaletteOpen: boolean;
+  isSettingsOpen: boolean;
+  isStashModalOpen: boolean;
+  isRemoteModalOpen: boolean;
+
   setTheme: (theme: ThemeMode) => void;
   toggleTheme: () => void;
   setSidebarWidth: (width: number) => void;
   setDetailsWidth: (width: number) => void;
   setActiveView: (view: ActiveView) => void;
+  setCommandPaletteOpen: (open: boolean) => void;
+  setSettingsOpen: (open: boolean) => void;
+  setStashModalOpen: (open: boolean) => void;
+  setRemoteModalOpen: (open: boolean) => void;
   applyThemeToDom: (theme: ThemeMode) => void;
 }
 
@@ -22,6 +31,10 @@ export const useUiStore = create<UiState>((set, get) => ({
   sidebarWidth: 210,
   detailsWidth: 400,
   activeView: "hist",
+  isCommandPaletteOpen: false,
+  isSettingsOpen: false,
+  isStashModalOpen: false,
+  isRemoteModalOpen: false,
 
   setTheme: (theme) => {
     set({ theme });
@@ -43,6 +56,10 @@ export const useUiStore = create<UiState>((set, get) => ({
   setSidebarWidth: (sidebarWidth) => set({ sidebarWidth }),
   setDetailsWidth: (detailsWidth) => set({ detailsWidth }),
   setActiveView: (activeView) => set({ activeView }),
+  setCommandPaletteOpen: (isCommandPaletteOpen) => set({ isCommandPaletteOpen }),
+  setSettingsOpen: (isSettingsOpen) => set({ isSettingsOpen }),
+  setStashModalOpen: (isStashModalOpen) => set({ isStashModalOpen }),
+  setRemoteModalOpen: (isRemoteModalOpen) => set({ isRemoteModalOpen }),
 
   applyThemeToDom: (theme) => {
     if (typeof document === "undefined") return;

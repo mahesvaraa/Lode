@@ -390,6 +390,17 @@ export async function startInteractiveRebase(
   });
 }
 
+// Stage 9: Settings
+export async function getAppSettings(): Promise<AppSettings> {
+  return invoke<AppSettings>("get_app_settings");
+}
+
+export async function saveAppSettings(
+  settings: AppSettings
+): Promise<AppSettings> {
+  return invoke<AppSettings>("save_app_settings", { settings });
+}
+
 export async function stageFile(repoPath: string, path: string): Promise<void> {
   return invoke<void>("stage_file", { repoPath, path });
 }

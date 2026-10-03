@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import { useRepoStore } from "@/store/repoStore";
+import { useSettingsStore } from "@/store/settingsStore";
 import { GitMissingScreen } from "@/features/gitCheck/GitMissingScreen";
 import { OpenRepoScreen } from "@/features/repo/OpenRepoScreen";
 import { MainLayout } from "@/features/layout/MainLayout";
@@ -10,10 +11,12 @@ export const App: React.FC = () => {
   const gitInfo = useRepoStore((s) => s.gitInfo);
   const currentRepo = useRepoStore((s) => s.currentRepo);
   const initApp = useRepoStore((s) => s.initApp);
+  const loadSettings = useSettingsStore((s) => s.loadSettings);
 
   useEffect(() => {
     initApp();
-  }, [initApp]);
+    loadSettings();
+  }, [initApp, loadSettings]);
 
   if (isCheckingGit) {
     return (

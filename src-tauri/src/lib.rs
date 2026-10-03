@@ -106,6 +106,9 @@ pub fn run() {
             // Rebase commands
             commands::rebase::get_rebase_todo_list,
             commands::rebase::start_interactive_rebase,
+            // Settings commands
+            settings::get_app_settings,
+            settings::save_app_settings,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

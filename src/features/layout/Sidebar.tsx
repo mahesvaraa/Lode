@@ -54,6 +54,11 @@ export const Sidebar: React.FC = () => {
   const [showRemoteModal, setShowRemoteModal] = useState(false);
   const [showStashModal, setShowStashModal] = useState(false);
 
+  const isRemoteModalOpen = useUiStore((s) => s.isRemoteModalOpen);
+  const setRemoteModalOpen = useUiStore((s) => s.setRemoteModalOpen);
+  const isStashModalOpen = useUiStore((s) => s.isStashModalOpen);
+  const setStashModalOpen = useUiStore((s) => s.setStashModalOpen);
+
   const loadRemotes = useRemoteStore((s) => s.loadRemotes);
   const stashes = useStashStore((s) => s.stashes);
   const loadStashes = useStashStore((s) => s.loadStashes);
@@ -722,14 +727,20 @@ export const Sidebar: React.FC = () => {
 
       {/* Remote Management Modal */}
       <RemoteModal
-        isOpen={showRemoteModal}
-        onClose={() => setShowRemoteModal(false)}
+        isOpen={showRemoteModal || isRemoteModalOpen}
+        onClose={() => {
+          setShowRemoteModal(false);
+          setRemoteModalOpen(false);
+        }}
       />
 
       {/* Stash Management Modal */}
       <StashModal
-        isOpen={showStashModal}
-        onClose={() => setShowStashModal(false)}
+        isOpen={showStashModal || isStashModalOpen}
+        onClose={() => {
+          setShowStashModal(false);
+          setStashModalOpen(false);
+        }}
       />
     </aside>
   );

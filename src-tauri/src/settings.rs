@@ -12,6 +12,13 @@ pub struct AppSettings {
     pub git_path: Option<String>,
     pub recent_repos: Vec<String>,
     pub theme: String,
+    pub font_size: u32,
+    pub font_family: String,
+    pub code_font_family: String,
+    pub pull_mode: String,
+    pub external_editor: Option<String>,
+    pub enable_fsmonitor: bool,
+    pub enable_untracked_cache: bool,
 }
 
 impl Default for AppSettings {
@@ -20,6 +27,13 @@ impl Default for AppSettings {
             git_path: None,
             recent_repos: Vec::new(),
             theme: "system".to_string(),
+            font_size: 13,
+            font_family: "Geist, system-ui, sans-serif".to_string(),
+            code_font_family: "Geist Mono, ui-monospace, monospace".to_string(),
+            pull_mode: "ff-only".to_string(),
+            external_editor: None,
+            enable_fsmonitor: false,
+            enable_untracked_cache: false,
         }
     }
 }
@@ -50,6 +64,10 @@ impl SettingsManager {
 
         let config_path = config_dir.join("settings.json");
         Ok(Self { config_path })
+    }
+
+    pub fn from_path(config_path: PathBuf) -> Self {
+        Self { config_path }
     }
 
     pub fn load(&self) -> AppSettings {
@@ -85,7 +103,7 @@ impl SettingsManager {
 
     pub fn add_recent_repo(&self, repo_path: &str) -> Result<AppSettings, AppError> {
         let mut settings = self.load();
-        
+
         let path = Path::new(repo_path);
         let canonical_str = path
             .canonicalize()
@@ -126,4 +144,20 @@ impl SettingsManager {
         self.save(&settings)?;
         Ok(settings)
     }
+}
+
+#[tauri::command]
+pub async fn get_app_settings(app: AppHandle) -> Result<AppSettings, AppError> {
+    let manager = SettingsManager::new(&app)?;
+    Ok(manager.load())
+}
+
+#[tauri::command]
+pub async fn save_app_settings(
+    settings: AppSettings,
+    app: AppHandle,
+) -> Result<AppSettings, AppError> {
+    let manager = SettingsManager::new(&app)?;
+    manager.save(&settings)?;
+    Ok(settings)
 }

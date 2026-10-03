@@ -8,6 +8,8 @@ import { useStatusStore } from "@/store/statusStore";
 import { useRemoteStore } from "@/store/remoteStore";
 import { useRefsStore } from "@/store/refsStore";
 import { useHistoryStore } from "@/store/historyStore";
+import { CommandPalette } from "@/features/palette/CommandPalette";
+import { SettingsModal } from "@/features/settings/SettingsModal";
 
 export const Header: React.FC = () => {
   const currentRepo = useRepoStore((s) => s.currentRepo);
@@ -15,6 +17,12 @@ export const Header: React.FC = () => {
 
   const toggleTheme = useUiStore((s) => s.toggleTheme);
   const theme = useUiStore((s) => s.theme);
+  const isCommandPaletteOpen = useUiStore((s) => s.isCommandPaletteOpen);
+  const setCommandPaletteOpen = useUiStore((s) => s.setCommandPaletteOpen);
+  const isSettingsOpen = useUiStore((s) => s.isSettingsOpen);
+  const setSettingsOpen = useUiStore((s) => s.setSettingsOpen);
+  const setStashModalOpen = useUiStore((s) => s.setStashModalOpen);
+  const setRemoteModalOpen = useUiStore((s) => s.setRemoteModalOpen);
   const showToast = useToastStore((s) => s.showToast);
 
   const status = useStatusStore((s) => s.status);
@@ -214,10 +222,18 @@ export const Header: React.FC = () => {
           size="sm"
           variant="default"
           title="Палитра команд (Ctrl+K)"
-          onClick={() => showToast("Палитра команд будет доступна в этапе 9")}
+          onClick={() => setCommandPaletteOpen(true)}
         >
-          Ctrl K
+          ⌘K
         </Button>
+
+        <IconButton
+          size="sm"
+          aria-label="Настройки"
+          title="Настройки (Ctrl+,)"
+          icon={<span>⚙</span>}
+          onClick={() => setSettingsOpen(true)}
+        />
 
         <IconButton
           size="sm"
@@ -277,6 +293,23 @@ export const Header: React.FC = () => {
           )}
         </div>
       </Modal>
+
+      {/* Command Palette (Ctrl+K) */}
+      <CommandPalette
+        isOpen={isCommandPaletteOpen}
+        onClose={() => setCommandPaletteOpen(false)}
+        onOpenSettings={() => setSettingsOpen(true)}
+        onOpenStash={() => setStashModalOpen(true)}
+        onOpenRemotes={() => setRemoteModalOpen(true)}
+        onOpenNewBranch={() => {}}
+        onOpenNewTag={() => {}}
+      />
+
+      {/* Settings Modal (Ctrl+,) */}
+      <SettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setSettingsOpen(false)}
+      />
     </>
   );
 };

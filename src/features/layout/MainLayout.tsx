@@ -9,16 +9,37 @@ import { ConflictsView } from "@/features/conflicts/ConflictsView";
 import { useUiStore } from "@/store/uiStore";
 import { useRepoStore } from "@/store/repoStore";
 import { useStatusStore } from "@/store/statusStore";
-import { listenToRepoChanged } from "@/api/client";
+import { useRefsStore } from "@/store/refsStore";
+import { useHistoryStore } from "@/store/historyStore";
+import { useToastStore } from "@/store/toastStore";
+import { listenToRepoChanged, stageAll } from "@/api/client";
 
 export const MainLayout: React.FC = () => {
   const activeView = useUiStore((s) => s.activeView);
   const setActiveView = useUiStore((s) => s.setActiveView);
   const sidebarWidth = useUiStore((s) => s.sidebarWidth);
   const setSidebarWidth = useUiStore((s) => s.setSidebarWidth);
+  const setCommandPaletteOpen = useUiStore((s) => s.setCommandPaletteOpen);
+  const setSettingsOpen = useUiStore((s) => s.setSettingsOpen);
 
   const currentRepo = useRepoStore((s) => s.currentRepo);
+  const chooseAndOpenRepo = useRepoStore((s) => s.chooseAndOpenRepo);
   const loadStatus = useStatusStore((s) => s.loadStatus);
+  const loadRefs = useRefsStore((s) => s.loadRefs);
+  const loadRepoState = useRefsStore((s) => s.loadRepoState);
+  const loadHistory = useHistoryStore((s) => s.loadInitial);
+  const showToast = useToastStore((s) => s.showToast);
+
+  const refreshAll = async () => {
+    if (!currentRepo) return;
+    await Promise.all([
+      loadStatus(currentRepo.path),
+      loadRepoState(currentRepo.path),
+      loadRefs(currentRepo.path),
+      loadHistory(currentRepo.path),
+    ]);
+    showToast("Репозиторий обновлён");
+  };
 
   // Load status and listen to repo:changed events from backend file watcher
   useEffect(() => {
@@ -38,12 +59,40 @@ export const MainLayout: React.FC = () => {
     };
   }, [currentRepo, loadStatus]);
 
-  // Keyboard navigation: Ctrl/Cmd+1/2/3
+  // Global Keyboard Shortcuts (Section 13 of CLAUDE.md)
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
+    const handleKeyDown = async (e: KeyboardEvent) => {
       const isCmdOrCtrl = e.metaKey || e.ctrlKey;
+
+      if (e.key === "F5") {
+        e.preventDefault();
+        await refreshAll();
+        return;
+      }
+
       if (isCmdOrCtrl) {
-        if (e.key === "1") {
+        const keyLower = e.key.toLowerCase();
+
+        if (keyLower === "k") {
+          e.preventDefault();
+          setCommandPaletteOpen(true);
+        } else if (keyLower === "o") {
+          e.preventDefault();
+          const opened = await chooseAndOpenRepo();
+          if (opened) {
+            showToast("Репозиторий открыт");
+          }
+        } else if (keyLower === ",") {
+          e.preventDefault();
+          setSettingsOpen(true);
+        } else if (e.shiftKey && (keyLower === "a" || keyLower === "ф")) {
+          e.preventDefault();
+          if (currentRepo) {
+            await stageAll(currentRepo.path);
+            await loadStatus(currentRepo.path);
+            showToast("Все файлы добавлены в индекс");
+          }
+        } else if (e.key === "1") {
           e.preventDefault();
           setActiveView("hist");
         } else if (e.key === "2") {
@@ -58,7 +107,15 @@ export const MainLayout: React.FC = () => {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [setActiveView]);
+  }, [
+    currentRepo,
+    chooseAndOpenRepo,
+    loadStatus,
+    setActiveView,
+    setCommandPaletteOpen,
+    setSettingsOpen,
+    showToast,
+  ]);
 
   const handleSidebarResize = (delta: number) => {
     const newWidth = Math.min(Math.max(160, sidebarWidth + delta), 400);
