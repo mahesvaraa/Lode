@@ -212,6 +212,11 @@ export const ConflictsView: React.FC = () => {
             return (
               <div
                 key={file.path}
+                data-ctx="working-file"
+                data-id={file.path}
+                data-conflicted="true"
+                data-staged="false"
+                data-untracked="false"
                 onClick={() => currentRepo && selectConflictFile(currentRepo.path, file.path)}
                 style={{
                   display: "flex",

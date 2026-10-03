@@ -9,7 +9,7 @@ pub mod status;
 pub use blame::{parse_git_blame_porcelain, BlameLine};
 pub use diff::{parse_unified_diff, DiffHunk, DiffLine, DiffLineKind, FileDiff};
 pub use log::{
-    parse_commit_files, parse_git_log, parse_ref_chips, Commit, CommitDetails, CommitFile, RefChip,
+    parse_commit_files, parse_git_log, parse_numstat, parse_ref_chips, Commit, CommitDetails, CommitFile, RefChip,
     RefKind,
 };
 pub use refs::{parse_git_refs, GitRef, GitRefKind, RepoRefs};

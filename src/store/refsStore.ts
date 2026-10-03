@@ -13,6 +13,7 @@ import {
 } from "@/api/client";
 import type { RepoRefs } from "@/api/types/repo_refs";
 import type { RepoState } from "@/api/types/repo_state";
+import { useRepoStore } from "./repoStore";
 
 interface RefsState {
   refs: RepoRefs | null;
@@ -86,6 +87,9 @@ export const useRefsStore = create<RefsState>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       await createBranch(repoPath, name, startPoint, switchTo);
+      if (switchTo) {
+        useRepoStore.getState().updateCurrentBranch(name);
+      }
       await Promise.all([get().loadRefs(repoPath), get().loadRepoState(repoPath)]);
       set({ isLoading: false });
     } catch (err: unknown) {
@@ -99,6 +103,7 @@ export const useRefsStore = create<RefsState>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       await switchBranch(repoPath, name);
+      useRepoStore.getState().updateCurrentBranch(name);
       await Promise.all([get().loadRefs(repoPath), get().loadRepoState(repoPath)]);
       set({ isLoading: false });
     } catch (err: unknown) {

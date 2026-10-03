@@ -1,10 +1,30 @@
-import { defineConfig } from "vite";
+import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "node:path";
 
+function ignoreGitAndTauriUpdates(): Plugin {
+  return {
+    name: "ignore-git-and-tauri-updates",
+    handleHotUpdate({ file }) {
+      const normalized = file.replace(/\\/g, "/");
+      if (
+        normalized.includes("/.git/") ||
+        normalized.endsWith("/.git") ||
+        normalized.includes("/src-tauri/") ||
+        normalized.includes("/target/") ||
+        normalized.includes("/dist/") ||
+        normalized.includes("/node_modules/") ||
+        normalized.endsWith(".lock")
+      ) {
+        return [];
+      }
+    },
+  };
+}
+
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), ignoreGitAndTauriUpdates()],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
@@ -17,15 +37,19 @@ export default defineConfig({
     strictPort: true,
     watch: {
       // Ignore git internals and build artifacts so git operations don't trigger page reloads
-      ignored: [
-        "**/.git/**",
-        "**/src-tauri/**",
-        "**/target/**",
-        "**/dist/**",
-        "**/node_modules/**",
-        "**/*.test.ts",
-        "**/*.test.tsx",
-      ],
+      ignored: (filePath: string) => {
+        const normalized = filePath.replace(/\\/g, "/");
+        return (
+          normalized.includes("/.git/") ||
+          normalized.endsWith("/.git") ||
+          normalized.includes("/src-tauri/") ||
+          normalized.includes("/target/") ||
+          normalized.includes("/dist/") ||
+          normalized.includes("/node_modules/") ||
+          normalized.endsWith(".lock") ||
+          normalized.includes(".test.")
+        );
+      },
     },
   },
 });

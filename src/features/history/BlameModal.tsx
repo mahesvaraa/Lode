@@ -136,6 +136,10 @@ export const BlameModal: React.FC<BlameModalProps> = ({
                   {blameLines.map((line) => (
                     <tr
                       key={line.line_number}
+                      data-ctx="blame-line"
+                      data-id={line.commit_hash}
+                      data-line-no={line.line_number}
+                      data-path={filePath}
                       style={{
                         borderBottom: "1px solid rgba(255, 255, 255, 0.03)",
                       }}

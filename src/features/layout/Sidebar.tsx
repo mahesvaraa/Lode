@@ -100,6 +100,7 @@ export const Sidebar: React.FC = () => {
     if (!currentRepo) return;
     try {
       await switchBranch(currentRepo.path, name);
+      useRepoStore.getState().updateCurrentBranch(name);
       await refreshAll();
     } catch {
       // error in store
@@ -259,6 +260,8 @@ export const Sidebar: React.FC = () => {
 
       {/* Local Branches Section */}
       <div
+        data-ctx="sidebar-section"
+        data-id="branches"
         style={{
           display: "flex",
           alignItems: "center",
@@ -300,6 +303,8 @@ export const Sidebar: React.FC = () => {
           return (
             <div
               key={branch.name}
+              data-ctx="branch"
+              data-id={branch.name}
               onClick={() => !isCurrent && handleSwitchBranch(branch.name)}
               className="row"
               style={{
@@ -336,47 +341,6 @@ export const Sidebar: React.FC = () => {
                   {tracking}
                 </span>
               )}
-
-              {/* Action buttons on hover */}
-              <div
-                style={{ display: "flex", gap: "2px" }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                {!isCurrent && (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    title={`Влить ${branch.name} в ${currentBranchName}`}
-                    onClick={() => setBranchToMerge(branch)}
-                    style={{ padding: "0 4px", fontSize: "11px" }}
-                  >
-                    🔀
-                  </Button>
-                )}
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  title="Переименовать ветку"
-                  onClick={() => {
-                    setBranchToRename(branch);
-                    setRenamedBranchName(branch.name);
-                  }}
-                  style={{ padding: "0 4px", fontSize: "11px" }}
-                >
-                  ✏
-                </Button>
-                {!isCurrent && (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    title="Удалить ветку"
-                    onClick={() => setBranchToDelete(branch)}
-                    style={{ padding: "0 4px", fontSize: "11px" }}
-                  >
-                    ✕
-                  </Button>
-                )}
-              </div>
             </div>
           );
         })}
@@ -384,6 +348,8 @@ export const Sidebar: React.FC = () => {
 
       {/* Remote Branches Section */}
       <div
+        data-ctx="sidebar-section"
+        data-id="remotes"
         style={{
           display: "flex",
           alignItems: "center",
@@ -423,6 +389,8 @@ export const Sidebar: React.FC = () => {
           refs?.remote_branches.map((remote) => (
             <div
               key={remote.name}
+              data-ctx="remote-branch"
+              data-id={remote.name}
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -447,6 +415,8 @@ export const Sidebar: React.FC = () => {
 
       {/* Tags Section */}
       <div
+        data-ctx="sidebar-section"
+        data-id="tags"
         style={{
           display: "flex",
           alignItems: "center",
@@ -486,6 +456,8 @@ export const Sidebar: React.FC = () => {
           refs?.tags.map((tag) => (
             <div
               key={tag.name}
+              data-ctx="tag"
+              data-id={tag.name}
               className="row"
               style={{
                 display: "flex",
@@ -517,6 +489,8 @@ export const Sidebar: React.FC = () => {
 
       {/* Stash Section */}
       <div
+        data-ctx="sidebar-section"
+        data-id="stashes"
         style={{
           display: "flex",
           alignItems: "center",
@@ -685,8 +659,9 @@ export const Sidebar: React.FC = () => {
         title="Создать тег"
         confirmLabel="Создать тег"
         onConfirm={handleCreateTag}
+        width="min(460px, 94vw)"
       >
-        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "10px", width: "100%", minWidth: 0 }}>
           <div>
             <label style={{ fontSize: "12px", color: "var(--mut)", display: "block", marginBottom: "4px" }}>
               Имя тега

@@ -90,8 +90,9 @@ export const RemoteModal: React.FC<RemoteModalProps> = ({ isOpen, onClose }) => 
         title="Управление удалёнными репозиториями (Remotes)"
         confirmLabel="Закрыть"
         onConfirm={onClose}
+        width="min(580px, 94vw)"
       >
-        <div style={{ display: "flex", flexDirection: "column", gap: "12px", minWidth: "460px" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "12px", width: "100%", minWidth: 0 }}>
           {error && (
             <div
               style={{
@@ -152,9 +153,9 @@ export const RemoteModal: React.FC<RemoteModalProps> = ({ isOpen, onClose }) => 
                     border: "1px solid var(--line)",
                   }}
                 >
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    <b style={{ fontSize: "var(--font-size-base)", color: "var(--tx)" }}>{remote.name}</b>
-                    <div style={{ display: "flex", gap: "4px" }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px", minWidth: 0 }}>
+                    <b style={{ fontSize: "var(--font-size-base)", color: "var(--tx)", flexShrink: 0 }}>{remote.name}</b>
+                    <div style={{ display: "flex", gap: "4px", flexShrink: 0 }}>
                       <Button
                         size="sm"
                         variant="ghost"

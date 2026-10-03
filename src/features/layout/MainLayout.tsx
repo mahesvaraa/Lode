@@ -2,7 +2,8 @@ import React, { useEffect } from "react";
 import { Header } from "./Header";
 import { Sidebar } from "./Sidebar";
 import { StateBanner } from "./StateBanner";
-import { Splitter } from "@/ui";
+import { StatusBar } from "./StatusBar";
+import { GlobalContextMenu } from "@/features/contextMenu/GlobalContextMenu";
 import { ChangesView } from "@/features/changes/ChangesView";
 import { HistoryView } from "@/features/history/HistoryView";
 import { ConflictsView } from "@/features/conflicts/ConflictsView";
@@ -12,6 +13,7 @@ import { useStatusStore } from "@/store/statusStore";
 import { useRefsStore } from "@/store/refsStore";
 import { useHistoryStore } from "@/store/historyStore";
 import { useToastStore } from "@/store/toastStore";
+import { Splitter } from "@/ui";
 import { listenToRepoChanged, stageAll } from "@/api/client";
 
 export const MainLayout: React.FC = () => {
@@ -164,6 +166,9 @@ export const MainLayout: React.FC = () => {
           {activeView === "conf" && <ConflictsView />}
         </main>
       </div>
+
+      <StatusBar />
+      <GlobalContextMenu />
     </div>
   );
 };

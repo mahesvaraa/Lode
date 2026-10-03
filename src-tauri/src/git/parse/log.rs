@@ -40,6 +40,8 @@ pub struct CommitFile {
     pub path: String,
     pub status: String,
     pub old_path: Option<String>,
+    pub additions: Option<u32>,
+    pub deletions: Option<u32>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
@@ -47,6 +49,8 @@ pub struct CommitFile {
 pub struct CommitDetails {
     pub commit: Commit,
     pub files: Vec<CommitFile>,
+    pub total_additions: u32,
+    pub total_deletions: u32,
 }
 
 /// Pure parser for git log output formatted with %x1f and -z
@@ -184,6 +188,8 @@ pub fn parse_commit_files(raw_bytes: &[u8]) -> Vec<CommitFile> {
                     path: new_path,
                     status: status_str,
                     old_path,
+                    additions: None,
+                    deletions: None,
                 });
                 continue;
             }
@@ -192,11 +198,35 @@ pub fn parse_commit_files(raw_bytes: &[u8]) -> Vec<CommitFile> {
                 path,
                 status: status_str,
                 old_path,
+                additions: None,
+                deletions: None,
             });
         }
     }
 
     files
+}
+
+/// Pure parser for raw git show --numstat -z output
+pub fn parse_numstat(raw_bytes: &[u8]) -> std::collections::HashMap<String, (Option<u32>, Option<u32>)> {
+    let mut map = std::collections::HashMap::new();
+    let records = raw_bytes.split(|&b| b == 0);
+
+    for record in records {
+        if record.is_empty() {
+            continue;
+        }
+        let record_str = String::from_utf8_lossy(record);
+        let parts: Vec<&str> = record_str.split('\t').collect();
+        if parts.len() >= 3 {
+            let additions = parts[0].trim().parse::<u32>().ok();
+            let deletions = parts[1].trim().parse::<u32>().ok();
+            let path = parts[2].trim().to_string();
+            map.insert(path, (additions, deletions));
+        }
+    }
+
+    map
 }
 
 #[cfg(test)]
@@ -250,5 +280,16 @@ mod tests {
         assert_eq!(files[2].path, "new.txt");
         assert_eq!(files[2].status, "R100");
         assert_eq!(files[2].old_path, Some("old.txt".to_string()));
+    }
+
+    #[test]
+    fn test_parse_numstat() {
+        let input = b"12\t4\tsrc/main.rs\0-\t-\timage.png\00\t5\tREADME.md\0";
+        let stats = parse_numstat(input);
+
+        assert_eq!(stats.len(), 3);
+        assert_eq!(stats.get("src/main.rs"), Some(&(Some(12), Some(4))));
+        assert_eq!(stats.get("image.png"), Some(&(None, None))); // binary file
+        assert_eq!(stats.get("README.md"), Some(&(Some(0), Some(5))));
     }
 }

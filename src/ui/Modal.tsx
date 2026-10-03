@@ -8,6 +8,7 @@ export interface ModalProps {
   confirmLabel?: string;
   cancelLabel?: string;
   isDanger?: boolean;
+  confirmVariant?: "primary" | "danger" | "default";
   onConfirm?: () => void;
   onClose: () => void;
   children?: React.ReactNode;
@@ -21,6 +22,7 @@ export const Modal: React.FC<ModalProps> = ({
   confirmLabel,
   cancelLabel = "Отмена",
   isDanger = false,
+  confirmVariant,
   onConfirm,
   onClose,
   children,
@@ -72,11 +74,15 @@ export const Modal: React.FC<ModalProps> = ({
           border: "1px solid var(--line)",
           borderRadius: "var(--radius-lg)",
           width,
+          maxWidth: "94vw",
+          maxHeight: "85vh",
+          boxSizing: "border-box",
           padding: "18px",
           display: "flex",
           flexDirection: "column",
           gap: "12px",
-          boxShadow: "none",
+          boxShadow: "0 12px 32px rgba(0, 0, 0, 0.45)",
+          overflow: "hidden",
         }}
       >
         <h3
@@ -86,6 +92,7 @@ export const Modal: React.FC<ModalProps> = ({
             fontSize: "var(--font-size-md)",
             fontWeight: 600,
             color: "var(--tx)",
+            flexShrink: 0,
           }}
         >
           {title}
@@ -98,13 +105,26 @@ export const Modal: React.FC<ModalProps> = ({
               color: "var(--mut)",
               fontSize: "var(--font-size-base)",
               lineHeight: "1.45",
+              flexShrink: 0,
             }}
           >
             {description}
           </p>
         )}
 
-        {children}
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "12px",
+            minWidth: 0,
+            overflowY: "auto",
+            overflowX: "hidden",
+            flex: 1,
+          }}
+        >
+          {children}
+        </div>
 
         <div
           style={{
@@ -112,6 +132,7 @@ export const Modal: React.FC<ModalProps> = ({
             gap: "8px",
             justifyContent: "flex-end",
             marginTop: "6px",
+            flexShrink: 0,
           }}
         >
           <Button variant="default" onClick={onClose}>
@@ -119,10 +140,9 @@ export const Modal: React.FC<ModalProps> = ({
           </Button>
           {confirmLabel && (
             <Button
-              variant={isDanger ? "danger" : "primary"}
+              variant={confirmVariant || (isDanger ? "danger" : "primary")}
               onClick={() => {
                 onConfirm?.();
-                onClose();
               }}
             >
               {confirmLabel}

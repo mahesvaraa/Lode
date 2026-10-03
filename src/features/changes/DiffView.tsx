@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { Button, EmptyState, Modal, Skeleton } from "@/ui";
 import { useStatusStore } from "@/store/statusStore";
 import { useRepoStore } from "@/store/repoStore";
@@ -196,7 +196,7 @@ export const DiffView: React.FC = () => {
       )}
 
       {/* Main Diff Content */}
-      <div style={{ flex: 1, overflow: "auto", position: "relative" }}>
+      <div style={{ flex: 1, minHeight: 0, overflow: diffMode === "side-by-side" ? "hidden" : "auto", position: "relative", display: "flex", flexDirection: "column" }}>
         {diff.is_binary ? (
           <div
             style={{
@@ -300,6 +300,10 @@ const InlineDiffView: React.FC<HunkProps> = ({ hunks, filePath, isStaged }) => {
           <React.Fragment key={hIdx}>
             {/* Hunk Header & Action Toolbar */}
             <div
+              data-ctx="hunk"
+              data-id={filePath}
+              data-hunk-index={hIdx}
+              data-staged={isStaged ? "true" : "false"}
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -536,99 +540,130 @@ const SideBySideDiffView: React.FC<HunkProps> = ({ hunks, filePath, isStaged }) 
   const stageHunk = useStatusStore((s) => s.stageHunk);
   const unstageHunk = useStatusStore((s) => s.unstageHunk);
 
+  const leftRef = useRef<HTMLDivElement>(null);
+  const rightRef = useRef<HTMLDivElement>(null);
+  const isSyncingRef = useRef(false);
+
+  const handleScroll = (source: "left" | "right") => {
+    if (isSyncingRef.current) return;
+    isSyncingRef.current = true;
+
+    const sourceEl = source === "left" ? leftRef.current : rightRef.current;
+    const targetEl = source === "left" ? rightRef.current : leftRef.current;
+
+    if (sourceEl && targetEl) {
+      targetEl.scrollTop = sourceEl.scrollTop;
+      targetEl.scrollLeft = sourceEl.scrollLeft;
+    }
+
+    requestAnimationFrame(() => {
+      isSyncingRef.current = false;
+    });
+  };
+
   if (hunks.length === 0) {
     return <div style={{ padding: "24px", color: "var(--mut)", textAlign: "center" }}>Файл пуст или без изменений</div>;
   }
 
-  return (
-    <div className="diff-side-by-side mono" style={{ width: "100%", minWidth: "max-content", fontSize: "12px", lineHeight: "1.5" }}>
-      {hunks.map((hunk, hIdx) => {
-        const pairs: { left: DiffLine | null; right: DiffLine | null }[] = [];
-        let i = 0;
+  // Pre-calculate line pairs for all hunks
+  const hunkData = hunks.map((hunk, hIdx) => {
+    const pairs: { left: DiffLine | null; right: DiffLine | null }[] = [];
+    let i = 0;
 
-        while (i < hunk.lines.length) {
-          const line = hunk.lines[i];
+    while (i < hunk.lines.length) {
+      const line = hunk.lines[i];
 
-          if (line.kind === "Context") {
-            pairs.push({ left: line, right: line });
-            i++;
-          } else if (line.kind === "Deletion") {
-            if (i + 1 < hunk.lines.length && hunk.lines[i + 1].kind === "Addition") {
-              pairs.push({ left: line, right: hunk.lines[i + 1] });
-              i += 2;
-            } else {
-              pairs.push({ left: line, right: null });
-              i++;
-            }
-          } else if (line.kind === "Addition") {
-            pairs.push({ left: null, right: line });
-            i++;
-          }
+      if (line.kind === "Context") {
+        pairs.push({ left: line, right: line });
+        i++;
+      } else if (line.kind === "Deletion") {
+        if (i + 1 < hunk.lines.length && hunk.lines[i + 1].kind === "Addition") {
+          pairs.push({ left: line, right: hunk.lines[i + 1] });
+          i += 2;
+        } else {
+          pairs.push({ left: line, right: null });
+          i++;
         }
+      } else if (line.kind === "Addition") {
+        pairs.push({ left: null, right: line });
+        i++;
+      }
+    }
 
-        return (
-          <React.Fragment key={hIdx}>
+    return { hunk, hIdx, pairs };
+  });
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        width: "100%",
+        height: "100%",
+        minHeight: 0,
+        overflow: "hidden",
+      }}
+    >
+      {/* Left Pane (Old / Deletions) - exactly 50% width */}
+      <div
+        ref={leftRef}
+        onScroll={() => handleScroll("left")}
+        className="diff-side-by-side mono"
+        style={{
+          flex: "1 1 50%",
+          width: "50%",
+          minWidth: 0,
+          height: "100%",
+          overflow: "auto",
+          borderRight: "1px solid var(--line)",
+          fontSize: "12px",
+          lineHeight: "22px",
+          backgroundColor: "var(--bg)",
+        }}
+      >
+        {hunkData.map(({ hunk, hIdx, pairs }) => (
+          <div key={`left-hunk-${hIdx}`}>
+            {/* Hunk Header */}
             <div
               style={{
                 display: "flex",
                 alignItems: "center",
                 gap: "8px",
-                padding: "4px 10px",
+                height: "28px",
+                padding: "0 10px",
                 backgroundColor: "var(--bg2)",
                 color: "var(--mut)",
                 borderBottom: "1px solid var(--line)",
                 userSelect: "none",
+                minWidth: "max-content",
+                boxSizing: "border-box",
               }}
             >
               <span style={{ fontWeight: 500 }}>
-                @@ -{hunk.old_start},{hunk.old_lines} +{hunk.new_start},{hunk.new_lines} @@
+                @@ -{hunk.old_start},{hunk.old_lines} @@
               </span>
-              {hunk.header && <span style={{ flex: 1 }}>{hunk.header}</span>}
-
-              <div style={{ marginLeft: "auto" }}>
-                {isStaged ? (
-                  <Button
-                    size="sm"
-                    onClick={() => currentRepo && unstageHunk(currentRepo.path, filePath, hIdx)}
-                    style={{ padding: "2px 8px", fontSize: "11px" }}
-                  >
-                    Исключить фрагмент
-                  </Button>
-                ) : (
-                  <Button
-                    size="sm"
-                    variant="primary"
-                    onClick={() => currentRepo && stageHunk(currentRepo.path, filePath, hIdx)}
-                    style={{ padding: "2px 8px", fontSize: "11px" }}
-                  >
-                    Фрагмент в индекс
-                  </Button>
-                )}
-              </div>
+              {hunk.header && <span style={{ opacity: 0.8 }}>{hunk.header}</span>}
             </div>
 
-            {pairs.map((pair, pIdx) => (
-              <div
-                key={pIdx}
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  minWidth: "max-content",
-                  borderBottom: "1px solid rgba(255,255,255,0.02)",
-                }}
-              >
-                {/* Left Column (Old / Deletion) */}
+            {/* Lines */}
+            {pairs.map((pair, pIdx) => {
+              const line = pair.left;
+              const isDel = line?.kind === "Deletion";
+              return (
                 <div
+                  key={`left-${hIdx}-${pIdx}`}
                   style={{
                     display: "flex",
-                    backgroundColor: pair.left?.kind === "Deletion" ? "var(--delbg)" : "transparent",
-                    borderRight: "1px solid var(--line)",
-                    minWidth: "300px",
+                    alignItems: "center",
+                    height: "22px",
+                    boxSizing: "border-box",
+                    backgroundColor: isDel ? "var(--delbg)" : line ? "transparent" : "var(--bg2)",
+                    borderBottom: "1px solid rgba(255,255,255,0.02)",
+                    minWidth: "max-content",
                   }}
                 >
                   <span
                     style={{
-                      width: "36px",
+                      width: "38px",
                       textAlign: "right",
                       paddingRight: "8px",
                       color: "var(--mut)",
@@ -637,27 +672,137 @@ const SideBySideDiffView: React.FC<HunkProps> = ({ hunks, filePath, isStaged }) 
                       borderRight: "1px solid var(--line)",
                     }}
                   >
-                    {pair.left?.old_no ?? ""}
+                    {line?.old_no ?? ""}
                   </span>
-                  <span style={{ width: "16px", textAlign: "center", userSelect: "none", color: "var(--del)" }}>
-                    {pair.left?.kind === "Deletion" ? "-" : " "}
+                  <span
+                    style={{
+                      width: "18px",
+                      textAlign: "center",
+                      userSelect: "none",
+                      color: isDel ? "var(--del)" : "var(--mut)",
+                      flexShrink: 0,
+                      fontWeight: 600,
+                    }}
+                  >
+                    {isDel ? "-" : " "}
                   </span>
-                  <span style={{ flex: 1, paddingRight: "8px", whiteSpace: "pre" }}>
-                    {pair.left?.text ?? ""}
+                  <span style={{ paddingRight: "16px", whiteSpace: "pre", color: "var(--tx)" }}>
+                    {line?.text ?? ""}
                   </span>
+                  {line?.has_crlf && (
+                    <span
+                      title="CRLF"
+                      style={{
+                        fontSize: "9px",
+                        color: "var(--mut)",
+                        opacity: 0.7,
+                        marginRight: "4px",
+                        userSelect: "none",
+                      }}
+                    >
+                      CRLF
+                    </span>
+                  )}
+                  {line?.no_eol && (
+                    <span
+                      title="Нет финального перевода строки"
+                      style={{
+                        fontSize: "9px",
+                        color: "var(--del)",
+                        fontWeight: 600,
+                        marginRight: "4px",
+                        userSelect: "none",
+                      }}
+                    >
+                      \ No newline
+                    </span>
+                  )}
                 </div>
+              );
+            })}
+          </div>
+        ))}
+      </div>
 
-                {/* Right Column (New / Addition) */}
+      {/* Right Pane (New / Additions) - exactly 50% width */}
+      <div
+        ref={rightRef}
+        onScroll={() => handleScroll("right")}
+        className="diff-side-by-side mono"
+        style={{
+          flex: "1 1 50%",
+          width: "50%",
+          minWidth: 0,
+          height: "100%",
+          overflow: "auto",
+          fontSize: "12px",
+          lineHeight: "22px",
+          backgroundColor: "var(--bg)",
+        }}
+      >
+        {hunkData.map(({ hunk, hIdx, pairs }) => (
+          <div key={`right-hunk-${hIdx}`}>
+            {/* Hunk Header with Stage Action */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "8px",
+                height: "28px",
+                padding: "0 10px",
+                backgroundColor: "var(--bg2)",
+                color: "var(--mut)",
+                borderBottom: "1px solid var(--line)",
+                userSelect: "none",
+                minWidth: "max-content",
+                boxSizing: "border-box",
+              }}
+            >
+              <span style={{ fontWeight: 500 }}>
+                @@ +{hunk.new_start},{hunk.new_lines} @@
+              </span>
+
+              {isStaged ? (
+                <Button
+                  size="sm"
+                  onClick={() => currentRepo && unstageHunk(currentRepo.path, filePath, hIdx)}
+                  style={{ padding: "1px 6px", fontSize: "11px", height: "20px" }}
+                >
+                  Исключить фрагмент
+                </Button>
+              ) : (
+                <Button
+                  size="sm"
+                  variant="primary"
+                  onClick={() => currentRepo && stageHunk(currentRepo.path, filePath, hIdx)}
+                  style={{ padding: "1px 6px", fontSize: "11px", height: "20px" }}
+                >
+                  Фрагмент в индекс
+                </Button>
+              )}
+            </div>
+
+            {/* Lines */}
+            {pairs.map((pair, pIdx) => {
+              const line = pair.right;
+              const isAdd = line?.kind === "Addition";
+              return (
                 <div
+                  key={`right-${hIdx}-${pIdx}`}
                   style={{
                     display: "flex",
-                    backgroundColor: pair.right?.kind === "Addition" ? "var(--addbg)" : "transparent",
-                    minWidth: "300px",
+                    alignItems: "center",
+                    height: "22px",
+                    boxSizing: "border-box",
+                    backgroundColor: isAdd ? "var(--addbg)" : line ? "transparent" : "var(--bg2)",
+                    borderBottom: "1px solid rgba(255,255,255,0.02)",
+                    minWidth: "max-content",
                   }}
                 >
                   <span
                     style={{
-                      width: "36px",
+                      width: "38px",
                       textAlign: "right",
                       paddingRight: "8px",
                       color: "var(--mut)",
@@ -666,20 +811,57 @@ const SideBySideDiffView: React.FC<HunkProps> = ({ hunks, filePath, isStaged }) 
                       borderRight: "1px solid var(--line)",
                     }}
                   >
-                    {pair.right?.new_no ?? ""}
+                    {line?.new_no ?? ""}
                   </span>
-                  <span style={{ width: "16px", textAlign: "center", userSelect: "none", color: "var(--add)" }}>
-                    {pair.right?.kind === "Addition" ? "+" : " "}
+                  <span
+                    style={{
+                      width: "18px",
+                      textAlign: "center",
+                      userSelect: "none",
+                      color: isAdd ? "var(--add)" : "var(--mut)",
+                      flexShrink: 0,
+                      fontWeight: 600,
+                    }}
+                  >
+                    {isAdd ? "+" : " "}
                   </span>
-                  <span style={{ flex: 1, paddingRight: "8px", whiteSpace: "pre" }}>
-                    {pair.right?.text ?? ""}
+                  <span style={{ paddingRight: "16px", whiteSpace: "pre", color: "var(--tx)" }}>
+                    {line?.text ?? ""}
                   </span>
+                  {line?.has_crlf && (
+                    <span
+                      title="CRLF"
+                      style={{
+                        fontSize: "9px",
+                        color: "var(--mut)",
+                        opacity: 0.7,
+                        marginRight: "4px",
+                        userSelect: "none",
+                      }}
+                    >
+                      CRLF
+                    </span>
+                  )}
+                  {line?.no_eol && (
+                    <span
+                      title="Нет финального перевода строки"
+                      style={{
+                        fontSize: "9px",
+                        color: "var(--del)",
+                        fontWeight: 600,
+                        marginRight: "4px",
+                        userSelect: "none",
+                      }}
+                    >
+                      \ No newline
+                    </span>
+                  )}
                 </div>
-              </div>
-            ))}
-          </React.Fragment>
-        );
-      })}
+              );
+            })}
+          </div>
+        ))}
+      </div>
     </div>
   );
 };

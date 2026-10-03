@@ -74,10 +74,16 @@ pub async fn set_remote_url(
 pub async fn fetch_all(
     repo_path: String,
     prune: bool,
+    remote: Option<String>,
     runner: State<'_, GitRunner>,
 ) -> Result<String, AppError> {
     let canonical = canonicalize_repo_path(&repo_path)?;
-    let mut args = vec!["fetch", "--all"];
+    let mut args = vec!["fetch"];
+    if let Some(ref r) = remote {
+        args.push(r);
+    } else {
+        args.push("--all");
+    }
     if prune {
         args.push("--prune");
     }

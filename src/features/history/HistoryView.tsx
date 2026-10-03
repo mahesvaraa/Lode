@@ -139,6 +139,7 @@ export const HistoryView: React.FC = () => {
         {/* Left: Virtualized Commit List */}
         <div
           ref={parentRef}
+          data-empty-history="true"
           style={{
             flex: 1,
             height: "100%",
@@ -172,6 +173,8 @@ export const HistoryView: React.FC = () => {
                 return (
                   <div
                     key={commit.hash}
+                    data-ctx="commit"
+                    data-id={commit.hash}
                     style={{
                       position: "absolute",
                       top: 0,

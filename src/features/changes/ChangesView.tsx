@@ -158,6 +158,11 @@ export const ChangesView: React.FC = () => {
                   return (
                     <div
                       key={`unstaged-${file.path}`}
+                      data-ctx="working-file"
+                      data-id={file.path}
+                      data-staged="false"
+                      data-untracked={file.status === "Untracked" ? "true" : "false"}
+                      data-conflicted={file.status === "Conflicted" ? "true" : "false"}
                       onClick={() => handleSelect(file, false)}
                       className={`row ${isSelected ? "on" : ""}`}
                       style={{
@@ -271,6 +276,11 @@ export const ChangesView: React.FC = () => {
                   return (
                     <div
                       key={`staged-${file.path}`}
+                      data-ctx="working-file"
+                      data-id={file.path}
+                      data-staged="true"
+                      data-untracked="false"
+                      data-conflicted="false"
                       onClick={() => handleSelect(file, true)}
                       className={`row ${isSelected ? "on" : ""}`}
                       style={{

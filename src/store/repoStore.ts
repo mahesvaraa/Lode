@@ -24,6 +24,7 @@ interface RepoState {
   closeRepo: () => void;
   removeRecent: (path: string) => Promise<void>;
   setGitInfo: (info: GitInfo) => void;
+  updateCurrentBranch: (branch: string) => void;
   clearError: () => void;
 }
 
@@ -39,11 +40,6 @@ export const useRepoStore = create<RepoState>((set, get) => ({
     set({ isCheckingGit: true });
     try {
       const [git, settings] = await Promise.all([checkGit(), getSettings()]);
-      set({
-        gitInfo: git,
-        recentRepos: settings.recent_repos,
-        isCheckingGit: false,
-      });
 
       if (settings.theme) {
         useUiStore.getState().setTheme(settings.theme as ThemeMode);
@@ -57,6 +53,12 @@ export const useRepoStore = create<RepoState>((set, get) => ({
       if (savedPath) {
         await get().openRepository(savedPath);
       }
+
+      set({
+        gitInfo: git,
+        recentRepos: settings.recent_repos,
+        isCheckingGit: false,
+      });
     } catch (err) {
       console.error("Failed to initialize app:", err);
       set({ isCheckingGit: false });
@@ -121,5 +123,11 @@ export const useRepoStore = create<RepoState>((set, get) => ({
   },
 
   setGitInfo: (gitInfo) => set({ gitInfo }),
+  updateCurrentBranch: (branch: string) => {
+    const current = get().currentRepo;
+    if (current) {
+      set({ currentRepo: { ...current, current_branch: branch } });
+    }
+  },
   clearError: () => set({ repoError: null }),
 }));

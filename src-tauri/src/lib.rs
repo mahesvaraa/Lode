@@ -109,6 +109,10 @@ pub fn run() {
             // Settings commands
             settings::get_app_settings,
             settings::save_app_settings,
+            // System commands
+            commands::system::show_in_file_manager,
+            commands::system::open_in_terminal,
+            commands::system::open_in_external_editor,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -58,9 +58,6 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
     set({
       isLoading: true,
       error: null,
-      commits: [],
-      graphNodes: [],
-      lanesState: [],
       hasMore: true,
     });
 

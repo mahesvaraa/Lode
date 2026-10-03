@@ -41,6 +41,7 @@ export const StateBanner: React.FC = () => {
 
   return (
     <div
+      data-ctx="state-banner"
       style={{
         display: "flex",
         alignItems: "center",

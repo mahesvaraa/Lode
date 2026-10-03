@@ -2,4 +2,4 @@
 import type { Commit } from "./commit";
 import type { CommitFile } from "./commit_file";
 
-export type CommitDetails = { commit: Commit, files: Array<CommitFile>, };
+export type CommitDetails = { commit: Commit, files: Array<CommitFile>, total_additions: number, total_deletions: number, };

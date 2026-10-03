@@ -145,9 +145,16 @@ export const Header: React.FC = () => {
           />
         </div>
 
-        <b style={{ fontWeight: 600 }}>lode</b>
-        <span style={{ color: "var(--mut)" }}>/</span>
-        <span>{currentRepo?.name}</span>
+        <div
+          data-ctx="repo-header"
+          data-id={currentRepo?.path || ""}
+          style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "default" }}
+          title="Правый клик для управления репозиторием"
+        >
+          <b style={{ fontWeight: 600 }}>lode</b>
+          <span style={{ color: "var(--mut)" }}>/</span>
+          <span>{currentRepo?.name}</span>
+        </div>
 
         {currentRepo?.current_branch && (
           <Chip variant="head">

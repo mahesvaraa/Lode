@@ -200,9 +200,10 @@ export async function setRemoteUrl(
 
 export async function fetchAll(
   repoPath: string,
-  prune: boolean = true
+  prune: boolean = true,
+  remote?: string
 ): Promise<string> {
-  return invoke<string>("fetch_all", { repoPath, prune });
+  return invoke<string>("fetch_all", { repoPath, prune, remote });
 }
 
 export async function pull(
@@ -338,9 +339,10 @@ export async function cherryPick(
 
 export async function revertCommit(
   repoPath: string,
-  commitHash: string
+  commitHash: string,
+  parentNumber?: number
 ): Promise<void> {
-  return invoke<void>("revert_commit", { repoPath, commitHash });
+  return invoke<void>("revert_commit", { repoPath, commitHash, parentNumber });
 }
 
 export async function resetRepo(
@@ -496,3 +498,46 @@ export async function pickFolder(): Promise<string | null> {
   }
   return null;
 }
+
+export async function discardHunk(
+  repoPath: string,
+  path: string,
+  hunkIndex: number
+): Promise<void> {
+  const allIndices = Array.from({ length: 1000 }, (_, i) => i);
+  return invoke<void>("discard_lines", {
+    repoPath,
+    path,
+    hunkIndex,
+    lineIndices: allIndices,
+  });
+}
+
+export async function showInFileManager(
+  repoPathOrFull: string,
+  relativePath?: string
+): Promise<void> {
+  const fullPath = relativePath
+    ? `${repoPathOrFull.replace(/[/\\]$/, "")}/${relativePath}`
+    : repoPathOrFull;
+  return invoke<void>("show_in_file_manager", { path: fullPath });
+}
+
+export async function openInTerminal(path: string): Promise<void> {
+  return invoke<void>("open_in_terminal", { path });
+}
+
+export async function openInExternalEditor(
+  repoPath: string,
+  path: string
+): Promise<void> {
+  return invoke<void>("open_in_external_editor", { repoPath, path });
+}
+
+export {
+  fetchAll as fetch,
+  stashApply as applyStash,
+  stashPop as popStash,
+  stashDrop as dropStash,
+  resetRepo as resetBranch,
+};

@@ -102,8 +102,9 @@ export const StashModal: React.FC<StashModalProps> = ({ isOpen, onClose }) => {
         title="Управление Stash (отложенные изменения)"
         confirmLabel="Закрыть"
         onConfirm={onClose}
+        width="min(640px, 94vw)"
       >
-        <div style={{ display: "flex", flexDirection: "column", gap: "12px", minWidth: "500px", maxWidth: "680px" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "12px", width: "100%", minWidth: 0 }}>
           {error && (
             <div
               style={{
@@ -165,17 +166,29 @@ export const StashModal: React.FC<StashModalProps> = ({ isOpen, onClose }) => {
                       border: "1px solid var(--line)",
                     }}
                   >
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                        <b className="mono" style={{ fontSize: "12px", color: "var(--acc)" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px", minWidth: 0 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px", minWidth: 0, flex: 1, overflow: "hidden" }}>
+                        <b className="mono" style={{ fontSize: "12px", color: "var(--acc)", flexShrink: 0 }}>
                           {s.selector}
                         </b>
-                        <span style={{ fontSize: "12px", color: "var(--tx)", fontWeight: 500 }}>
+                        <span
+                          style={{
+                            fontSize: "12px",
+                            color: "var(--tx)",
+                            fontWeight: 500,
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                            flex: 1,
+                            minWidth: 0,
+                          }}
+                          title={s.message}
+                        >
                           {s.message}
                         </span>
                       </div>
 
-                      <div style={{ display: "flex", gap: "4px" }}>
+                      <div style={{ display: "flex", gap: "4px", flexShrink: 0 }}>
                         <Button
                           size="sm"
                           variant="ghost"

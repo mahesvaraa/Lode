@@ -131,12 +131,21 @@ pub async fn cherry_pick(
 pub async fn revert_commit(
     repo_path: String,
     commit_hash: String,
+    parent_number: Option<u32>,
     runner: State<'_, GitRunner>,
 ) -> Result<(), AppError> {
     let canonical = canonicalize_repo_path(&repo_path)?;
-    runner
-        .run_write(&canonical, &["revert", "--no-edit", "--", &commit_hash])
-        .await?;
+    let mut args = vec!["revert", "--no-edit"];
+    let parent_str;
+    if let Some(parent) = parent_number {
+        parent_str = parent.to_string();
+        args.push("-m");
+        args.push(&parent_str);
+    }
+    args.push("--");
+    args.push(&commit_hash);
+
+    runner.run_write(&canonical, &args).await?;
     Ok(())
 }
 
