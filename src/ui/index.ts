@@ -15,3 +15,4 @@ export * from "./Banner";
 export * from "./Skeleton";
 export * from "./EmptyState";
 export * from "./Splitter";
+export * from "./ErrorBoundary";

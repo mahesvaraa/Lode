@@ -16,8 +16,16 @@ export default defineConfig({
     port: 1420,
     strictPort: true,
     watch: {
-      // 3. tell vite to ignore watching `src-tauri`
-      ignored: ["**/src-tauri/**"],
+      // Ignore git internals and build artifacts so git operations don't trigger page reloads
+      ignored: [
+        "**/.git/**",
+        "**/src-tauri/**",
+        "**/target/**",
+        "**/dist/**",
+        "**/node_modules/**",
+        "**/*.test.ts",
+        "**/*.test.tsx",
+      ],
     },
   },
 });

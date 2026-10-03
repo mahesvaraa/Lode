@@ -4,7 +4,7 @@ import { useSettingsStore } from "@/store/settingsStore";
 import { GitMissingScreen } from "@/features/gitCheck/GitMissingScreen";
 import { OpenRepoScreen } from "@/features/repo/OpenRepoScreen";
 import { MainLayout } from "@/features/layout/MainLayout";
-import { ToastContainer } from "@/ui";
+import { ErrorBoundary, ToastContainer } from "@/ui";
 
 export const App: React.FC = () => {
   const isCheckingGit = useRepoStore((s) => s.isCheckingGit);
@@ -58,10 +58,10 @@ export const App: React.FC = () => {
 
   // Repository is open
   return (
-    <>
+    <ErrorBoundary>
       <MainLayout />
       <ToastContainer />
-    </>
+    </ErrorBoundary>
   );
 };
 

@@ -48,6 +48,15 @@ export const useRepoStore = create<RepoState>((set, get) => ({
       if (settings.theme) {
         useUiStore.getState().setTheme(settings.theme as ThemeMode);
       }
+
+      // Automatically restore last opened repository
+      const savedPath =
+        (typeof localStorage !== "undefined" && localStorage.getItem("lode:current_repo")) ||
+        settings.recent_repos[0];
+
+      if (savedPath) {
+        await get().openRepository(savedPath);
+      }
     } catch (err) {
       console.error("Failed to initialize app:", err);
       set({ isCheckingGit: false });
@@ -59,6 +68,9 @@ export const useRepoStore = create<RepoState>((set, get) => ({
     try {
       const details = await openRepo(path);
       const settings = await getSettings();
+      if (typeof localStorage !== "undefined") {
+        localStorage.setItem("lode:current_repo", details.path);
+      }
       set({
         currentRepo: details,
         recentRepos: settings.recent_repos,
@@ -67,6 +79,9 @@ export const useRepoStore = create<RepoState>((set, get) => ({
       });
       return true;
     } catch (err: unknown) {
+      if (typeof localStorage !== "undefined") {
+        localStorage.removeItem("lode:current_repo");
+      }
       const errorObj = err as { message?: string };
       set({
         isLoadingRepo: false,
@@ -90,6 +105,9 @@ export const useRepoStore = create<RepoState>((set, get) => ({
   },
 
   closeRepo: () => {
+    if (typeof localStorage !== "undefined") {
+      localStorage.removeItem("lode:current_repo");
+    }
     set({ currentRepo: null, repoError: null });
   },
 
