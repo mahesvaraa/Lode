@@ -7,10 +7,13 @@ import { useRefsStore } from "@/store/refsStore";
 import { useHistoryStore } from "@/store/historyStore";
 import { useRemoteStore } from "@/store/remoteStore";
 import { useStashStore } from "@/store/stashStore";
+import { useWorktreeStore } from "@/store/worktreeStore";
 import { RemoteModal } from "@/features/remote/RemoteModal";
 import { StashModal } from "@/features/stash/StashModal";
+import { CreateWorktreeModal } from "@/features/dialogs";
 import { useI18n } from "@/lib/i18n";
 import type { GitRef } from "@/api/types/git_ref";
+import type { WorktreeInfo } from "@/api/types/worktree_info";
 
 export const Sidebar: React.FC = () => {
   const { t } = useI18n();
@@ -64,14 +67,25 @@ export const Sidebar: React.FC = () => {
   const stashes = useStashStore((s) => s.stashes);
   const loadStashes = useStashStore((s) => s.loadStashes);
 
+  const worktrees = useWorktreeStore((s) => s.worktrees);
+  const loadWorktrees = useWorktreeStore((s) => s.loadWorktrees);
+  const createWorktreeAction = useWorktreeStore((s) => s.createWorktree);
+  const deleteWorktreeAction = useWorktreeStore((s) => s.deleteWorktree);
+  const openRepository = useRepoStore((s) => s.openRepository);
+
+  const [showCreateWorktree, setShowCreateWorktree] = useState(false);
+  const [worktreeToDelete, setWorktreeToDelete] = useState<WorktreeInfo | null>(null);
+  const [forceDeleteWorktree, setForceDeleteWorktree] = useState(false);
+
   useEffect(() => {
     if (currentRepo) {
       loadRefs(currentRepo.path);
       loadRepoState(currentRepo.path);
       loadRemotes(currentRepo.path);
       loadStashes(currentRepo.path);
+      loadWorktrees(currentRepo.path);
     }
-  }, [currentRepo, loadRefs, loadRepoState, loadRemotes, loadStashes]);
+  }, [currentRepo, loadRefs, loadRepoState, loadRemotes, loadStashes, loadWorktrees]);
 
   const refreshAll = async () => {
     if (!currentRepo) return;
@@ -82,6 +96,7 @@ export const Sidebar: React.FC = () => {
       loadHistory(currentRepo.path),
       loadRemotes(currentRepo.path),
       loadStashes(currentRepo.path),
+      loadWorktrees(currentRepo.path),
     ]);
   };
 
@@ -161,6 +176,25 @@ export const Sidebar: React.FC = () => {
     try {
       await deleteTag(currentRepo.path, tagToDelete.name);
       setTagToDelete(null);
+      await refreshAll();
+    } catch {
+      // error in store
+    }
+  };
+
+  const handleCreateWorktree = async (path: string, branch?: string, newBranch?: string) => {
+    if (!currentRepo) return;
+    await createWorktreeAction(currentRepo.path, path, branch, newBranch);
+    setShowCreateWorktree(false);
+    await refreshAll();
+  };
+
+  const handleDeleteWorktree = async () => {
+    if (!currentRepo || !worktreeToDelete) return;
+    try {
+      await deleteWorktreeAction(currentRepo.path, worktreeToDelete.path, forceDeleteWorktree);
+      setWorktreeToDelete(null);
+      setForceDeleteWorktree(false);
       await refreshAll();
     } catch {
       // error in store
@@ -572,6 +606,142 @@ export const Sidebar: React.FC = () => {
         )}
       </div>
 
+      {/* WORKTREES SECTION */}
+      <div
+        data-ctx="sidebar-section"
+        data-id="worktrees"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          margin: "14px 0 4px",
+          padding: "0 8px",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          <span
+            style={{
+              fontSize: "var(--font-size-xs)",
+              fontWeight: 600,
+              color: "var(--mut)",
+              letterSpacing: "0.5px",
+            }}
+          >
+            WORKTREES
+          </span>
+          {worktrees.length > 0 && (
+            <b
+              style={{
+                fontSize: "10px",
+                backgroundColor: "var(--bg3)",
+                color: "var(--tx)",
+                borderRadius: "9px",
+                padding: "0 5px",
+                lineHeight: "14px",
+              }}
+            >
+              {worktrees.length}
+            </b>
+          )}
+        </div>
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => setShowCreateWorktree(true)}
+          style={{ padding: "1px 6px", fontSize: "11px" }}
+          title="Добавить рабочее дерево"
+        >
+          +
+        </Button>
+      </div>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+        {worktrees.length === 0 ? (
+          <div style={{ padding: "3px 8px", fontSize: "var(--font-size-xs)", color: "var(--mut)" }}>
+            (нет worktrees)
+          </div>
+        ) : (
+          worktrees.map((wt) => {
+            const isCurrent =
+              currentRepo &&
+              currentRepo.path.replace(/[\\/]+$/, "").toLowerCase() ===
+                wt.path.replace(/[\\/]+$/, "").toLowerCase();
+            const folderName = wt.path.split(/[\\/]/).pop() || wt.path;
+
+            return (
+              <div
+                key={wt.path}
+                onClick={() => !isCurrent && openRepository(wt.path)}
+                className={`row ${isCurrent ? "on" : ""}`}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  padding: "3px 8px",
+                  fontSize: "var(--font-size-sm)",
+                  color: isCurrent ? "var(--tx)" : "var(--mut)",
+                  cursor: isCurrent ? "default" : "pointer",
+                  backgroundColor: isCurrent ? "var(--sel)" : "transparent",
+                  borderRadius: "var(--radius-base)",
+                }}
+                title={`${wt.path} (${wt.branch || wt.head.substring(0, 7)})`}
+              >
+                <span style={{ fontSize: "12px" }}>📁</span>
+                <span
+                  style={{
+                    flex: 1,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {folderName}
+                </span>
+
+                {wt.is_main ? (
+                  <span style={{ fontSize: "10px", color: "var(--acc)", opacity: 0.8 }}>
+                    main
+                  </span>
+                ) : (
+                  <span style={{ fontSize: "10px", color: "var(--mut)", opacity: 0.8 }}>
+                    {wt.branch || wt.head.substring(0, 7)}
+                  </span>
+                )}
+
+                {wt.is_locked && (
+                  <span
+                    style={{ fontSize: "10px", color: "var(--del)" }}
+                    title={wt.lock_reason || "Заблокировано"}
+                  >
+                    🔒
+                  </span>
+                )}
+
+                {!wt.is_main && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setWorktreeToDelete(wt);
+                    }}
+                    style={{
+                      padding: "0 4px",
+                      fontSize: "10px",
+                      height: "18px",
+                      color: "var(--mut)",
+                    }}
+                    title="Удалить worktree"
+                  >
+                    ✕
+                  </Button>
+                )}
+              </div>
+            );
+          })
+        )}
+      </div>
+
       {/* Create Branch Modal */}
       <Modal
         isOpen={showCreateBranch}
@@ -699,6 +869,39 @@ export const Sidebar: React.FC = () => {
         <p style={{ margin: 0, lineHeight: 1.5 }}>
           Вы уверены, что хотите удалить тег <b>{tagToDelete?.name}</b>?
         </p>
+      </Modal>
+
+      {/* Create Worktree Modal */}
+      <CreateWorktreeModal
+        isOpen={showCreateWorktree}
+        branches={refs?.local_branches || []}
+        onClose={() => setShowCreateWorktree(false)}
+        onConfirm={handleCreateWorktree}
+      />
+
+      {/* Delete Worktree Modal */}
+      <Modal
+        isOpen={worktreeToDelete !== null}
+        onClose={() => {
+          setWorktreeToDelete(null);
+          setForceDeleteWorktree(false);
+        }}
+        title={`Удалить рабочее дерево?`}
+        confirmLabel="Удалить worktree"
+        isDanger={true}
+        onConfirm={handleDeleteWorktree}
+      >
+        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+          <p style={{ margin: 0, lineHeight: 1.5 }}>
+            Вы уверены, что хотите удалить рабочее дерево по пути{" "}
+            <b>{worktreeToDelete?.path}</b>?
+          </p>
+          <Checkbox
+            label="Принудительное удаление (--force)"
+            checked={forceDeleteWorktree}
+            onChange={(e) => setForceDeleteWorktree(e.target.checked)}
+          />
+        </div>
       </Modal>
 
       {/* Remote Management Modal */}

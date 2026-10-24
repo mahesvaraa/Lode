@@ -18,6 +18,7 @@ import type { ParsedConflictFile } from "./types/parsed_conflict_file";
 import type { StashItem } from "./types/stash_item";
 import type { BlameLine } from "./types/blame_line";
 import type { RebaseTodoItem } from "./types/rebase_todo_item";
+import type { WorktreeInfo } from "./types/worktree_info";
 
 export async function checkGit(): Promise<GitInfo> {
   return invoke<GitInfo>("check_git");
@@ -565,6 +566,27 @@ export async function openInExternalEditor(
   path: string
 ): Promise<void> {
   return invoke<void>("open_in_external_editor", { repoPath, path });
+}
+
+export async function getWorktrees(repoPath: string): Promise<WorktreeInfo[]> {
+  return invoke<WorktreeInfo[]>("get_worktrees", { repoPath });
+}
+
+export async function addWorktree(
+  repoPath: string,
+  path: string,
+  branch?: string,
+  newBranch?: string
+): Promise<string> {
+  return invoke<string>("add_worktree", { repoPath, path, branch, newBranch });
+}
+
+export async function removeWorktree(
+  repoPath: string,
+  path: string,
+  force = false
+): Promise<string> {
+  return invoke<string>("remove_worktree", { repoPath, path, force });
 }
 
 export {

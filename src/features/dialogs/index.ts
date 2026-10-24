@@ -5,3 +5,4 @@ export * from "./ResetModal";
 export * from "./MergeParentModal";
 export * from "./SetUpstreamModal";
 export * from "./ConfirmationModal";
+export * from "./CreateWorktreeModal";

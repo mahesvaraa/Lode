@@ -110,6 +110,10 @@ pub fn run() {
             // Rebase commands
             commands::rebase::get_rebase_todo_list,
             commands::rebase::start_interactive_rebase,
+            // Worktree commands
+            commands::worktree::get_worktrees,
+            commands::worktree::add_worktree,
+            commands::worktree::remove_worktree,
             // Settings commands
             settings::get_app_settings,
             settings::save_app_settings,
@@ -173,6 +177,9 @@ mod tests {
         // Stash & Blame types
         git::parse::StashItem::export().expect("Failed to export StashItem");
         git::parse::BlameLine::export().expect("Failed to export BlameLine");
+
+        // Worktree types
+        git::parse::WorktreeInfo::export().expect("Failed to export WorktreeInfo");
 
         // Rebase types
         git::rebase::RebaseActionKind::export().expect("Failed to export RebaseActionKind");
