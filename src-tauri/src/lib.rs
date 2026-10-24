@@ -68,6 +68,7 @@ pub fn run() {
             commands::staging::discard_lines,
             commands::staging::discard_file,
             commands::commit::create_commit,
+            commands::commit::create_fixup_commit,
             // Branch, Tag & Merge commands
             commands::branch::get_refs,
             commands::branch::get_repo_state,

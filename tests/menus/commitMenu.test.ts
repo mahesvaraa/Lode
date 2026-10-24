@@ -122,4 +122,29 @@ describe("buildCommitMenu", () => {
     expect(ids).toContain("commit:multi-squash");
     expect(ids).toContain("commit:multi-copy-shas");
   });
+
+  it("handles fixup commit action depending on staged files", () => {
+    // With no staged files
+    const emptyStagedItems = buildCommitMenu("abc1234567890", baseContext, dummyCallbacks);
+    const disabledFixup = emptyStagedItems.find((i) => i.type === "item" && i.id === "commit:fixup");
+    expect(disabledFixup?.type === "item" && disabledFixup.disabled).toBe(true);
+    expect(disabledFixup?.type === "item" && disabledFixup.disabledReason).toContain("индексе нет");
+
+    // With staged files
+    const withStagedContext: RepoContext = {
+      ...baseContext,
+      status: {
+        ...baseContext.status!,
+        staged: [{ path: "foo.txt", status: "Modified" }],
+      },
+    };
+    const enabledStagedItems = buildCommitMenu("abc1234567890", withStagedContext, dummyCallbacks);
+    const enabledFixup = enabledStagedItems.find((i) => i.type === "item" && i.id === "commit:fixup");
+    expect(enabledFixup?.type === "item" && enabledFixup.disabled).toBe(false);
+
+    if (enabledFixup?.type === "item") {
+      enabledFixup.run();
+      expect(dummyCallbacks.onFixup).toHaveBeenCalledWith("abc1234567890");
+    }
+  });
 });

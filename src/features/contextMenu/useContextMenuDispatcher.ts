@@ -44,6 +44,7 @@ import {
   dropStash,
   cherryPick,
   revertCommit,
+  createFixupCommit,
   abortMerge,
   continueOperation,
   openInExternalEditor,
@@ -233,8 +234,15 @@ export function useContextMenuDispatcher(dialogs: ContextMenuDialogSetters) {
                 });
               }
             },
-            onFixup: (hash) => {
-              showToast(`Fixup для ${hash.substring(0, 7)}`);
+            onFixup: async (hash) => {
+              try {
+                await createFixupCommit(currentRepo.path, hash);
+                await refreshAll();
+                showToast(`Создан fixup-коммит для ${hash.substring(0, 7)}`);
+              } catch (err: unknown) {
+                const errObj = err as { message?: string };
+                showToast(errObj.message || "Ошибка создания fixup", "error");
+              }
             },
             onReword: (hash) => {
               showToast(`Reword для ${hash.substring(0, 7)}`);

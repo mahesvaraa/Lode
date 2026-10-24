@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Button, Checkbox, Chip, EmptyState, Modal, Splitter, Textarea } from "@/ui";
 import { DiffView } from "./DiffView";
 import {
@@ -7,6 +7,8 @@ import {
   type SelectedFile,
 } from "@/store/statusStore";
 import { useRepoStore } from "@/store/repoStore";
+import { useHistoryStore } from "@/store/historyStore";
+import { useRefsStore } from "@/store/refsStore";
 import type { StatusItem } from "@/api/types/status_item";
 
 export const ChangesView: React.FC = () => {
@@ -22,6 +24,9 @@ export const ChangesView: React.FC = () => {
   const discardFile = useStatusStore((s) => s.discardFile);
   const commit = useStatusStore((s) => s.commit);
 
+  const commits = useHistoryStore((s) => s.commits);
+  const refs = useRefsStore((s) => s.refs);
+
   const isOperating = useStatusStore((s) => s.isOperating);
   const operationError = useStatusStore((s) => s.operationError);
   const clearOperationError = useStatusStore((s) => s.clearOperationError);
@@ -30,10 +35,18 @@ export const ChangesView: React.FC = () => {
   const [commitMsg, setCommitMsg] = useState("");
   const [isAmend, setIsAmend] = useState(false);
   const [fileToDiscard, setFileToDiscard] = useState<StatusItem | null>(null);
+  const [confirmAmendPublished, setConfirmAmendPublished] = useState(false);
 
   const stagedFiles = status?.staged || [];
   const unstagedFiles = status?.unstaged || [];
   const totalChanges = stagedFiles.length + unstagedFiles.length;
+
+  const headCommit = commits.length > 0 ? commits[0] : null;
+
+  const isHeadPublished = useMemo(() => {
+    if (!headCommit || !refs) return false;
+    return refs.remote_branches.some((rb) => rb.target_hash === headCommit.hash);
+  }, [headCommit, refs]);
 
   const handleResize = (delta: number) => {
     setPanelWidth((w) => Math.min(Math.max(220, w + delta), 500));
@@ -45,7 +58,17 @@ export const ChangesView: React.FC = () => {
     selectFile(currentRepo.path, target);
   };
 
-  const handleCommit = async () => {
+  const handleToggleAmend = (checked: boolean) => {
+    setIsAmend(checked);
+    if (checked && commitMsg.trim().length === 0 && headCommit) {
+      const fullMsg = headCommit.body
+        ? `${headCommit.subject}\n\n${headCommit.body}`
+        : headCommit.subject;
+      setCommitMsg(fullMsg);
+    }
+  };
+
+  const executeCommit = async () => {
     if (!currentRepo) return;
     if (!isAmend && commitMsg.trim().length === 0) return;
 
@@ -53,9 +76,18 @@ export const ChangesView: React.FC = () => {
       await commit(currentRepo.path, commitMsg, isAmend);
       setCommitMsg("");
       setIsAmend(false);
+      setConfirmAmendPublished(false);
     } catch {
       // operationError is set in store
     }
+  };
+
+  const handleCommit = async () => {
+    if (isAmend && isHeadPublished) {
+      setConfirmAmendPublished(true);
+      return;
+    }
+    await executeCommit();
   };
 
   const handleConfirmDiscard = () => {
@@ -388,12 +420,19 @@ export const ChangesView: React.FC = () => {
           />
 
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <Checkbox
-              label="Изменить последний"
-              checked={isAmend}
-              onChange={(e) => setIsAmend(e.target.checked)}
-              style={{ fontSize: "var(--font-size-xs)" }}
-            />
+            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              <Checkbox
+                label="Изменить последний (amend)"
+                checked={isAmend}
+                onChange={(e) => handleToggleAmend(e.target.checked)}
+                style={{ fontSize: "var(--font-size-xs)" }}
+              />
+              {isAmend && isHeadPublished && (
+                <Chip variant="tag" style={{ color: "var(--del)", backgroundColor: "var(--delbg)", fontSize: "10px", padding: "1px 5px" }}>
+                  Опубликован
+                </Chip>
+              )}
+            </div>
 
             <span
               className="mono"
@@ -413,7 +452,7 @@ export const ChangesView: React.FC = () => {
             onClick={handleCommit}
             style={{ width: "100%", marginTop: "2px" }}
           >
-            {isAmend ? "Изменить коммит" : "Закоммитить"}
+            {isAmend ? "Изменить коммит (Amend)" : "Закоммитить"}
           </Button>
         </div>
       </div>
@@ -438,6 +477,22 @@ export const ChangesView: React.FC = () => {
         <p style={{ margin: 0, lineHeight: 1.5 }}>
           Вы уверены, что хотите безвозвратно откатить изменения в файле <b>{fileToDiscard?.path}</b>?
           Несохранённые данные будут утеряны.
+        </p>
+      </Modal>
+
+      {/* Confirmation modal for amending published commit */}
+      <Modal
+        isOpen={confirmAmendPublished}
+        onClose={() => setConfirmAmendPublished(false)}
+        title="Изменение опубликованного коммита"
+        confirmLabel="Изменить коммит (Amend)"
+        isDanger={true}
+        onConfirm={executeCommit}
+      >
+        <p style={{ margin: 0, lineHeight: 1.5 }}>
+          Коммит <b>{headCommit?.hash.substring(0, 7)}</b> уже отправлен на удалённый репозиторий.
+          Изменение (amend) перепишет историю и в будущем потребует отправку с флагом <code>--force-with-lease</code>.
+          Вы уверены, что хотите продолжить?
         </p>
       </Modal>
     </div>

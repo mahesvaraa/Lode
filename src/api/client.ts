@@ -504,6 +504,13 @@ export async function createCommit(
   return invoke<string>("create_commit", { repoPath, message, amend });
 }
 
+export async function createFixupCommit(
+  repoPath: string,
+  targetHash: string
+): Promise<string> {
+  return invoke<string>("create_fixup_commit", { repoPath, targetHash });
+}
+
 export async function listenToRepoChanged(
   callback: (event: RepoChangedEvent) => void
 ): Promise<UnlistenFn> {

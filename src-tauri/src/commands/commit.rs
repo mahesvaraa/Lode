@@ -13,7 +13,7 @@ pub async fn create_commit(
 ) -> Result<String, AppError> {
     let canonical = canonicalize_repo_path(&repo_path)?;
 
-    if message.trim().is_empty() {
+    if !amend && message.trim().is_empty() {
         return Err(AppError::new(
             ErrorKind::Unknown,
             "Сообщение коммита не может быть пустым".to_string(),
@@ -21,16 +21,34 @@ pub async fn create_commit(
         ));
     }
 
-    let args: Vec<&str> = if amend {
-        vec!["commit", "--amend", "-F", "-"]
+    let output = if amend && message.trim().is_empty() {
+        runner
+            .run_write(&canonical, &["commit", "--amend", "--no-edit"])
+            .await?
     } else {
-        vec!["commit", "-F", "-"]
+        let args: Vec<&str> = if amend {
+            vec!["commit", "--amend", "-F", "-"]
+        } else {
+            vec!["commit", "-F", "-"]
+        };
+        runner
+            .run_write_stdin(&canonical, &args, message.as_bytes())
+            .await?
     };
 
-    let output = runner
-        .run_write_stdin(&canonical, &args, message.as_bytes())
-        .await?;
+    let stdout_str = String::from_utf8_lossy(&output.stdout).trim().to_string();
+    Ok(stdout_str)
+}
 
+#[tauri::command]
+pub async fn create_fixup_commit(
+    repo_path: String,
+    target_hash: String,
+    runner: State<'_, GitRunner>,
+) -> Result<String, AppError> {
+    let canonical = canonicalize_repo_path(&repo_path)?;
+    let fixup_flag = format!("--fixup={}", target_hash);
+    let output = runner.run_write(&canonical, &["commit", &fixup_flag]).await?;
     let stdout_str = String::from_utf8_lossy(&output.stdout).trim().to_string();
     Ok(stdout_str)
 }
