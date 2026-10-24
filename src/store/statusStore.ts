@@ -40,11 +40,13 @@ interface StatusState {
 
   diffMode: DiffMode;
   showFullDiff: boolean;
+  ignoreWhitespace: boolean;
 
   loadStatus: (repoPath: string) => Promise<void>;
   selectFile: (repoPath: string, file: SelectedFile | null) => Promise<void>;
   setDiffMode: (mode: DiffMode) => void;
   setShowFullDiff: (show: boolean) => void;
+  setIgnoreWhitespace: (repoPath: string, ignore: boolean) => Promise<void>;
   clearOperationError: () => void;
 
   stageFile: (repoPath: string, path: string) => Promise<void>;
@@ -77,6 +79,7 @@ export const useStatusStore = create<StatusState>((set, get) => ({
 
   diffMode: "inline",
   showFullDiff: false,
+  ignoreWhitespace: false,
 
   clearOperationError: () => set({ operationError: null }),
 
@@ -133,7 +136,7 @@ export const useStatusStore = create<StatusState>((set, get) => ({
 
     set({ selectedFile: file, isLoadingDiff: true, diffError: null, showFullDiff: false });
     try {
-      const diff = await getDiff(repoPath, file.path, file.is_staged);
+      const diff = await getDiff(repoPath, file.path, file.is_staged, get().ignoreWhitespace);
       set({ diff, isLoadingDiff: false });
     } catch (err: unknown) {
       const errorObj = err as { message?: string };
@@ -314,6 +317,13 @@ export const useStatusStore = create<StatusState>((set, get) => ({
 
   setDiffMode: (diffMode: DiffMode) => set({ diffMode }),
   setShowFullDiff: (showFullDiff: boolean) => set({ showFullDiff }),
+  setIgnoreWhitespace: async (repoPath: string, ignoreWhitespace: boolean) => {
+    set({ ignoreWhitespace });
+    const current = get().selectedFile;
+    if (current) {
+      await get().selectFile(repoPath, current);
+    }
+  },
 
   reset: () =>
     set({

@@ -32,6 +32,14 @@ describe("statusStore and helpers", () => {
     expect(useStatusStore.getState().showFullDiff).toBe(true);
   });
 
+  it("handles ignoreWhitespace flag", () => {
+    const store = useStatusStore.getState();
+    expect(store.ignoreWhitespace).toBe(false);
+
+    useStatusStore.setState({ ignoreWhitespace: true });
+    expect(useStatusStore.getState().ignoreWhitespace).toBe(true);
+  });
+
   it("handles operationError and clearOperationError", () => {
     useStatusStore.setState({ operationError: "pre-commit hook failed" });
     expect(useStatusStore.getState().operationError).toBe("pre-commit hook failed");

@@ -89,7 +89,7 @@ pub async fn stage_hunk(
     // If file is untracked, mark it intent-to-add so diff generates hunks
     ensure_intent_to_add(&canonical, &path, &runner).await?;
 
-    let file_diff = get_diff(repo_path.clone(), path.clone(), None, false, runner.clone()).await?;
+    let file_diff = get_diff(repo_path.clone(), path.clone(), None, false, None, runner.clone()).await?;
     if hunk_index >= file_diff.hunks.len() {
         return Err(AppError::new(
             ErrorKind::Unknown,
@@ -119,7 +119,7 @@ pub async fn unstage_hunk(
 ) -> Result<(), AppError> {
     let canonical = canonicalize_repo_path(&repo_path)?;
 
-    let file_diff = get_diff(repo_path.clone(), path.clone(), None, true, runner.clone()).await?;
+    let file_diff = get_diff(repo_path.clone(), path.clone(), None, true, None, runner.clone()).await?;
     if hunk_index >= file_diff.hunks.len() {
         return Err(AppError::new(
             ErrorKind::Unknown,
@@ -156,7 +156,7 @@ pub async fn stage_lines(
 
     ensure_intent_to_add(&canonical, &path, &runner).await?;
 
-    let file_diff = get_diff(repo_path.clone(), path.clone(), None, false, runner.clone()).await?;
+    let file_diff = get_diff(repo_path.clone(), path.clone(), None, false, None, runner.clone()).await?;
     let patch = build_hunk_patch(&file_diff, hunk_index, &line_indices).map_err(|e| {
         AppError::new(ErrorKind::Unknown, e, None)
     })?;
@@ -178,7 +178,7 @@ pub async fn unstage_lines(
 ) -> Result<(), AppError> {
     let canonical = canonicalize_repo_path(&repo_path)?;
 
-    let file_diff = get_diff(repo_path.clone(), path.clone(), None, true, runner.clone()).await?;
+    let file_diff = get_diff(repo_path.clone(), path.clone(), None, true, None, runner.clone()).await?;
     let patch = build_hunk_patch(&file_diff, hunk_index, &line_indices).map_err(|e| {
         AppError::new(ErrorKind::Unknown, e, None)
     })?;
@@ -204,7 +204,7 @@ pub async fn discard_lines(
 ) -> Result<(), AppError> {
     let canonical = canonicalize_repo_path(&repo_path)?;
 
-    let file_diff = get_diff(repo_path.clone(), path.clone(), None, false, runner.clone()).await?;
+    let file_diff = get_diff(repo_path.clone(), path.clone(), None, false, None, runner.clone()).await?;
     let patch = build_hunk_patch(&file_diff, hunk_index, &line_indices).map_err(|e| {
         AppError::new(ErrorKind::Unknown, e, None)
     })?;

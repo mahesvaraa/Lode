@@ -2,10 +2,12 @@ import React, { useState, useRef } from "react";
 import { Button, EmptyState, Modal, Skeleton } from "@/ui";
 import { useStatusStore } from "@/store/statusStore";
 import { useRepoStore } from "@/store/repoStore";
+import { useI18n } from "@/lib/i18n";
 import type { DiffLine } from "@/api/types/diff_line";
 import type { DiffHunk } from "@/api/types/diff_hunk";
 
 export const DiffView: React.FC = () => {
+  const { t } = useI18n();
   const currentRepo = useRepoStore((s) => s.currentRepo);
   const selectedFile = useStatusStore((s) => s.selectedFile);
   const diff = useStatusStore((s) => s.diff);
@@ -15,6 +17,8 @@ export const DiffView: React.FC = () => {
   const setDiffMode = useStatusStore((s) => s.setDiffMode);
   const showFullDiff = useStatusStore((s) => s.showFullDiff);
   const setShowFullDiff = useStatusStore((s) => s.setShowFullDiff);
+  const ignoreWhitespace = useStatusStore((s) => s.ignoreWhitespace);
+  const setIgnoreWhitespace = useStatusStore((s) => s.setIgnoreWhitespace);
 
   const stageFile = useStatusStore((s) => s.stageFile);
   const unstageFile = useStatusStore((s) => s.unstageFile);
@@ -150,7 +154,7 @@ export const DiffView: React.FC = () => {
           )}
         </div>
 
-        {/* Diff Mode Toggle */}
+        {/* Diff Mode Toggle & Ignore Whitespace */}
         <div style={{ display: "flex", gap: "2px", backgroundColor: "var(--bg3)", padding: "2px", borderRadius: "var(--radius-base)" }}>
           <Button
             size="sm"
@@ -158,7 +162,7 @@ export const DiffView: React.FC = () => {
             onClick={() => setDiffMode("inline")}
             style={{ padding: "2px 8px", fontSize: "11px" }}
           >
-            Inline
+            {t.diff.inline}
           </Button>
           <Button
             size="sm"
@@ -166,9 +170,19 @@ export const DiffView: React.FC = () => {
             onClick={() => setDiffMode("side-by-side")}
             style={{ padding: "2px 8px", fontSize: "11px" }}
           >
-            Side-by-side
+            {t.diff.sideBySide}
           </Button>
         </div>
+
+        <Button
+          size="sm"
+          variant={ignoreWhitespace ? "primary" : "ghost"}
+          onClick={() => currentRepo && setIgnoreWhitespace(currentRepo.path, !ignoreWhitespace)}
+          style={{ padding: "2px 8px", fontSize: "11px" }}
+          title={t.diff.ignoreWhitespace}
+        >
+          {ignoreWhitespace ? "✓ " : ""}{t.diff.ignoreWhitespace}
+        </Button>
       </div>
 
       {/* Truncation Warning Banner */}

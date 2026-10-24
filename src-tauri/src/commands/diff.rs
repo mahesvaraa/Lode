@@ -12,6 +12,7 @@ pub async fn get_diff(
     file_path: String,
     orig_path: Option<String>,
     staged: bool,
+    ignore_whitespace: Option<bool>,
     runner: State<'_, GitRunner>,
 ) -> Result<FileDiff, AppError> {
     let canonical = canonicalize_repo_path(&repo_path)?;
@@ -24,6 +25,10 @@ pub async fn get_diff(
         "-p",
         "--unified=3",
     ];
+
+    if ignore_whitespace.unwrap_or(false) {
+        args.push("--ignore-all-space");
+    }
 
     if staged {
         args.push("--cached");
@@ -72,21 +77,27 @@ pub async fn get_commit_diff(
     repo_path: String,
     commit_hash: String,
     file_path: String,
+    ignore_whitespace: Option<bool>,
     runner: State<'_, GitRunner>,
 ) -> Result<FileDiff, AppError> {
     let canonical = canonicalize_repo_path(&repo_path)?;
 
-    let args = [
+    let mut args: Vec<&str> = vec![
         "show",
         "-M",
         "--no-ext-diff",
         "--no-color",
         "-p",
         "--unified=3",
-        &commit_hash,
-        "--",
-        &file_path,
     ];
+
+    if ignore_whitespace.unwrap_or(false) {
+        args.push("--ignore-all-space");
+    }
+
+    args.push(&commit_hash);
+    args.push("--");
+    args.push(&file_path);
 
     let output = runner.run_read(Some(&canonical), &args).await?;
     let parsed_files = parse_unified_diff(&output.stdout);

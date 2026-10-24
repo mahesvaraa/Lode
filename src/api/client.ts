@@ -50,17 +50,29 @@ export async function getStatus(repoPath: string): Promise<RepoStatus> {
 export async function getDiff(
   repoPath: string,
   filePath: string,
-  staged: boolean
+  staged: boolean,
+  ignoreWhitespace?: boolean
 ): Promise<FileDiff> {
-  return invoke<FileDiff>("get_diff", { repoPath, filePath, staged });
+  return invoke<FileDiff>("get_diff", {
+    repoPath,
+    filePath,
+    staged,
+    ignoreWhitespace: ignoreWhitespace ?? false,
+  });
 }
 
 export async function getCommitDiff(
   repoPath: string,
   commitHash: string,
-  filePath: string
+  filePath: string,
+  ignoreWhitespace?: boolean
 ): Promise<FileDiff> {
-  return invoke<FileDiff>("get_commit_diff", { repoPath, commitHash, filePath });
+  return invoke<FileDiff>("get_commit_diff", {
+    repoPath,
+    commitHash,
+    filePath,
+    ignoreWhitespace: ignoreWhitespace ?? false,
+  });
 }
 
 export async function getCommits(
