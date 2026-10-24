@@ -114,6 +114,10 @@ pub fn run() {
             commands::worktree::get_worktrees,
             commands::worktree::add_worktree,
             commands::worktree::remove_worktree,
+            // Submodule commands
+            commands::submodule::get_submodules,
+            commands::submodule::update_submodules,
+            commands::submodule::init_submodule,
             // Settings commands
             settings::get_app_settings,
             settings::save_app_settings,
@@ -180,6 +184,9 @@ mod tests {
 
         // Worktree types
         git::parse::WorktreeInfo::export().expect("Failed to export WorktreeInfo");
+
+        // Submodule types
+        git::parse::SubmoduleInfo::export().expect("Failed to export SubmoduleInfo");
 
         // Rebase types
         git::rebase::RebaseActionKind::export().expect("Failed to export RebaseActionKind");

@@ -10,5 +10,6 @@ pub mod remote;
 pub mod repo;
 pub mod staging;
 pub mod status;
+pub mod submodule;
 pub mod system;
 pub mod worktree;

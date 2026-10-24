@@ -5,6 +5,7 @@ pub mod refs;
 pub mod remote;
 pub mod stash;
 pub mod status;
+pub mod submodule;
 pub mod worktree;
 
 pub use blame::{parse_git_blame_porcelain, BlameLine};
@@ -19,4 +20,5 @@ pub use stash::{parse_git_stash_list, StashItem};
 pub use status::{
     parse_status_porcelain_v2, BranchInfo, FileStatusKind, RepoStatus, StatusItem,
 };
+pub use submodule::{parse_submodule_status, SubmoduleInfo};
 pub use worktree::{parse_worktree_list, WorktreeInfo};

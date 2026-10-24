@@ -8,6 +8,7 @@ import { useHistoryStore } from "@/store/historyStore";
 import { useRemoteStore } from "@/store/remoteStore";
 import { useStashStore } from "@/store/stashStore";
 import { useWorktreeStore } from "@/store/worktreeStore";
+import { useSubmoduleStore } from "@/store/submoduleStore";
 import { RemoteModal } from "@/features/remote/RemoteModal";
 import { StashModal } from "@/features/stash/StashModal";
 import { CreateWorktreeModal } from "@/features/dialogs";
@@ -73,6 +74,12 @@ export const Sidebar: React.FC = () => {
   const deleteWorktreeAction = useWorktreeStore((s) => s.deleteWorktree);
   const openRepository = useRepoStore((s) => s.openRepository);
 
+  const submodules = useSubmoduleStore((s) => s.submodules);
+  const loadSubmodules = useSubmoduleStore((s) => s.loadSubmodules);
+  const syncSubmodules = useSubmoduleStore((s) => s.syncSubmodules);
+  const initializeSubmodule = useSubmoduleStore((s) => s.initializeSubmodule);
+  const isSyncingSubmodules = useSubmoduleStore((s) => s.isLoading);
+
   const [showCreateWorktree, setShowCreateWorktree] = useState(false);
   const [worktreeToDelete, setWorktreeToDelete] = useState<WorktreeInfo | null>(null);
   const [forceDeleteWorktree, setForceDeleteWorktree] = useState(false);
@@ -84,8 +91,9 @@ export const Sidebar: React.FC = () => {
       loadRemotes(currentRepo.path);
       loadStashes(currentRepo.path);
       loadWorktrees(currentRepo.path);
+      loadSubmodules(currentRepo.path);
     }
-  }, [currentRepo, loadRefs, loadRepoState, loadRemotes, loadStashes, loadWorktrees]);
+  }, [currentRepo, loadRefs, loadRepoState, loadRemotes, loadStashes, loadWorktrees, loadSubmodules]);
 
   const refreshAll = async () => {
     if (!currentRepo) return;
@@ -97,6 +105,7 @@ export const Sidebar: React.FC = () => {
       loadRemotes(currentRepo.path),
       loadStashes(currentRepo.path),
       loadWorktrees(currentRepo.path),
+      loadSubmodules(currentRepo.path),
     ]);
   };
 
@@ -736,6 +745,152 @@ export const Sidebar: React.FC = () => {
                     ✕
                   </Button>
                 )}
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* SUBMODULES SECTION */}
+      <div
+        data-ctx="sidebar-section"
+        data-id="submodules"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          margin: "14px 0 4px",
+          padding: "0 8px",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          <span
+            style={{
+              fontSize: "var(--font-size-xs)",
+              fontWeight: 600,
+              color: "var(--mut)",
+              letterSpacing: "0.5px",
+            }}
+          >
+            SUBMODULES
+          </span>
+          {submodules.length > 0 && (
+            <b
+              style={{
+                fontSize: "10px",
+                backgroundColor: "var(--bg3)",
+                color: "var(--tx)",
+                borderRadius: "9px",
+                padding: "0 5px",
+                lineHeight: "14px",
+              }}
+            >
+              {submodules.length}
+            </b>
+          )}
+        </div>
+        <Button
+          size="sm"
+          variant="ghost"
+          disabled={isSyncingSubmodules}
+          onClick={async () => {
+            if (!currentRepo) return;
+            await syncSubmodules(currentRepo.path, true, true);
+            await refreshAll();
+          }}
+          style={{ padding: "1px 6px", fontSize: "11px" }}
+          title="Синхронизировать и обновить все подмодули (git submodule update --init --recursive)"
+        >
+          {isSyncingSubmodules ? "…" : "Обновить"}
+        </Button>
+      </div>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+        {submodules.length === 0 ? (
+          <div style={{ padding: "3px 8px", fontSize: "var(--font-size-xs)", color: "var(--mut)" }}>
+            (нет подмодулей)
+          </div>
+        ) : (
+          submodules.map((sub) => {
+            const subRepoPath = currentRepo
+              ? `${currentRepo.path.replace(/[\\/]+$/, "")}/${sub.path.replace(/^[\\/]+/, "")}`
+              : sub.path;
+
+            return (
+              <div
+                key={sub.path}
+                onClick={() => openRepository(subRepoPath)}
+                className="row"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  padding: "3px 8px",
+                  fontSize: "var(--font-size-sm)",
+                  color: "var(--tx)",
+                  cursor: "pointer",
+                  borderRadius: "var(--radius-base)",
+                }}
+                title={`${sub.path} (${sub.describe || sub.head.substring(0, 7)})`}
+              >
+                <span style={{ fontSize: "12px" }}>📦</span>
+                <span
+                  style={{
+                    flex: 1,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {sub.name}
+                </span>
+
+                {sub.status_indicator === "-" && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      if (!currentRepo) return;
+                      await initializeSubmodule(currentRepo.path, sub.path);
+                      await refreshAll();
+                    }}
+                    style={{
+                      padding: "0 4px",
+                      fontSize: "10px",
+                      height: "18px",
+                      color: "var(--acc)",
+                    }}
+                    title="Инициализировать подмодуль"
+                  >
+                    Инит
+                  </Button>
+                )}
+
+                {sub.status_indicator === "+" && (
+                  <span
+                    style={{ fontSize: "10px", color: "var(--add)", fontWeight: 600 }}
+                    title="Текущий коммит подмодуля отличается от индекса"
+                  >
+                    +изм
+                  </span>
+                )}
+
+                {sub.status_indicator === "U" && (
+                  <span
+                    style={{ fontSize: "10px", color: "var(--del)", fontWeight: 600 }}
+                    title="Конфликт слияния подмодуля"
+                  >
+                    конфликт
+                  </span>
+                )}
+
+                <span
+                  className="mono"
+                  style={{ fontSize: "10px", color: "var(--mut)", opacity: 0.8 }}
+                >
+                  {sub.describe || sub.head.substring(0, 7)}
+                </span>
               </div>
             );
           })

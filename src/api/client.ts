@@ -19,6 +19,7 @@ import type { StashItem } from "./types/stash_item";
 import type { BlameLine } from "./types/blame_line";
 import type { RebaseTodoItem } from "./types/rebase_todo_item";
 import type { WorktreeInfo } from "./types/worktree_info";
+import type { SubmoduleInfo } from "./types/submodule_info";
 
 export async function checkGit(): Promise<GitInfo> {
   return invoke<GitInfo>("check_git");
@@ -587,6 +588,26 @@ export async function removeWorktree(
   force = false
 ): Promise<string> {
   return invoke<string>("remove_worktree", { repoPath, path, force });
+}
+
+export async function getSubmodules(repoPath: string): Promise<SubmoduleInfo[]> {
+  return invoke<SubmoduleInfo[]>("get_submodules", { repoPath });
+}
+
+export async function updateSubmodules(
+  repoPath: string,
+  init = true,
+  recursive = true,
+  path?: string
+): Promise<string> {
+  return invoke<string>("update_submodules", { repoPath, init, recursive, path });
+}
+
+export async function initSubmodule(
+  repoPath: string,
+  path?: string
+): Promise<string> {
+  return invoke<string>("init_submodule", { repoPath, path });
 }
 
 export {
