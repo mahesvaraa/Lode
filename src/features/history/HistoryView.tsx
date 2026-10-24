@@ -3,7 +3,7 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 import { Button, EmptyState, Input, Skeleton, Splitter } from "@/ui";
 import { CommitRow } from "./CommitRow";
 import { CommitDetailsPanel } from "./CommitDetailsPanel";
-import { useHistoryStore } from "@/store/historyStore";
+import { useHistoryStore, type DateFilterPeriod } from "@/store/historyStore";
 import { useRepoStore } from "@/store/repoStore";
 import { useStatusStore } from "@/store/statusStore";
 import { useRefsStore } from "@/store/refsStore";
@@ -27,6 +27,8 @@ export const HistoryView: React.FC = () => {
   const setSearchQuery = useHistoryStore((s) => s.setSearchQuery);
   const setSelectedBranch = useHistoryStore((s) => s.setSelectedBranch);
   const selectedBranch = useHistoryStore((s) => s.selectedBranch);
+  const dateFilter = useHistoryStore((s) => s.dateFilter);
+  const setDateFilter = useHistoryStore((s) => s.setDateFilter);
   const onlyMyCommits = useHistoryStore((s) => s.onlyMyCommits);
   const setOnlyMyCommits = useHistoryStore((s) => s.setOnlyMyCommits);
   const currentUser = useHistoryStore((s) => s.currentUser);
@@ -169,6 +171,32 @@ export const HistoryView: React.FC = () => {
         >
           {onlyMyCommits ? "✓ Только мои" : "Только мои"}
         </Button>
+
+        {/* Date Filter */}
+        <select
+          value={dateFilter}
+          onChange={(e) => {
+            if (currentRepo) setDateFilter(currentRepo.path, e.target.value as DateFilterPeriod);
+          }}
+          style={{
+            height: "26px",
+            backgroundColor: "var(--bg3)",
+            color: "var(--tx)",
+            border: "1px solid var(--line)",
+            borderRadius: "var(--radius-base)",
+            padding: "0 8px",
+            fontSize: "var(--font-size-sm)",
+            outline: "none",
+            cursor: "pointer",
+          }}
+          title="Фильтр по времени коммитов"
+        >
+          <option value="all">За всё время</option>
+          <option value="today">За сегодня</option>
+          <option value="week">За неделю</option>
+          <option value="month">За месяц</option>
+          <option value="year">За год</option>
+        </select>
 
         {/* Stats */}
         <span style={{ fontSize: "var(--font-size-xs)", color: "var(--mut)", marginLeft: "auto" }}>

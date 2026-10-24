@@ -91,7 +91,9 @@ export async function getCommits(
   limit: number,
   branch?: string,
   search?: string,
-  author?: string
+  author?: string,
+  since?: string,
+  until?: string
 ): Promise<Commit[]> {
   return invoke<Commit[]>("get_commits", {
     repoPath,
@@ -100,6 +102,8 @@ export async function getCommits(
     branch: branch || null,
     search: search || null,
     author: author || null,
+    since: since || null,
+    until: until || null,
   });
 }
 

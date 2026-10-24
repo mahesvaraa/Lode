@@ -7,6 +7,23 @@ import type { FileDiff } from "@/api/types/file_diff";
 
 const PAGE_SIZE = 500;
 
+export type DateFilterPeriod = "all" | "today" | "week" | "month" | "year";
+
+function dateFilterToSince(period: DateFilterPeriod): string | undefined {
+  switch (period) {
+    case "today":
+      return "today";
+    case "week":
+      return "1.week.ago";
+    case "month":
+      return "1.month.ago";
+    case "year":
+      return "1.year.ago";
+    default:
+      return undefined;
+  }
+}
+
 interface HistoryState {
   commits: Commit[];
   graphNodes: GraphNode[];
@@ -26,6 +43,7 @@ interface HistoryState {
   searchQuery: string;
   selectedBranch: string;
   authorFilter: string;
+  dateFilter: DateFilterPeriod;
   currentUser: string | null;
   onlyMyCommits: boolean;
 
@@ -36,6 +54,7 @@ interface HistoryState {
   setSearchQuery: (repoPath: string, query: string) => Promise<void>;
   setSelectedBranch: (repoPath: string, branch: string) => Promise<void>;
   setAuthorFilter: (repoPath: string, author: string) => Promise<void>;
+  setDateFilter: (repoPath: string, dateFilter: DateFilterPeriod) => Promise<void>;
   setOnlyMyCommits: (repoPath: string, onlyMine: boolean) => Promise<void>;
   reset: () => void;
 }
@@ -59,6 +78,7 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
   searchQuery: "",
   selectedBranch: "ALL",
   authorFilter: "",
+  dateFilter: "all",
   currentUser: null,
   onlyMyCommits: false,
 
@@ -76,8 +96,9 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
         if (currentUser) set({ currentUser });
       }
 
-      const { selectedBranch, searchQuery, onlyMyCommits, authorFilter } = get();
+      const { selectedBranch, searchQuery, onlyMyCommits, authorFilter, dateFilter } = get();
       const effectiveAuthor = onlyMyCommits ? currentUser || undefined : (authorFilter || undefined);
+      const sinceDate = dateFilterToSince(dateFilter);
 
       const newCommits = await getCommits(
         repoPath,
@@ -85,7 +106,8 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
         PAGE_SIZE,
         selectedBranch,
         searchQuery,
-        effectiveAuthor
+        effectiveAuthor,
+        sinceDate
       );
 
       const graph = computeGraph(newCommits, []);
@@ -112,19 +134,21 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
   },
 
   loadMore: async (repoPath: string) => {
-    const { commits, lanesState, isLoading, hasMore, selectedBranch, searchQuery, onlyMyCommits, currentUser, authorFilter } = get();
+    const { commits, lanesState, isLoading, hasMore, selectedBranch, searchQuery, onlyMyCommits, currentUser, authorFilter, dateFilter } = get();
     if (isLoading || !hasMore) return;
 
     set({ isLoading: true });
     try {
       const effectiveAuthor = onlyMyCommits ? currentUser || undefined : (authorFilter || undefined);
+      const sinceDate = dateFilterToSince(dateFilter);
       const newCommits = await getCommits(
         repoPath,
         commits.length,
         PAGE_SIZE,
         selectedBranch,
         searchQuery,
-        effectiveAuthor
+        effectiveAuthor,
+        sinceDate
       );
 
       // Continue graph calculation preserving prior lanesState
@@ -216,6 +240,11 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
     await get().loadInitial(repoPath);
   },
 
+  setDateFilter: async (repoPath: string, dateFilter: DateFilterPeriod) => {
+    set({ dateFilter });
+    await get().loadInitial(repoPath);
+  },
+
   setOnlyMyCommits: async (repoPath: string, onlyMyCommits: boolean) => {
     set({ onlyMyCommits });
     await get().loadInitial(repoPath);
@@ -238,6 +267,7 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
       searchQuery: "",
       selectedBranch: "ALL",
       authorFilter: "",
+      dateFilter: "all",
       onlyMyCommits: false,
     }),
 }));

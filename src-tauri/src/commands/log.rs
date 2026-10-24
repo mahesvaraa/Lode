@@ -16,6 +16,8 @@ pub async fn get_commits(
     branch: Option<String>,
     search: Option<String>,
     author: Option<String>,
+    since: Option<String>,
+    until: Option<String>,
     runner: State<'_, GitRunner>,
 ) -> Result<Vec<Commit>, AppError> {
     let canonical = canonicalize_repo_path(&repo_path)?;
@@ -26,6 +28,8 @@ pub async fn get_commits(
 
     let search_query = search.as_deref().map(str::trim).filter(|q| !q.is_empty());
     let author_query = author.as_deref().map(str::trim).filter(|a| !a.is_empty());
+    let since_query = since.as_deref().map(str::trim).filter(|s| !s.is_empty());
+    let until_query = until.as_deref().map(str::trim).filter(|u| !u.is_empty());
 
     if let Some(query) = search_query {
         let mut results = Vec::new();
@@ -78,6 +82,18 @@ pub async fn get_commits(
         if let Some(auth) = author_query {
             author_filter_arg = format!("--author={auth}");
             base_args.push(&author_filter_arg);
+        }
+
+        let since_filter_arg;
+        if let Some(s) = since_query {
+            since_filter_arg = format!("--since={s}");
+            base_args.push(&since_filter_arg);
+        }
+
+        let until_filter_arg;
+        if let Some(u) = until_query {
+            until_filter_arg = format!("--until={u}");
+            base_args.push(&until_filter_arg);
         }
 
         let mut msg_args = base_args.clone();
@@ -143,6 +159,18 @@ pub async fn get_commits(
     if let Some(auth) = author_query {
         author_filter_arg = format!("--author={auth}");
         args.push(&author_filter_arg);
+    }
+
+    let since_filter_arg;
+    if let Some(s) = since_query {
+        since_filter_arg = format!("--since={s}");
+        args.push(&since_filter_arg);
+    }
+
+    let until_filter_arg;
+    if let Some(u) = until_query {
+        until_filter_arg = format!("--until={u}");
+        args.push(&until_filter_arg);
     }
 
     let output = runner.run_read(Some(&canonical), &args).await?;
