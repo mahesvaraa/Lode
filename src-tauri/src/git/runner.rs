@@ -227,6 +227,7 @@ impl GitRunner {
         }
 
         configure_command_platform(&mut cmd);
+        cmd.kill_on_drop(true);
         cmd.stdin(Stdio::piped());
         cmd.stdout(Stdio::piped());
         cmd.stderr(Stdio::piped());
@@ -379,6 +380,7 @@ impl GitRunner {
         }
 
         configure_command_platform(&mut cmd);
+        cmd.kill_on_drop(true);
         cmd.stdout(Stdio::piped());
         cmd.stderr(Stdio::piped());
 
