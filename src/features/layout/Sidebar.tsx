@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { Button, Checkbox, Input, Modal } from "@/ui";
 import { useUiStore, type ActiveView } from "@/store/uiStore";
 import { useRepoStore } from "@/store/repoStore";
 import { useStatusStore } from "@/store/statusStore";
@@ -9,12 +8,16 @@ import { useRemoteStore } from "@/store/remoteStore";
 import { useStashStore } from "@/store/stashStore";
 import { useWorktreeStore } from "@/store/worktreeStore";
 import { useSubmoduleStore } from "@/store/submoduleStore";
-import { RemoteModal } from "@/features/remote/RemoteModal";
-import { StashModal } from "@/features/stash/StashModal";
-import { CreateWorktreeModal } from "@/features/dialogs";
 import { useI18n } from "@/lib/i18n";
 import type { GitRef } from "@/api/types/git_ref";
 import type { WorktreeInfo } from "@/api/types/worktree_info";
+import { BranchesSection } from "@/features/sidebar/BranchesSection";
+import { RemotesSection } from "@/features/sidebar/RemotesSection";
+import { TagsSection } from "@/features/sidebar/TagsSection";
+import { StashesSection } from "@/features/sidebar/StashesSection";
+import { WorktreesSection } from "@/features/sidebar/WorktreesSection";
+import { SubmodulesSection } from "@/features/sidebar/SubmodulesSection";
+import { SidebarModals } from "@/features/sidebar/SidebarModals";
 
 export const Sidebar: React.FC = () => {
   const { t } = useI18n();
@@ -23,6 +26,8 @@ export const Sidebar: React.FC = () => {
   const sidebarWidth = useUiStore((s) => s.sidebarWidth);
 
   const currentRepo = useRepoStore((s) => s.currentRepo);
+  const openRepository = useRepoStore((s) => s.openRepository);
+
   const status = useStatusStore((s) => s.status);
   const loadStatus = useStatusStore((s) => s.loadStatus);
   const loadHistory = useHistoryStore((s) => s.loadInitial);
@@ -38,7 +43,27 @@ export const Sidebar: React.FC = () => {
   const deleteTag = useRefsStore((s) => s.deleteTag);
   const mergeBranch = useRefsStore((s) => s.mergeBranch);
 
-  // Modals state
+  const loadRemotes = useRemoteStore((s) => s.loadRemotes);
+  const isRemoteModalOpen = useUiStore((s) => s.isRemoteModalOpen);
+  const setRemoteModalOpen = useUiStore((s) => s.setRemoteModalOpen);
+
+  const stashes = useStashStore((s) => s.stashes);
+  const loadStashes = useStashStore((s) => s.loadStashes);
+  const isStashModalOpen = useUiStore((s) => s.isStashModalOpen);
+  const setStashModalOpen = useUiStore((s) => s.setStashModalOpen);
+
+  const worktrees = useWorktreeStore((s) => s.worktrees);
+  const loadWorktrees = useWorktreeStore((s) => s.loadWorktrees);
+  const createWorktreeAction = useWorktreeStore((s) => s.createWorktree);
+  const deleteWorktreeAction = useWorktreeStore((s) => s.deleteWorktree);
+
+  const submodules = useSubmoduleStore((s) => s.submodules);
+  const loadSubmodules = useSubmoduleStore((s) => s.loadSubmodules);
+  const syncSubmodules = useSubmoduleStore((s) => s.syncSubmodules);
+  const initializeSubmodule = useSubmoduleStore((s) => s.initializeSubmodule);
+  const isSyncingSubmodules = useSubmoduleStore((s) => s.isLoading);
+
+  // Modal visibility states
   const [showCreateBranch, setShowCreateBranch] = useState(false);
   const [newBranchName, setNewBranchName] = useState("");
   const [switchToNewBranch, setSwitchToNewBranch] = useState(true);
@@ -54,31 +79,10 @@ export const Sidebar: React.FC = () => {
   const [showCreateTag, setShowCreateTag] = useState(false);
   const [newTagName, setNewTagName] = useState("");
   const [newTagMessage, setNewTagMessage] = useState("");
-
   const [tagToDelete, setTagToDelete] = useState<GitRef | null>(null);
+
   const [showRemoteModal, setShowRemoteModal] = useState(false);
   const [showStashModal, setShowStashModal] = useState(false);
-
-  const isRemoteModalOpen = useUiStore((s) => s.isRemoteModalOpen);
-  const setRemoteModalOpen = useUiStore((s) => s.setRemoteModalOpen);
-  const isStashModalOpen = useUiStore((s) => s.isStashModalOpen);
-  const setStashModalOpen = useUiStore((s) => s.setStashModalOpen);
-
-  const loadRemotes = useRemoteStore((s) => s.loadRemotes);
-  const stashes = useStashStore((s) => s.stashes);
-  const loadStashes = useStashStore((s) => s.loadStashes);
-
-  const worktrees = useWorktreeStore((s) => s.worktrees);
-  const loadWorktrees = useWorktreeStore((s) => s.loadWorktrees);
-  const createWorktreeAction = useWorktreeStore((s) => s.createWorktree);
-  const deleteWorktreeAction = useWorktreeStore((s) => s.deleteWorktree);
-  const openRepository = useRepoStore((s) => s.openRepository);
-
-  const submodules = useSubmoduleStore((s) => s.submodules);
-  const loadSubmodules = useSubmoduleStore((s) => s.loadSubmodules);
-  const syncSubmodules = useSubmoduleStore((s) => s.syncSubmodules);
-  const initializeSubmodule = useSubmoduleStore((s) => s.initializeSubmodule);
-  const isSyncingSubmodules = useSubmoduleStore((s) => s.isLoading);
 
   const [showCreateWorktree, setShowCreateWorktree] = useState(false);
   const [worktreeToDelete, setWorktreeToDelete] = useState<WorktreeInfo | null>(null);
@@ -170,7 +174,7 @@ export const Sidebar: React.FC = () => {
   const handleCreateTag = async () => {
     if (!currentRepo || !newTagName.trim()) return;
     try {
-      await createTag(currentRepo.path, newTagName.trim(), undefined, newTagMessage.trim() || undefined);
+      await createTag(currentRepo.path, newTagName.trim(), "HEAD", newTagMessage.trim() || undefined);
       setShowCreateTag(false);
       setNewTagName("");
       setNewTagMessage("");
@@ -302,776 +306,115 @@ export const Sidebar: React.FC = () => {
         })}
       </div>
 
-      {/* Local Branches Section */}
-      <div
-        data-ctx="sidebar-section"
-        data-id="branches"
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          margin: "16px 8px 6px",
-        }}
-      >
-        <h6
-          style={{
-            margin: 0,
-            fontSize: "var(--font-size-xs)",
-            fontWeight: 600,
-            textTransform: "uppercase",
-            letterSpacing: "0.5px",
-            color: "var(--mut)",
-          }}
-        >
-          {t.sidebar.branches}
-        </h6>
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={() => setShowCreateBranch(true)}
-          style={{ padding: "1px 6px", fontSize: "11px" }}
-          title="Создать новую ветку"
-        >
-          +
-        </Button>
-      </div>
-
-      <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-        {refs?.local_branches.map((branch) => {
-          const isCurrent = branch.is_head;
-          const tracking =
-            branch.ahead > 0 || branch.behind > 0
-              ? `${branch.ahead > 0 ? `↑${branch.ahead}` : ""} ${branch.behind > 0 ? `↓${branch.behind}` : ""}`.trim()
-              : undefined;
-
-          return (
-            <div
-              key={branch.name}
-              data-ctx="branch"
-              data-id={branch.name}
-              onClick={() => !isCurrent && handleSwitchBranch(branch.name)}
-              className="row"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-                padding: "4px 8px",
-                borderRadius: "var(--radius-base)",
-                fontSize: "var(--font-size-base)",
-                color: isCurrent ? "var(--tx)" : "var(--mut)",
-                backgroundColor: isCurrent ? "var(--sel)" : "transparent",
-                fontWeight: isCurrent ? 600 : 400,
-                cursor: isCurrent ? "default" : "pointer",
-              }}
-              title={isCurrent ? "Текущая ветка" : `Переключиться на ${branch.name}`}
-            >
-              <span style={{ color: isCurrent ? "var(--acc)" : "transparent", fontSize: "10px" }}>
-                ●
-              </span>
-
-              <span
-                style={{
-                  flex: 1,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {branch.name}
-              </span>
-
-              {tracking && (
-                <span className="mono" style={{ fontSize: "var(--font-size-xs)", color: "var(--mut)" }}>
-                  {tracking}
-                </span>
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Remote Branches Section */}
-      <div
-        data-ctx="sidebar-section"
-        data-id="remotes"
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          margin: "16px 8px 6px",
-        }}
-      >
-        <h6
-          style={{
-            margin: 0,
-            fontSize: "var(--font-size-xs)",
-            fontWeight: 600,
-            textTransform: "uppercase",
-            letterSpacing: "0.5px",
-            color: "var(--mut)",
-          }}
-        >
-          {t.sidebar.remotes}
-        </h6>
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={() => setShowRemoteModal(true)}
-          style={{ padding: "1px 6px", fontSize: "11px" }}
-          title="Управление удалёнными репозиториями"
-        >
-          ⚙
-        </Button>
-      </div>
-
-      <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-        {refs?.remote_branches.length === 0 ? (
-          <div style={{ padding: "4px 8px", fontSize: "var(--font-size-xs)", color: "var(--mut)" }}>
-            (нет remote)
-          </div>
-        ) : (
-          refs?.remote_branches.map((remote) => (
-            <div
-              key={remote.name}
-              data-ctx="remote-branch"
-              data-id={remote.name}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-                padding: "3px 8px",
-                fontSize: "var(--font-size-sm)",
-                color: "var(--mut)",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-              }}
-              title={remote.name}
-            >
-              <span style={{ fontSize: "11px" }}>🌐</span>
-              <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis" }}>
-                {remote.name}
-              </span>
-            </div>
-          ))
-        )}
-      </div>
-
-      {/* Tags Section */}
-      <div
-        data-ctx="sidebar-section"
-        data-id="tags"
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          margin: "16px 8px 6px",
-        }}
-      >
-        <h6
-          style={{
-            margin: 0,
-            fontSize: "var(--font-size-xs)",
-            fontWeight: 600,
-            textTransform: "uppercase",
-            letterSpacing: "0.5px",
-            color: "var(--mut)",
-          }}
-        >
-          {t.sidebar.tags}
-        </h6>
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={() => setShowCreateTag(true)}
-          style={{ padding: "1px 6px", fontSize: "11px" }}
-          title="Создать тег"
-        >
-          +
-        </Button>
-      </div>
-
-      <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-        {refs?.tags.length === 0 ? (
-          <div style={{ padding: "4px 8px", fontSize: "var(--font-size-xs)", color: "var(--mut)" }}>
-            (нет тегов)
-          </div>
-        ) : (
-          refs?.tags.map((tag) => (
-            <div
-              key={tag.name}
-              data-ctx="tag"
-              data-id={tag.name}
-              className="row"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-                padding: "3px 8px",
-                borderRadius: "var(--radius-base)",
-                fontSize: "var(--font-size-sm)",
-                color: "var(--tx)",
-              }}
-            >
-              <span style={{ fontSize: "11px" }}>🏷</span>
-              <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                {tag.name}
-              </span>
-              <Button
-                size="sm"
-                variant="ghost"
-                title="Удалить тег"
-                onClick={() => setTagToDelete(tag)}
-                style={{ padding: "0 4px", fontSize: "11px" }}
-              >
-                ✕
-              </Button>
-            </div>
-          ))
-        )}
-      </div>
-
-      {/* Stash Section */}
-      <div
-        data-ctx="sidebar-section"
-        data-id="stashes"
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          margin: "16px 8px 6px",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-          <h6
-            style={{
-              margin: 0,
-              fontSize: "var(--font-size-xs)",
-              fontWeight: 600,
-              textTransform: "uppercase",
-              letterSpacing: "0.5px",
-              color: "var(--mut)",
-            }}
-          >
-            Stash
-          </h6>
-          {stashes.length > 0 && (
-            <b
-              style={{
-                fontSize: "10px",
-                backgroundColor: "var(--bg3)",
-                color: "var(--tx)",
-                borderRadius: "9px",
-                padding: "0 5px",
-                lineHeight: "14px",
-              }}
-            >
-              {stashes.length}
-            </b>
-          )}
-        </div>
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={() => setShowStashModal(true)}
-          style={{ padding: "1px 6px", fontSize: "11px" }}
-          title="Управление Stash"
-        >
-          {stashes.length > 0 ? "Открыть" : "+"}
-        </Button>
-      </div>
-
-      <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-        {stashes.length === 0 ? (
-          <div style={{ padding: "3px 8px", fontSize: "var(--font-size-xs)", color: "var(--mut)" }}>
-            (нет сохранённых)
-          </div>
-        ) : (
-          stashes.slice(0, 5).map((s) => (
-            <div
-              key={s.selector}
-              onClick={() => setShowStashModal(true)}
-              className="row"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-                padding: "3px 8px",
-                fontSize: "var(--font-size-sm)",
-                color: "var(--mut)",
-                cursor: "pointer",
-                borderRadius: "var(--radius-base)",
-              }}
-              title={s.message}
-            >
-              <b className="mono" style={{ fontSize: "11px", color: "var(--acc)" }}>
-                {s.selector}
-              </b>
-              <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                {s.message}
-              </span>
-            </div>
-          ))
-        )}
-      </div>
-
-      {/* WORKTREES SECTION */}
-      <div
-        data-ctx="sidebar-section"
-        data-id="worktrees"
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          margin: "14px 0 4px",
-          padding: "0 8px",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-          <span
-            style={{
-              fontSize: "var(--font-size-xs)",
-              fontWeight: 600,
-              color: "var(--mut)",
-              letterSpacing: "0.5px",
-            }}
-          >
-            WORKTREES
-          </span>
-          {worktrees.length > 0 && (
-            <b
-              style={{
-                fontSize: "10px",
-                backgroundColor: "var(--bg3)",
-                color: "var(--tx)",
-                borderRadius: "9px",
-                padding: "0 5px",
-                lineHeight: "14px",
-              }}
-            >
-              {worktrees.length}
-            </b>
-          )}
-        </div>
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={() => setShowCreateWorktree(true)}
-          style={{ padding: "1px 6px", fontSize: "11px" }}
-          title="Добавить рабочее дерево"
-        >
-          +
-        </Button>
-      </div>
-
-      <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-        {worktrees.length === 0 ? (
-          <div style={{ padding: "3px 8px", fontSize: "var(--font-size-xs)", color: "var(--mut)" }}>
-            (нет worktrees)
-          </div>
-        ) : (
-          worktrees.map((wt) => {
-            const isCurrent =
-              currentRepo &&
-              currentRepo.path.replace(/[\\/]+$/, "").toLowerCase() ===
-                wt.path.replace(/[\\/]+$/, "").toLowerCase();
-            const folderName = wt.path.split(/[\\/]/).pop() || wt.path;
-
-            return (
-              <div
-                key={wt.path}
-                onClick={() => !isCurrent && openRepository(wt.path)}
-                className={`row ${isCurrent ? "on" : ""}`}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  padding: "3px 8px",
-                  fontSize: "var(--font-size-sm)",
-                  color: isCurrent ? "var(--tx)" : "var(--mut)",
-                  cursor: isCurrent ? "default" : "pointer",
-                  backgroundColor: isCurrent ? "var(--sel)" : "transparent",
-                  borderRadius: "var(--radius-base)",
-                }}
-                title={`${wt.path} (${wt.branch || wt.head.substring(0, 7)})`}
-              >
-                <span style={{ fontSize: "12px" }}>📁</span>
-                <span
-                  style={{
-                    flex: 1,
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {folderName}
-                </span>
-
-                {wt.is_main ? (
-                  <span style={{ fontSize: "10px", color: "var(--acc)", opacity: 0.8 }}>
-                    main
-                  </span>
-                ) : (
-                  <span style={{ fontSize: "10px", color: "var(--mut)", opacity: 0.8 }}>
-                    {wt.branch || wt.head.substring(0, 7)}
-                  </span>
-                )}
-
-                {wt.is_locked && (
-                  <span
-                    style={{ fontSize: "10px", color: "var(--del)" }}
-                    title={wt.lock_reason || "Заблокировано"}
-                  >
-                    🔒
-                  </span>
-                )}
-
-                {!wt.is_main && (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setWorktreeToDelete(wt);
-                    }}
-                    style={{
-                      padding: "0 4px",
-                      fontSize: "10px",
-                      height: "18px",
-                      color: "var(--mut)",
-                    }}
-                    title="Удалить worktree"
-                  >
-                    ✕
-                  </Button>
-                )}
-              </div>
-            );
-          })
-        )}
-      </div>
-
-      {/* SUBMODULES SECTION */}
-      <div
-        data-ctx="sidebar-section"
-        data-id="submodules"
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          margin: "14px 0 4px",
-          padding: "0 8px",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-          <span
-            style={{
-              fontSize: "var(--font-size-xs)",
-              fontWeight: 600,
-              color: "var(--mut)",
-              letterSpacing: "0.5px",
-            }}
-          >
-            SUBMODULES
-          </span>
-          {submodules.length > 0 && (
-            <b
-              style={{
-                fontSize: "10px",
-                backgroundColor: "var(--bg3)",
-                color: "var(--tx)",
-                borderRadius: "9px",
-                padding: "0 5px",
-                lineHeight: "14px",
-              }}
-            >
-              {submodules.length}
-            </b>
-          )}
-        </div>
-        <Button
-          size="sm"
-          variant="ghost"
-          disabled={isSyncingSubmodules}
-          onClick={async () => {
-            if (!currentRepo) return;
-            await syncSubmodules(currentRepo.path, true, true);
-            await refreshAll();
-          }}
-          style={{ padding: "1px 6px", fontSize: "11px" }}
-          title="Синхронизировать и обновить все подмодули (git submodule update --init --recursive)"
-        >
-          {isSyncingSubmodules ? "…" : "Обновить"}
-        </Button>
-      </div>
-
-      <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-        {submodules.length === 0 ? (
-          <div style={{ padding: "3px 8px", fontSize: "var(--font-size-xs)", color: "var(--mut)" }}>
-            (нет подмодулей)
-          </div>
-        ) : (
-          submodules.map((sub) => {
-            const subRepoPath = currentRepo
-              ? `${currentRepo.path.replace(/[\\/]+$/, "")}/${sub.path.replace(/^[\\/]+/, "")}`
-              : sub.path;
-
-            return (
-              <div
-                key={sub.path}
-                onClick={() => openRepository(subRepoPath)}
-                className="row"
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  padding: "3px 8px",
-                  fontSize: "var(--font-size-sm)",
-                  color: "var(--tx)",
-                  cursor: "pointer",
-                  borderRadius: "var(--radius-base)",
-                }}
-                title={`${sub.path} (${sub.describe || sub.head.substring(0, 7)})`}
-              >
-                <span style={{ fontSize: "12px" }}>📦</span>
-                <span
-                  style={{
-                    flex: 1,
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {sub.name}
-                </span>
-
-                {sub.status_indicator === "-" && (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={async (e) => {
-                      e.stopPropagation();
-                      if (!currentRepo) return;
-                      await initializeSubmodule(currentRepo.path, sub.path);
-                      await refreshAll();
-                    }}
-                    style={{
-                      padding: "0 4px",
-                      fontSize: "10px",
-                      height: "18px",
-                      color: "var(--acc)",
-                    }}
-                    title="Инициализировать подмодуль"
-                  >
-                    Инит
-                  </Button>
-                )}
-
-                {sub.status_indicator === "+" && (
-                  <span
-                    style={{ fontSize: "10px", color: "var(--add)", fontWeight: 600 }}
-                    title="Текущий коммит подмодуля отличается от индекса"
-                  >
-                    +изм
-                  </span>
-                )}
-
-                {sub.status_indicator === "U" && (
-                  <span
-                    style={{ fontSize: "10px", color: "var(--del)", fontWeight: 600 }}
-                    title="Конфликт слияния подмодуля"
-                  >
-                    конфликт
-                  </span>
-                )}
-
-                <span
-                  className="mono"
-                  style={{ fontSize: "10px", color: "var(--mut)", opacity: 0.8 }}
-                >
-                  {sub.describe || sub.head.substring(0, 7)}
-                </span>
-              </div>
-            );
-          })
-        )}
-      </div>
-
-      {/* Create Branch Modal */}
-      <Modal
-        isOpen={showCreateBranch}
-        onClose={() => setShowCreateBranch(false)}
-        title="Создать ветку"
-        confirmLabel="Создать"
-        onConfirm={handleCreateBranch}
-      >
-        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-          <div>
-            <label style={{ fontSize: "12px", color: "var(--mut)", display: "block", marginBottom: "4px" }}>
-              Имя ветки
-            </label>
-            <Input
-              placeholder="feature/new-feature"
-              value={newBranchName}
-              onChange={(e) => setNewBranchName(e.target.value)}
-              autoFocus
-            />
-          </div>
-          <Checkbox
-            label="Переключиться на ветку сразу"
-            checked={switchToNewBranch}
-            onChange={(e) => setSwitchToNewBranch(e.target.checked)}
-          />
-        </div>
-      </Modal>
-
-      {/* Rename Branch Modal */}
-      <Modal
-        isOpen={branchToRename !== null}
-        onClose={() => setBranchToRename(null)}
-        title={`Переименовать ветку ${branchToRename?.name}`}
-        confirmLabel="Переименовать"
-        onConfirm={handleRenameBranch}
-      >
-        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-          <label style={{ fontSize: "12px", color: "var(--mut)" }}>Новое имя ветки</label>
-          <Input
-            value={renamedBranchName}
-            onChange={(e) => setRenamedBranchName(e.target.value)}
-            autoFocus
-          />
-        </div>
-      </Modal>
-
-      {/* Delete Branch Modal */}
-      <Modal
-        isOpen={branchToDelete !== null}
-        onClose={() => setBranchToDelete(null)}
-        title={`Удалить ветку ${branchToDelete?.name}?`}
-        confirmLabel="Удалить ветку"
-        isDanger={true}
-        onConfirm={handleDeleteBranch}
-      >
-        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-          <p style={{ margin: 0, lineHeight: 1.5 }}>
-            Вы уверены, что хотите удалить ветку <b>{branchToDelete?.name}</b>?
-          </p>
-          <Checkbox
-            label="Принудительное удаление (-D)"
-            checked={forceDeleteBranch}
-            onChange={(e) => setForceDeleteBranch(e.target.checked)}
-          />
-        </div>
-      </Modal>
-
-      {/* Merge Confirmation Modal */}
-      <Modal
-        isOpen={branchToMerge !== null}
-        onClose={() => setBranchToMerge(null)}
-        title="Слияние веток"
-        confirmLabel={`Влить ${branchToMerge?.name} в ${currentBranchName}`}
-        onConfirm={handleMergeBranch}
-      >
-        <p style={{ margin: 0, lineHeight: 1.5 }}>
-          Ветка <b>{branchToMerge?.name}</b> будет слита в текущую ветку <b>{currentBranchName}</b>.
-          Если возникнут конфликты, приложение перейдёт в режим разрешения конфликтов.
-        </p>
-      </Modal>
-
-      {/* Create Tag Modal */}
-      <Modal
-        isOpen={showCreateTag}
-        onClose={() => setShowCreateTag(false)}
-        title="Создать тег"
-        confirmLabel="Создать тег"
-        onConfirm={handleCreateTag}
-        width="min(460px, 94vw)"
-      >
-        <div style={{ display: "flex", flexDirection: "column", gap: "10px", width: "100%", minWidth: 0 }}>
-          <div>
-            <label style={{ fontSize: "12px", color: "var(--mut)", display: "block", marginBottom: "4px" }}>
-              Имя тега
-            </label>
-            <Input
-              placeholder="v1.0.0"
-              value={newTagName}
-              onChange={(e) => setNewTagName(e.target.value)}
-              autoFocus
-            />
-          </div>
-          <div>
-            <label style={{ fontSize: "12px", color: "var(--mut)", display: "block", marginBottom: "4px" }}>
-              Сообщение тега (опционально, создаст аннотированный тег)
-            </label>
-            <Input
-              placeholder="Релиз версии 1.0.0"
-              value={newTagMessage}
-              onChange={(e) => setNewTagMessage(e.target.value)}
-            />
-          </div>
-        </div>
-      </Modal>
-
-      {/* Delete Tag Modal */}
-      <Modal
-        isOpen={tagToDelete !== null}
-        onClose={() => setTagToDelete(null)}
-        title={`Удалить тег ${tagToDelete?.name}?`}
-        confirmLabel="Удалить тег"
-        isDanger={true}
-        onConfirm={handleDeleteTag}
-      >
-        <p style={{ margin: 0, lineHeight: 1.5 }}>
-          Вы уверены, что хотите удалить тег <b>{tagToDelete?.name}</b>?
-        </p>
-      </Modal>
-
-      {/* Create Worktree Modal */}
-      <CreateWorktreeModal
-        isOpen={showCreateWorktree}
-        branches={refs?.local_branches || []}
-        onClose={() => setShowCreateWorktree(false)}
-        onConfirm={handleCreateWorktree}
+      {/* Branches Section */}
+      <BranchesSection
+        refs={refs}
+        onOpenCreateModal={() => setShowCreateBranch(true)}
+        onSwitchBranch={handleSwitchBranch}
       />
 
-      {/* Delete Worktree Modal */}
-      <Modal
-        isOpen={worktreeToDelete !== null}
-        onClose={() => {
+      {/* Remote Branches Section */}
+      <RemotesSection
+        refs={refs}
+        onOpenRemoteModal={() => setShowRemoteModal(true)}
+      />
+
+      {/* Tags Section */}
+      <TagsSection
+        refs={refs}
+        onOpenCreateTag={() => setShowCreateTag(true)}
+        onSelectTagToDelete={setTagToDelete}
+      />
+
+      {/* Stash Section */}
+      <StashesSection
+        stashes={stashes}
+        onOpenStashModal={() => setShowStashModal(true)}
+      />
+
+      {/* Worktrees Section */}
+      <WorktreesSection
+        worktrees={worktrees}
+        currentRepoPath={currentRepo?.path}
+        onOpenCreateWorktree={() => setShowCreateWorktree(true)}
+        onSelectWorktree={(path) => openRepository(path)}
+        onSelectWorktreeToDelete={setWorktreeToDelete}
+      />
+
+      {/* Submodules Section */}
+      <SubmodulesSection
+        submodules={submodules}
+        isSyncing={isSyncingSubmodules}
+        onSyncSubmodules={async () => {
+          if (!currentRepo) return;
+          await syncSubmodules(currentRepo.path, true, true);
+          await refreshAll();
+        }}
+        onSelectSubmodule={(sub) => {
+          const subRepoPath = currentRepo
+            ? `${currentRepo.path.replace(/[\\/]+$/, "")}/${sub.path.replace(/^[\\/]+/, "")}`
+            : sub.path;
+          openRepository(subRepoPath);
+        }}
+        onInitializeSubmodule={async (path) => {
+          if (!currentRepo) return;
+          await initializeSubmodule(currentRepo.path, path);
+          await refreshAll();
+        }}
+      />
+
+      {/* Modals */}
+      <SidebarModals
+        currentBranchName={currentBranchName}
+        localBranches={refs?.local_branches || []}
+        showCreateBranch={showCreateBranch}
+        onCloseCreateBranch={() => setShowCreateBranch(false)}
+        newBranchName={newBranchName}
+        setNewBranchName={setNewBranchName}
+        switchToNewBranch={switchToNewBranch}
+        setSwitchToNewBranch={setSwitchToNewBranch}
+        onConfirmCreateBranch={handleCreateBranch}
+        branchToRename={branchToRename}
+        onCloseRenameBranch={() => setBranchToRename(null)}
+        renamedBranchName={renamedBranchName}
+        setRenamedBranchName={setRenamedBranchName}
+        onConfirmRenameBranch={handleRenameBranch}
+        branchToDelete={branchToDelete}
+        onCloseDeleteBranch={() => setBranchToDelete(null)}
+        forceDeleteBranch={forceDeleteBranch}
+        setForceDeleteBranch={setForceDeleteBranch}
+        onConfirmDeleteBranch={handleDeleteBranch}
+        branchToMerge={branchToMerge}
+        onCloseMergeBranch={() => setBranchToMerge(null)}
+        onConfirmMergeBranch={handleMergeBranch}
+        showCreateTag={showCreateTag}
+        onCloseCreateTag={() => setShowCreateTag(false)}
+        newTagName={newTagName}
+        setNewTagName={setNewTagName}
+        newTagMessage={newTagMessage}
+        setNewTagMessage={setNewTagMessage}
+        onConfirmCreateTag={handleCreateTag}
+        tagToDelete={tagToDelete}
+        onCloseDeleteTag={() => setTagToDelete(null)}
+        onConfirmDeleteTag={handleDeleteTag}
+        showCreateWorktree={showCreateWorktree}
+        onCloseCreateWorktree={() => setShowCreateWorktree(false)}
+        onConfirmCreateWorktree={handleCreateWorktree}
+        worktreeToDelete={worktreeToDelete}
+        onCloseDeleteWorktree={() => {
           setWorktreeToDelete(null);
           setForceDeleteWorktree(false);
         }}
-        title={`Удалить рабочее дерево?`}
-        confirmLabel="Удалить worktree"
-        isDanger={true}
-        onConfirm={handleDeleteWorktree}
-      >
-        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-          <p style={{ margin: 0, lineHeight: 1.5 }}>
-            Вы уверены, что хотите удалить рабочее дерево по пути{" "}
-            <b>{worktreeToDelete?.path}</b>?
-          </p>
-          <Checkbox
-            label="Принудительное удаление (--force)"
-            checked={forceDeleteWorktree}
-            onChange={(e) => setForceDeleteWorktree(e.target.checked)}
-          />
-        </div>
-      </Modal>
-
-      {/* Remote Management Modal */}
-      <RemoteModal
-        isOpen={showRemoteModal || isRemoteModalOpen}
-        onClose={() => {
+        forceDeleteWorktree={forceDeleteWorktree}
+        setForceDeleteWorktree={setForceDeleteWorktree}
+        onConfirmDeleteWorktree={handleDeleteWorktree}
+        showRemoteModal={showRemoteModal || isRemoteModalOpen}
+        onCloseRemoteModal={() => {
           setShowRemoteModal(false);
           setRemoteModalOpen(false);
         }}
-      />
-
-      {/* Stash Management Modal */}
-      <StashModal
-        isOpen={showStashModal || isStashModalOpen}
-        onClose={() => {
+        showStashModal={showStashModal || isStashModalOpen}
+        onCloseStashModal={() => {
           setShowStashModal(false);
           setStashModalOpen(false);
         }}
