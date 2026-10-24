@@ -88,7 +88,8 @@ export async function getCommits(
   skip: number,
   limit: number,
   branch?: string,
-  search?: string
+  search?: string,
+  author?: string
 ): Promise<Commit[]> {
   return invoke<Commit[]>("get_commits", {
     repoPath,
@@ -96,7 +97,12 @@ export async function getCommits(
     limit,
     branch: branch || null,
     search: search || null,
+    author: author || null,
   });
+}
+
+export async function getGitUser(repoPath: string): Promise<string | null> {
+  return invoke<string | null>("get_git_user", { repoPath });
 }
 
 export async function getCommitDetails(

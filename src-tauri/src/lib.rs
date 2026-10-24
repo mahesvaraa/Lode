@@ -55,6 +55,7 @@ pub fn run() {
             // Log commands
             commands::log::get_commits,
             commands::log::get_commit_details,
+            commands::log::get_git_user,
             // Staging & Commit commands
             commands::staging::stage_file,
             commands::staging::unstage_file,

@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { getCommits, getCommitDetails, getCommitDiff } from "@/api/client";
+import { getCommits, getCommitDetails, getCommitDiff, getGitUser } from "@/api/client";
 import { computeGraph, type GraphNode } from "@/lib/graph";
 import type { Commit } from "@/api/types/commit";
 import type { CommitDetails } from "@/api/types/commit_details";
@@ -25,6 +25,9 @@ interface HistoryState {
 
   searchQuery: string;
   selectedBranch: string;
+  authorFilter: string;
+  currentUser: string | null;
+  onlyMyCommits: boolean;
 
   loadInitial: (repoPath: string) => Promise<void>;
   loadMore: (repoPath: string) => Promise<void>;
@@ -32,6 +35,8 @@ interface HistoryState {
   selectCommitFile: (repoPath: string, path: string | null) => Promise<void>;
   setSearchQuery: (repoPath: string, query: string) => Promise<void>;
   setSelectedBranch: (repoPath: string, branch: string) => Promise<void>;
+  setAuthorFilter: (repoPath: string, author: string) => Promise<void>;
+  setOnlyMyCommits: (repoPath: string, onlyMine: boolean) => Promise<void>;
   reset: () => void;
 }
 
@@ -53,6 +58,9 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
 
   searchQuery: "",
   selectedBranch: "ALL",
+  authorFilter: "",
+  currentUser: null,
+  onlyMyCommits: false,
 
   loadInitial: async (repoPath: string) => {
     set({
@@ -62,13 +70,22 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
     });
 
     try {
-      const { selectedBranch, searchQuery } = get();
+      let { currentUser } = get();
+      if (!currentUser) {
+        currentUser = await getGitUser(repoPath);
+        if (currentUser) set({ currentUser });
+      }
+
+      const { selectedBranch, searchQuery, onlyMyCommits, authorFilter } = get();
+      const effectiveAuthor = onlyMyCommits ? currentUser || undefined : (authorFilter || undefined);
+
       const newCommits = await getCommits(
         repoPath,
         0,
         PAGE_SIZE,
         selectedBranch,
-        searchQuery
+        searchQuery,
+        effectiveAuthor
       );
 
       const graph = computeGraph(newCommits, []);
@@ -95,17 +112,19 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
   },
 
   loadMore: async (repoPath: string) => {
-    const { commits, lanesState, isLoading, hasMore, selectedBranch, searchQuery } = get();
+    const { commits, lanesState, isLoading, hasMore, selectedBranch, searchQuery, onlyMyCommits, currentUser, authorFilter } = get();
     if (isLoading || !hasMore) return;
 
     set({ isLoading: true });
     try {
+      const effectiveAuthor = onlyMyCommits ? currentUser || undefined : (authorFilter || undefined);
       const newCommits = await getCommits(
         repoPath,
         commits.length,
         PAGE_SIZE,
         selectedBranch,
-        searchQuery
+        searchQuery,
+        effectiveAuthor
       );
 
       // Continue graph calculation preserving prior lanesState
@@ -192,6 +211,16 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
     await get().loadInitial(repoPath);
   },
 
+  setAuthorFilter: async (repoPath: string, authorFilter: string) => {
+    set({ authorFilter });
+    await get().loadInitial(repoPath);
+  },
+
+  setOnlyMyCommits: async (repoPath: string, onlyMyCommits: boolean) => {
+    set({ onlyMyCommits });
+    await get().loadInitial(repoPath);
+  },
+
   reset: () =>
     set({
       commits: [],
@@ -208,5 +237,7 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
       isLoadingFileDiff: false,
       searchQuery: "",
       selectedBranch: "ALL",
+      authorFilter: "",
+      onlyMyCommits: false,
     }),
 }));

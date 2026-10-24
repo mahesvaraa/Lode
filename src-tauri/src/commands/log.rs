@@ -15,6 +15,7 @@ pub async fn get_commits(
     limit: usize,
     branch: Option<String>,
     search: Option<String>,
+    author: Option<String>,
     runner: State<'_, GitRunner>,
 ) -> Result<Vec<Commit>, AppError> {
     let canonical = canonicalize_repo_path(&repo_path)?;
@@ -24,6 +25,7 @@ pub async fn get_commits(
         .filter(|b| !b.is_empty() && *b != "ALL");
 
     let search_query = search.as_deref().map(str::trim).filter(|q| !q.is_empty());
+    let author_query = author.as_deref().map(str::trim).filter(|a| !a.is_empty());
 
     if let Some(query) = search_query {
         let mut results = Vec::new();
@@ -43,6 +45,13 @@ pub async fn get_commits(
                     if let Ok(hash_out) = runner.run_read(Some(&canonical), &hash_log_args).await {
                         let parsed = parse_git_log(&hash_out.stdout);
                         for c in parsed {
+                            if let Some(auth) = author_query {
+                                if !c.author_name.to_lowercase().contains(&auth.to_lowercase())
+                                    && !c.author_email.to_lowercase().contains(&auth.to_lowercase())
+                                {
+                                    continue;
+                                }
+                            }
                             if seen_hashes.insert(c.hash.clone()) {
                                 results.push(c);
                             }
@@ -63,6 +72,12 @@ pub async fn get_commits(
             base_args.push(b);
         } else {
             base_args.push("--all");
+        }
+
+        let author_filter_arg;
+        if let Some(auth) = author_query {
+            author_filter_arg = format!("--author={auth}");
+            base_args.push(&author_filter_arg);
         }
 
         let mut msg_args = base_args.clone();
@@ -124,8 +139,37 @@ pub async fn get_commits(
         args.push("--all");
     }
 
+    let author_filter_arg;
+    if let Some(auth) = author_query {
+        author_filter_arg = format!("--author={auth}");
+        args.push(&author_filter_arg);
+    }
+
     let output = runner.run_read(Some(&canonical), &args).await?;
     Ok(parse_git_log(&output.stdout))
+}
+
+#[tauri::command]
+pub async fn get_git_user(
+    repo_path: String,
+    runner: State<'_, GitRunner>,
+) -> Result<Option<String>, AppError> {
+    let canonical = canonicalize_repo_path(&repo_path)?;
+    let out = runner.run_read(Some(&canonical), &["config", "user.name"]).await;
+    if let Ok(o) = out {
+        let name = String::from_utf8_lossy(&o.stdout).trim().to_string();
+        if !name.is_empty() {
+            return Ok(Some(name));
+        }
+    }
+    let email_out = runner.run_read(Some(&canonical), &["config", "user.email"]).await;
+    if let Ok(o) = email_out {
+        let email = String::from_utf8_lossy(&o.stdout).trim().to_string();
+        if !email.is_empty() {
+            return Ok(Some(email));
+        }
+    }
+    Ok(None)
 }
 
 #[tauri::command]

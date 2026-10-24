@@ -1,15 +1,17 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { EmptyState, Input, Skeleton, Splitter } from "@/ui";
+import { Button, EmptyState, Input, Skeleton, Splitter } from "@/ui";
 import { CommitRow } from "./CommitRow";
 import { CommitDetailsPanel } from "./CommitDetailsPanel";
 import { useHistoryStore } from "@/store/historyStore";
 import { useRepoStore } from "@/store/repoStore";
 import { useStatusStore } from "@/store/statusStore";
+import { useRefsStore } from "@/store/refsStore";
 
 export const HistoryView: React.FC = () => {
   const currentRepo = useRepoStore((s) => s.currentRepo);
   const status = useStatusStore((s) => s.status);
+  const refs = useRefsStore((s) => s.refs);
 
   const commits = useHistoryStore((s) => s.commits);
   const graphNodes = useHistoryStore((s) => s.graphNodes);
@@ -25,6 +27,9 @@ export const HistoryView: React.FC = () => {
   const setSearchQuery = useHistoryStore((s) => s.setSearchQuery);
   const setSelectedBranch = useHistoryStore((s) => s.setSelectedBranch);
   const selectedBranch = useHistoryStore((s) => s.selectedBranch);
+  const onlyMyCommits = useHistoryStore((s) => s.onlyMyCommits);
+  const setOnlyMyCommits = useHistoryStore((s) => s.setOnlyMyCommits);
+  const currentUser = useHistoryStore((s) => s.currentUser);
 
   const [detailsPanelWidth, setDetailsPanelWidth] = useState(440);
   const [searchInput, setSearchInput] = useState("");
@@ -111,10 +116,29 @@ export const HistoryView: React.FC = () => {
             fontSize: "var(--font-size-sm)",
             outline: "none",
             cursor: "pointer",
+            maxWidth: "200px",
           }}
         >
           <option value="ALL">Все ветки (--all)</option>
           <option value="HEAD">Текущая ветка (HEAD: {currentHeadBranch})</option>
+          {refs && refs.local_branches.length > 0 && (
+            <optgroup label="Локальные ветки">
+              {refs.local_branches.map((b) => (
+                <option key={b.name} value={b.name}>
+                  {b.name}
+                </option>
+              ))}
+            </optgroup>
+          )}
+          {refs && refs.remote_branches.length > 0 && (
+            <optgroup label="Удалённые ветки">
+              {refs.remote_branches.map((b) => (
+                <option key={b.name} value={b.name}>
+                  {b.name}
+                </option>
+              ))}
+            </optgroup>
+          )}
         </select>
 
         {/* Search input */}
@@ -126,6 +150,25 @@ export const HistoryView: React.FC = () => {
             style={{ height: "26px", fontSize: "var(--font-size-sm)" }}
           />
         </div>
+
+        {/* "Only my commits" toggle */}
+        <Button
+          size="sm"
+          variant={onlyMyCommits ? "primary" : "ghost"}
+          onClick={() => {
+            if (currentRepo) {
+              setOnlyMyCommits(currentRepo.path, !onlyMyCommits);
+            }
+          }}
+          title={
+            currentUser
+              ? `Показать только коммиты автора "${currentUser}"`
+              : "Показать только мои коммиты (git config user.name)"
+          }
+          style={{ height: "26px", padding: "0 10px", fontSize: "11px" }}
+        >
+          {onlyMyCommits ? "✓ Только мои" : "Только мои"}
+        </Button>
 
         {/* Stats */}
         <span style={{ fontSize: "var(--font-size-xs)", color: "var(--mut)", marginLeft: "auto" }}>
