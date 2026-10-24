@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import { Button, Input, IconButton, Banner } from "@/ui";
-import { t } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n";
 import { useRepoStore } from "@/store/repoStore";
 import { useUiStore } from "@/store/uiStore";
 
 export const OpenRepoScreen: React.FC = () => {
+  const { t } = useI18n();
   const chooseAndOpenRepo = useRepoStore((s) => s.chooseAndOpenRepo);
   const openRepository = useRepoStore((s) => s.openRepository);
   const recentRepos = useRepoStore((s) => s.recentRepos);

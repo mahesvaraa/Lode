@@ -1,11 +1,12 @@
 import React, { useState } from "react";
 import { Button, Input } from "@/ui";
-import { t } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n";
 import { setCustomGitPath } from "@/api/client";
 import { useRepoStore } from "@/store/repoStore";
 import { useToastStore } from "@/store/toastStore";
 
 export const GitMissingScreen: React.FC = () => {
+  const { t } = useI18n();
   const gitInfo = useRepoStore((s) => s.gitInfo);
   const setGitInfo = useRepoStore((s) => s.setGitInfo);
   const showToast = useToastStore((s) => s.showToast);

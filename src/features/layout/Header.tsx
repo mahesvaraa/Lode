@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Button, Checkbox, IconButton, Chip, Modal } from "@/ui";
-import { t } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n";
 import { useRepoStore } from "@/store/repoStore";
 import { useUiStore } from "@/store/uiStore";
 import { useToastStore } from "@/store/toastStore";
@@ -12,6 +12,7 @@ import { CommandPalette } from "@/features/palette/CommandPalette";
 import { SettingsModal } from "@/features/settings/SettingsModal";
 
 export const Header: React.FC = () => {
+  const { t } = useI18n();
   const currentRepo = useRepoStore((s) => s.currentRepo);
   const closeRepo = useRepoStore((s) => s.closeRepo);
 

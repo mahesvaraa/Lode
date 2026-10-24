@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Button, Checkbox, Input, Modal, Select } from "@/ui";
 import { useSettingsStore } from "@/store/settingsStore";
+import { useI18n } from "@/lib/i18n";
 import { checkGit } from "@/api/client";
 import { useToastStore } from "@/store/toastStore";
 import type { GitInfo } from "@/api/types/git_info";
@@ -14,6 +15,7 @@ type SettingsTab = "appearance" | "git" | "performance" | "hotkeys" | "about";
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
   const { settings, updateSettings } = useSettingsStore();
+  const { locale, setLocale, t: i18nText } = useI18n();
   const showToast = useToastStore((s) => s.showToast);
 
   const [activeTab, setActiveTab] = useState<SettingsTab>("appearance");
@@ -97,6 +99,48 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
           {/* 1. Appearance */}
           {activeTab === "appearance" && (
             <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+              <div>
+                <label style={{ fontSize: "12px", fontWeight: 600, display: "block", marginBottom: "6px" }}>
+                  {i18nText.settings.language}
+                </label>
+                <div style={{ display: "flex", gap: "8px" }}>
+                  <button
+                    onClick={() => {
+                      setLocale("ru");
+                      showToast("Язык интерфейса: Русский");
+                    }}
+                    style={{
+                      padding: "6px 14px",
+                      fontSize: "12px",
+                      borderRadius: "var(--radius-base)",
+                      border: "1px solid var(--line)",
+                      backgroundColor: locale === "ru" ? "var(--acc)" : "var(--bg2)",
+                      color: locale === "ru" ? "#ffffff" : "var(--tx)",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Русский
+                  </button>
+                  <button
+                    onClick={() => {
+                      setLocale("en");
+                      showToast("Language changed: English");
+                    }}
+                    style={{
+                      padding: "6px 14px",
+                      fontSize: "12px",
+                      borderRadius: "var(--radius-base)",
+                      border: "1px solid var(--line)",
+                      backgroundColor: locale === "en" ? "var(--acc)" : "var(--bg2)",
+                      color: locale === "en" ? "#ffffff" : "var(--tx)",
+                      cursor: "pointer",
+                    }}
+                  >
+                    English
+                  </button>
+                </div>
+              </div>
+
               <div>
                 <label style={{ fontSize: "12px", fontWeight: 600, display: "block", marginBottom: "6px" }}>
                   Тема оформления

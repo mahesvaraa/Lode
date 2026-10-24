@@ -9,10 +9,11 @@ import { useRemoteStore } from "@/store/remoteStore";
 import { useStashStore } from "@/store/stashStore";
 import { RemoteModal } from "@/features/remote/RemoteModal";
 import { StashModal } from "@/features/stash/StashModal";
-import { t } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n";
 import type { GitRef } from "@/api/types/git_ref";
 
 export const Sidebar: React.FC = () => {
+  const { t } = useI18n();
   const activeView = useUiStore((s) => s.activeView);
   const setActiveView = useUiStore((s) => s.setActiveView);
   const sidebarWidth = useUiStore((s) => s.sidebarWidth);

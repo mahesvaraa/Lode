@@ -7,6 +7,8 @@ node_modules/
 dist/
 dist-ssr/
 *.local
+*.zip
+*.tar.gz
 
 # Tauri / Rust build
 src-tauri/target/
