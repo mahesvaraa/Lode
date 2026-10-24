@@ -88,3 +88,65 @@ pub async fn open_repo(
         current_branch,
     })
 }
+
+#[tauri::command]
+pub async fn init_repo(
+    path: String,
+    initial_branch: Option<String>,
+    runner: State<'_, GitRunner>,
+    settings: State<'_, SettingsManager>,
+    watcher: State<'_, RepoWatcher>,
+) -> Result<RepoDetails, AppError> {
+    let target = PathBuf::from(&path);
+    if !target.exists() {
+        std::fs::create_dir_all(&target).map_err(|e| {
+            AppError::new(
+                ErrorKind::InvalidPath,
+                format!("Не удалось создать директорию '{path}': {e}"),
+                None,
+            )
+        })?;
+    }
+
+    let branch = initial_branch.as_deref().unwrap_or("main");
+    let args = ["init", "-b", branch];
+
+    runner.run_write(&target, &args).await?;
+    open_repo(path, runner, settings, watcher).await
+}
+
+#[tauri::command]
+pub async fn clone_repo(
+    url: String,
+    target_path: String,
+    runner: State<'_, GitRunner>,
+    settings: State<'_, SettingsManager>,
+    watcher: State<'_, RepoWatcher>,
+) -> Result<RepoDetails, AppError> {
+    let clean_url = url.trim();
+    if clean_url.is_empty() {
+        return Err(AppError::new(
+            ErrorKind::Unknown,
+            "URL репозитория не может быть пустым",
+            None,
+        ));
+    }
+
+    let target = PathBuf::from(&target_path);
+    if let Some(parent) = target.parent() {
+        if !parent.as_os_str().is_empty() && !parent.exists() {
+            std::fs::create_dir_all(parent).map_err(|e| {
+                AppError::new(
+                    ErrorKind::InvalidPath,
+                    format!("Не удалось создать родительскую директорию: {e}"),
+                    None,
+                )
+            })?;
+        }
+    }
+
+    let args = ["clone", "--progress", "--", clean_url, &target_path];
+    runner.run_clone(None, &args).await?;
+
+    open_repo(target_path, runner, settings, watcher).await
+}

@@ -1,7 +1,9 @@
 import { create } from "zustand";
 import {
   checkGit,
+  cloneRepo,
   getSettings,
+  initRepo,
   openRepo,
   pickFolder,
   removeRecentRepo,
@@ -20,6 +22,8 @@ interface RepoState {
 
   initApp: () => Promise<void>;
   openRepository: (path: string) => Promise<boolean>;
+  initRepository: (path: string, initialBranch?: string) => Promise<boolean>;
+  cloneRepository: (url: string, targetPath: string) => Promise<boolean>;
   chooseAndOpenRepo: () => Promise<boolean>;
   closeRepo: () => void;
   removeRecent: (path: string) => Promise<void>;
@@ -88,6 +92,56 @@ export const useRepoStore = create<RepoState>((set, get) => ({
       set({
         isLoadingRepo: false,
         repoError: errorObj.message || "Не удалось открыть репозиторий",
+      });
+      return false;
+    }
+  },
+
+  initRepository: async (path: string, initialBranch?: string) => {
+    set({ isLoadingRepo: true, repoError: null });
+    try {
+      const details = await initRepo(path, initialBranch);
+      const settings = await getSettings();
+      if (typeof localStorage !== "undefined") {
+        localStorage.setItem("lode:current_repo", details.path);
+      }
+      set({
+        currentRepo: details,
+        recentRepos: settings.recent_repos,
+        isLoadingRepo: false,
+        repoError: null,
+      });
+      return true;
+    } catch (err: unknown) {
+      const errorObj = err as { message?: string };
+      set({
+        isLoadingRepo: false,
+        repoError: errorObj.message || "Не удалось инициализировать репозиторий",
+      });
+      return false;
+    }
+  },
+
+  cloneRepository: async (url: string, targetPath: string) => {
+    set({ isLoadingRepo: true, repoError: null });
+    try {
+      const details = await cloneRepo(url, targetPath);
+      const settings = await getSettings();
+      if (typeof localStorage !== "undefined") {
+        localStorage.setItem("lode:current_repo", details.path);
+      }
+      set({
+        currentRepo: details,
+        recentRepos: settings.recent_repos,
+        isLoadingRepo: false,
+        repoError: null,
+      });
+      return true;
+    } catch (err: unknown) {
+      const errorObj = err as { message?: string };
+      set({
+        isLoadingRepo: false,
+        repoError: errorObj.message || "Не удалось клонировать репозиторий",
       });
       return false;
     }

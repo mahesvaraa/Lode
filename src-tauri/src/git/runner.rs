@@ -303,6 +303,16 @@ impl GitRunner {
         self.run_inner(Some(repo_path), args, false, REMOTE_TIMEOUT).await
     }
 
+    /// Execute a git clone command with extended timeout
+    pub async fn run_clone(
+        &self,
+        working_dir: Option<&Path>,
+        args: &[&str],
+    ) -> Result<GitOutput, AppError> {
+        const CLONE_TIMEOUT: Duration = Duration::from_secs(600);
+        self.run_inner(working_dir, args, false, CLONE_TIMEOUT).await
+    }
+
     /// Execute a git write command with custom environment variables
     pub async fn run_write_env(
         &self,

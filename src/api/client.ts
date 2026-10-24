@@ -43,6 +43,14 @@ export async function openRepo(path: string): Promise<RepoDetails> {
   return invoke<RepoDetails>("open_repo", { path });
 }
 
+export async function initRepo(path: string, initialBranch?: string): Promise<RepoDetails> {
+  return invoke<RepoDetails>("init_repo", { path, initialBranch });
+}
+
+export async function cloneRepo(url: string, targetPath: string): Promise<RepoDetails> {
+  return invoke<RepoDetails>("clone_repo", { url, targetPath });
+}
+
 export async function getStatus(repoPath: string): Promise<RepoStatus> {
   return invoke<RepoStatus>("get_status", { repoPath });
 }

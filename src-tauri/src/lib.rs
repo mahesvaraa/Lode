@@ -46,6 +46,8 @@ pub fn run() {
             commands::git_check::save_theme,
             commands::git_check::remove_recent_repo,
             commands::repo::open_repo,
+            commands::repo::init_repo,
+            commands::repo::clone_repo,
             // Status & Diff commands
             commands::status::get_status,
             commands::diff::get_diff,

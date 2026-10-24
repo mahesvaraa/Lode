@@ -32,6 +32,15 @@ export interface TranslationSchema {
     dropHint: string;
     notARepo: string;
     invalidPath: string;
+    initRepo: string;
+    cloneRepo: string;
+    initTitle: string;
+    cloneTitle: string;
+    repoUrl: string;
+    targetFolder: string;
+    initialBranch: string;
+    cloneBtn: string;
+    initBtn: string;
   };
   gitCheck: {
     notFoundTitle: string;
@@ -128,6 +137,15 @@ export const ruTranslations: TranslationSchema = {
     dropHint: "Или перетащите папку сюда",
     notARepo: "Выбранная папка не является Git-репозиторием",
     invalidPath: "Указанный путь не существует",
+    initRepo: "Создать новый",
+    cloneRepo: "Клонировать",
+    initTitle: "Инициализировать новый репозиторий",
+    cloneTitle: "Клонировать удалённый репозиторий",
+    repoUrl: "URL репозитория (HTTPS или SSH)",
+    targetFolder: "Целевая папка",
+    initialBranch: "Имя начальной ветки",
+    cloneBtn: "Клонировать репозиторий",
+    initBtn: "Инициализировать",
   },
   gitCheck: {
     notFoundTitle: "Git не найден",
@@ -226,6 +244,15 @@ export const enTranslations: TranslationSchema = {
     dropHint: "Or drop a folder here",
     notARepo: "The selected folder is not a Git repository",
     invalidPath: "Specified path does not exist",
+    initRepo: "Create New",
+    cloneRepo: "Clone",
+    initTitle: "Initialize New Repository",
+    cloneTitle: "Clone Remote Repository",
+    repoUrl: "Repository URL (HTTPS or SSH)",
+    targetFolder: "Destination Folder",
+    initialBranch: "Initial Branch Name",
+    cloneBtn: "Clone Repository",
+    initBtn: "Initialize",
   },
   gitCheck: {
     notFoundTitle: "Git Not Found",

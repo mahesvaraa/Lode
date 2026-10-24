@@ -1,13 +1,16 @@
 import React, { useState } from "react";
-import { Button, Input, IconButton, Banner } from "@/ui";
+import { Button, Input, IconButton, Banner, Modal } from "@/ui";
 import { useI18n } from "@/lib/i18n";
 import { useRepoStore } from "@/store/repoStore";
 import { useUiStore } from "@/store/uiStore";
+import { pickFolder } from "@/api/client";
 
 export const OpenRepoScreen: React.FC = () => {
   const { t } = useI18n();
   const chooseAndOpenRepo = useRepoStore((s) => s.chooseAndOpenRepo);
   const openRepository = useRepoStore((s) => s.openRepository);
+  const initRepository = useRepoStore((s) => s.initRepository);
+  const cloneRepository = useRepoStore((s) => s.cloneRepository);
   const recentRepos = useRepoStore((s) => s.recentRepos);
   const removeRecent = useRepoStore((s) => s.removeRecent);
   const isLoading = useRepoStore((s) => s.isLoadingRepo);
@@ -18,10 +21,46 @@ export const OpenRepoScreen: React.FC = () => {
   const theme = useUiStore((s) => s.theme);
 
   const [manualPath, setManualPath] = useState("");
+  const [isInitModalOpen, setIsInitModalOpen] = useState(false);
+  const [initPath, setInitPath] = useState("");
+  const [initBranch, setInitBranch] = useState("main");
+
+  const [isCloneModalOpen, setIsCloneModalOpen] = useState(false);
+  const [cloneUrl, setCloneUrl] = useState("");
+  const [clonePath, setClonePath] = useState("");
 
   const handleManualOpen = async () => {
     if (!manualPath.trim()) return;
     await openRepository(manualPath.trim());
+  };
+
+  const handlePickInitFolder = async () => {
+    const folder = await pickFolder();
+    if (folder) setInitPath(folder);
+  };
+
+  const handlePickCloneFolder = async () => {
+    const folder = await pickFolder();
+    if (folder) setClonePath(folder);
+  };
+
+  const handleInitSubmit = async () => {
+    if (!initPath.trim()) return;
+    const success = await initRepository(initPath.trim(), initBranch.trim() || "main");
+    if (success) {
+      setIsInitModalOpen(false);
+      setInitPath("");
+    }
+  };
+
+  const handleCloneSubmit = async () => {
+    if (!cloneUrl.trim() || !clonePath.trim()) return;
+    const success = await cloneRepository(cloneUrl.trim(), clonePath.trim());
+    if (success) {
+      setIsCloneModalOpen(false);
+      setCloneUrl("");
+      setClonePath("");
+    }
   };
 
   return (
@@ -183,6 +222,23 @@ export const OpenRepoScreen: React.FC = () => {
                 {t.actions.open}
               </Button>
             </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginTop: "2px" }}>
+              <Button
+                variant="default"
+                disabled={isLoading}
+                onClick={() => setIsInitModalOpen(true)}
+              >
+                + {t.openRepo.initRepo}
+              </Button>
+              <Button
+                variant="default"
+                disabled={isLoading}
+                onClick={() => setIsCloneModalOpen(true)}
+              >
+                ↓ {t.openRepo.cloneRepo}
+              </Button>
+            </div>
           </div>
 
           {/* Recent Repositories */}
@@ -296,6 +352,96 @@ export const OpenRepoScreen: React.FC = () => {
           </div>
         </div>
       </main>
+
+      {/* Init Repo Modal */}
+      <Modal
+        isOpen={isInitModalOpen}
+        onClose={() => setIsInitModalOpen(false)}
+        title={t.openRepo.initTitle}
+        confirmLabel={isLoading ? "Создание…" : t.openRepo.initBtn}
+        onConfirm={handleInitSubmit}
+        isConfirmDisabled={isLoading || !initPath.trim()}
+      >
+        <div style={{ display: "flex", flexDirection: "column", gap: "14px", width: "420px", maxWidth: "90vw" }}>
+          <div>
+            <label style={{ fontSize: "12px", fontWeight: 600, display: "block", marginBottom: "6px" }}>
+              {t.openRepo.targetFolder}
+            </label>
+            <div style={{ display: "flex", gap: "8px" }}>
+              <Input
+                placeholder="C:\Projects\my-project или /home/user/project"
+                value={initPath}
+                onChange={(e) => setInitPath(e.target.value)}
+                disabled={isLoading}
+              />
+              <Button size="sm" onClick={handlePickInitFolder} disabled={isLoading}>
+                Обзор…
+              </Button>
+            </div>
+          </div>
+
+          <div>
+            <label style={{ fontSize: "12px", fontWeight: 600, display: "block", marginBottom: "6px" }}>
+              {t.openRepo.initialBranch}
+            </label>
+            <Input
+              value={initBranch}
+              onChange={(e) => setInitBranch(e.target.value)}
+              placeholder="main"
+              disabled={isLoading}
+            />
+          </div>
+        </div>
+      </Modal>
+
+      {/* Clone Repo Modal */}
+      <Modal
+        isOpen={isCloneModalOpen}
+        onClose={() => setIsCloneModalOpen(false)}
+        title={t.openRepo.cloneTitle}
+        confirmLabel={isLoading ? "Клонирование…" : t.openRepo.cloneBtn}
+        onConfirm={handleCloneSubmit}
+        isConfirmDisabled={isLoading || !cloneUrl.trim() || !clonePath.trim()}
+      >
+        <div style={{ display: "flex", flexDirection: "column", gap: "14px", width: "460px", maxWidth: "90vw" }}>
+          <div>
+            <label style={{ fontSize: "12px", fontWeight: 600, display: "block", marginBottom: "6px" }}>
+              {t.openRepo.repoUrl}
+            </label>
+            <Input
+              placeholder="https://github.com/user/repo.git или git@github.com:user/repo.git"
+              value={cloneUrl}
+              onChange={(e) => {
+                const url = e.target.value;
+                setCloneUrl(url);
+                // Auto-suggest folder name from url if target path is empty or matches previous suggestion
+                const match = url.match(/\/([^/]+?)(?:\.git)?$/);
+                if (match && (!clonePath || clonePath.endsWith("/") || clonePath.endsWith("\\"))) {
+                  setClonePath((prev) => (prev ? `${prev.replace(/[/\\]$/, "")}/${match[1]}` : match[1]));
+                }
+              }}
+              disabled={isLoading}
+            />
+          </div>
+
+          <div>
+            <label style={{ fontSize: "12px", fontWeight: 600, display: "block", marginBottom: "6px" }}>
+              {t.openRepo.targetFolder}
+            </label>
+            <div style={{ display: "flex", gap: "8px" }}>
+              <Input
+                placeholder="Путь для размещения клона"
+                value={clonePath}
+                onChange={(e) => setClonePath(e.target.value)}
+                disabled={isLoading}
+              />
+              <Button size="sm" onClick={handlePickCloneFolder} disabled={isLoading}>
+                Обзор…
+              </Button>
+            </div>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

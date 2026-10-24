@@ -9,6 +9,7 @@ export interface ModalProps {
   cancelLabel?: string;
   isDanger?: boolean;
   confirmVariant?: "primary" | "danger" | "default";
+  isConfirmDisabled?: boolean;
   onConfirm?: () => void;
   onClose: () => void;
   children?: React.ReactNode;
@@ -23,6 +24,7 @@ export const Modal: React.FC<ModalProps> = ({
   cancelLabel = "Отмена",
   isDanger = false,
   confirmVariant,
+  isConfirmDisabled = false,
   onConfirm,
   onClose,
   children,
@@ -141,7 +143,9 @@ export const Modal: React.FC<ModalProps> = ({
           {confirmLabel && (
             <Button
               variant={confirmVariant || (isDanger ? "danger" : "primary")}
+              disabled={isConfirmDisabled}
               onClick={() => {
+                if (isConfirmDisabled) return;
                 onConfirm?.();
               }}
             >
