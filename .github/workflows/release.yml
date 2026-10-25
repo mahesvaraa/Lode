@@ -4,6 +4,15 @@ on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: "Название релиза / тега (например, v0.1.0)"
+        required: false
+        default: "v0.1.0"
+
+permissions:
+  contents: write
 
 jobs:
   release:
@@ -35,6 +44,11 @@ jobs:
         with:
           targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
 
+      - name: Rust Cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: "./src-tauri -> target"
+
       - name: Install Linux dependencies
         if: matrix.platform == 'ubuntu-22.04'
         run: |
@@ -61,9 +75,18 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tagName: ${{ github.ref_name }}
-          releaseName: "Lode ${{ github.ref_name }}"
-          releaseBody: "См. прикреплённые бинарники для Windows (.msi, .exe), macOS (.dmg) и Linux (.AppImage, .deb)."
+          tagName: ${{ github.ref_name || inputs.tag_name }}
+          releaseName: "Lode ${{ github.ref_name || inputs.tag_name }}"
+          releaseBody: "Релиз Lode: сборки для Linux (.deb, .AppImage), Windows (.exe, .msi) и macOS (.dmg)."
           releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}
+
+      - name: Upload bundle artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: lode-${{ matrix.platform }}-bundles
+          path: |
+            src-tauri/target/release/bundle/*/*
+            src-tauri/target/universal-apple-darwin/release/bundle/*/*
+          if-no-files-found: ignore

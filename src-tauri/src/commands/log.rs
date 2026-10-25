@@ -9,6 +9,7 @@ const LOG_FORMAT: &str =
     "--format=%H%x1f%h%x1f%P%x1f%an%x1f%ae%x1f%at%x1f%cn%x1f%ce%x1f%ct%x1f%D%x1f%s%x1f%b";
 
 #[tauri::command]
+#[allow(clippy::too_many_arguments)]
 pub async fn get_commits(
     repo_path: String,
     skip: usize,
@@ -123,7 +124,7 @@ pub async fn get_commits(
         }
 
         // Sort candidates by author_date descending
-        other_commits.sort_by(|a, b| b.author_date.cmp(&a.author_date));
+        other_commits.sort_by_key(|a| std::cmp::Reverse(a.author_date));
 
         for c in other_commits {
             if seen_hashes.insert(c.hash.clone()) {

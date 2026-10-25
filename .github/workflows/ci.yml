@@ -5,6 +5,7 @@ on:
     branches: ["main", "master"]
   pull_request:
     branches: ["main", "master"]
+  workflow_dispatch:
 
 jobs:
   test:
@@ -29,6 +30,11 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy, rustfmt
+
+      - name: Rust Cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: "./src-tauri -> target"
 
       - name: Install Linux dependencies
         if: matrix.os == 'ubuntu-latest'

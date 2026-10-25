@@ -93,11 +93,27 @@
 - **Операционная система**:
   - Windows 10 / 11 (требуется WebView2, встроен в систему).
   - macOS 11+ (Big Sur и новее).
-  - Linux (Ubuntu 20.04+, Fedora, Arch и др. с WebKitGTK 4.1).
+  - Linux (Ubuntu 22.04+, Debian 12+, Fedora, Arch и др. с WebKitGTK 4.1).
 - **Git**: версия **2.30.0** или выше.
 - **Для сборки из исходников**:
   - Node.js 18.x или 20.x
   - Rust stable 1.80+ (`rustup default stable`)
+  - **Для Linux / WSL**: системные библиотеки WebKitGTK и GTK3:
+    - *Debian / Ubuntu*:
+      ```bash
+      sudo apt update && sudo apt install -y \
+        libwebkit2gtk-4.1-dev build-essential curl wget file \
+        libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev
+      ```
+    - *Fedora*:
+      ```bash
+      sudo dnf install -y webkit2gtk4.1-devel openssl-devel curl wget \
+        libappindicator-gtk3-devel librsvg2-devel
+      ```
+    - *Arch Linux*:
+      ```bash
+      sudo pacman -S webkit2gtk-4.1 base-devel openssl libappindicator-gtk3
+      ```
 
 ---
 

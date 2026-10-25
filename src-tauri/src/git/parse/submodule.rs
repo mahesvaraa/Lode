@@ -54,7 +54,7 @@ pub fn parse_submodule_status(output: &[u8]) -> Vec<SubmoduleInfo> {
         let is_initialized = status_indicator != "-";
         let is_modified = status_indicator == "+";
         let has_conflict = status_indicator == "U";
-        let name = path.split('/').last().unwrap_or(&path).to_string();
+        let name = path.split('/').next_back().unwrap_or(&path).to_string();
 
         submodules.push(SubmoduleInfo {
             path,
