@@ -84,6 +84,7 @@ interface ConflictState {
   ) => Promise<RepoState>;
   nextBlock: () => void;
   prevBlock: () => void;
+  setCurrentBlockIndex: (index: number) => void;
   clearError: () => void;
   reset: () => void;
 }
@@ -238,6 +239,10 @@ export const useConflictStore = create<ConflictState>((set, get) => ({
     if (currentBlockIndex > 0) {
       set({ currentBlockIndex: currentBlockIndex - 1 });
     }
+  },
+
+  setCurrentBlockIndex: (index: number) => {
+    set({ currentBlockIndex: index });
   },
 
   clearError: () => set({ error: null }),

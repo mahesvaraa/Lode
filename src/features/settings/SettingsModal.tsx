@@ -27,44 +27,47 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
     try {
       const info = await checkGit();
       setGitCheckInfo(info);
-      showToast(`Обнаружен Git v${info.version || "неизвестно"}`);
+      showToast(`Git v${info.version || "ok"}`);
     } catch (err: unknown) {
       const errObj = err as { message?: string };
-      showToast(errObj.message || "Ошибка проверки Git", "error");
+      showToast(errObj.message || "Git check error", "error");
     } finally {
       setIsCheckingGit(false);
     }
   };
 
   const tabs: { id: SettingsTab; label: string }[] = [
-    { id: "appearance", label: "Внешний вид" },
-    { id: "git", label: "Git и поведение" },
-    { id: "performance", label: "Производительность" },
-    { id: "hotkeys", label: "Горячие клавиши" },
-    { id: "about", label: "О программе" },
+    { id: "appearance", label: i18nText.settings.tabs.appearance },
+    { id: "git", label: i18nText.settings.tabs.git },
+    { id: "performance", label: i18nText.settings.tabs.performance },
+    { id: "hotkeys", label: i18nText.settings.tabs.hotkeys },
+    { id: "about", label: i18nText.settings.tabs.about },
   ];
 
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Настройки Lode"
-      confirmLabel="Закрыть"
+      title={i18nText.settings.title}
+      confirmLabel={i18nText.settings.close}
       onConfirm={onClose}
+      width="min(760px, 94vw)"
     >
       <div
         style={{
           display: "flex",
-          width: "720px",
-          maxWidth: "92vw",
-          height: "460px",
+          width: "100%",
+          minHeight: "420px",
+          maxHeight: "65vh",
           gap: "16px",
+          overflow: "hidden",
         }}
       >
         {/* Navigation Tabs */}
         <div
           style={{
             width: "160px",
+            flexShrink: 0,
             display: "flex",
             flexDirection: "column",
             gap: "4px",
@@ -95,7 +98,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
         </div>
 
         {/* Content Pane */}
-        <div style={{ flex: 1, overflowY: "auto", paddingRight: "4px" }}>
+        <div style={{ flex: 1, overflowY: "auto", paddingRight: "6px" }}>
           {/* 1. Appearance */}
           {activeTab === "appearance" && (
             <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
@@ -143,7 +146,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
 
               <div>
                 <label style={{ fontSize: "12px", fontWeight: 600, display: "block", marginBottom: "6px" }}>
-                  Тема оформления
+                  {i18nText.settings.theme}
                 </label>
                 <div style={{ display: "flex", gap: "8px" }}>
                   {(["system", "dark", "light"] as const).map((mode) => (
@@ -160,7 +163,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                         cursor: "pointer",
                       }}
                     >
-                      {mode === "system" ? "Системная" : mode === "dark" ? "Тёмная" : "Светлая"}
+                      {mode === "system"
+                        ? i18nText.settings.themeSystem
+                        : mode === "dark"
+                        ? i18nText.settings.themeDark
+                        : i18nText.settings.themeLight}
                     </button>
                   ))}
                 </div>
@@ -168,7 +175,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
 
               <div>
                 <label style={{ fontSize: "12px", fontWeight: 600, display: "block", marginBottom: "6px" }}>
-                  Размер шрифта интерфейса: {settings.font_size} px
+                  {i18nText.settings.fontSize}: {settings.font_size} px
                 </label>
                 <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
                   {[11, 12, 13, 14, 16].map((size) => (
@@ -186,16 +193,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
 
               <div>
                 <label style={{ fontSize: "12px", fontWeight: 600, display: "block", marginBottom: "6px" }}>
-                  Шрифт интерфейса
+                  {i18nText.settings.fontFamily}
                 </label>
                 <Select
                   value={settings.font_family}
                   onChange={(e) => updateSettings({ font_family: e.target.value })}
                   options={[
-                    { value: "Geist, system-ui, sans-serif", label: "Geist (по умолчанию)" },
+                    { value: "Geist, system-ui, sans-serif", label: "Geist" },
                     { value: "Inter, system-ui, sans-serif", label: "Inter" },
                     { value: "Segoe UI, system-ui, sans-serif", label: "Segoe UI" },
-                    { value: "system-ui, sans-serif", label: "Системный шрифт ОС" },
+                    { value: "system-ui, sans-serif", label: "System UI" },
                   ]}
                   style={{ width: "100%", fontSize: "12px" }}
                 />
@@ -203,17 +210,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
 
               <div>
                 <label style={{ fontSize: "12px", fontWeight: 600, display: "block", marginBottom: "6px" }}>
-                  Моноширинный шрифт (код, diff, хеши)
+                  {i18nText.settings.codeFontFamily}
                 </label>
                 <Select
                   value={settings.code_font_family}
                   onChange={(e) => updateSettings({ code_font_family: e.target.value })}
                   options={[
-                    { value: "Geist Mono, ui-monospace, monospace", label: "Geist Mono (по умолчанию)" },
+                    { value: "Geist Mono, ui-monospace, monospace", label: "Geist Mono" },
                     { value: "JetBrains Mono, ui-monospace, monospace", label: "JetBrains Mono" },
                     { value: "Fira Code, ui-monospace, monospace", label: "Fira Code" },
                     { value: "Consolas, ui-monospace, monospace", label: "Consolas" },
-                    { value: "ui-monospace, monospace", label: "Системный моноширинный" },
+                    { value: "ui-monospace, monospace", label: "System Monospace" },
                   ]}
                   style={{ width: "100%", fontSize: "12px" }}
                 />
@@ -226,15 +233,15 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
             <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
               <div>
                 <label style={{ fontSize: "12px", fontWeight: 600, display: "block", marginBottom: "6px" }}>
-                  Режим Pull по умолчанию
+                  {i18nText.settings.pullMode}
                 </label>
                 <Select
                   value={settings.pull_mode}
                   onChange={(e) => updateSettings({ pull_mode: e.target.value })}
                   options={[
-                    { value: "ff-only", label: "Быстрая перемотка только (--ff-only, безопасно)" },
-                    { value: "merge", label: "Создавать слияние (--merge)" },
-                    { value: "rebase", label: "Перебазировать (--rebase)" },
+                    { value: "ff-only", label: i18nText.settings.pullModeFfOnly },
+                    { value: "merge", label: i18nText.settings.pullModeMerge },
+                    { value: "rebase", label: i18nText.settings.pullModeRebase },
                   ]}
                   style={{ width: "100%", fontSize: "12px" }}
                 />
@@ -242,29 +249,29 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
 
               <div>
                 <label style={{ fontSize: "12px", fontWeight: 600, display: "block", marginBottom: "6px" }}>
-                  Путь к исполняемому файлу Git
+                  {i18nText.settings.gitPath}
                 </label>
                 <div style={{ display: "flex", gap: "8px" }}>
                   <Input
-                    placeholder="Автоопределение из PATH / C:\Program Files\Git"
+                    placeholder={i18nText.settings.gitPathPlaceholder}
                     value={settings.git_path || ""}
                     onChange={(e) => updateSettings({ git_path: e.target.value.trim() || null })}
                     style={{ flex: 1, fontSize: "12px" }}
                   />
                   <Button size="sm" variant="ghost" disabled={isCheckingGit} onClick={handleCheckGit}>
-                    {isCheckingGit ? "Проверка..." : "Проверить"}
+                    {isCheckingGit ? i18nText.settings.checkingBtn : i18nText.settings.checkBtn}
                   </Button>
                 </div>
                 {gitCheckInfo && (
                   <div style={{ fontSize: "11px", color: "var(--add)", marginTop: "4px" }}>
-                    ✓ Git v{gitCheckInfo.version || "неизвестно"} ({gitCheckInfo.path || "PATH"})
+                    ✓ Git v{gitCheckInfo.version || "ok"} ({gitCheckInfo.path || "PATH"})
                   </div>
                 )}
               </div>
 
               <div>
                 <label style={{ fontSize: "12px", fontWeight: 600, display: "block", marginBottom: "6px" }}>
-                  Внешний редактор
+                  {i18nText.settings.externalEditor}
                 </label>
                 <Select
                   value={settings.external_editor || "none"}
@@ -274,7 +281,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                     })
                   }
                   options={[
-                    { value: "none", label: "Не задан" },
+                    { value: "none", label: i18nText.settings.editorNone },
                     { value: "code", label: "Visual Studio Code (code)" },
                     { value: "cursor", label: "Cursor (cursor)" },
                     { value: "subl", label: "Sublime Text (subl)" },
@@ -290,7 +297,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
           {activeTab === "performance" && (
             <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
               <div style={{ fontSize: "12px", color: "var(--mut)", lineHeight: 1.4 }}>
-                Опции оптимизации производительности для репозиториев на 50 000+ файлов (раздел 14 CLAUDE.md).
+                {i18nText.settings.performanceDesc}
               </div>
 
               <div
@@ -308,10 +315,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                     checked={settings.enable_fsmonitor}
                     onChange={(e) => updateSettings({ enable_fsmonitor: e.target.checked })}
                   />
-                  <b style={{ fontSize: "12px" }}>Включить core.fsmonitor</b>
+                  <b style={{ fontSize: "12px" }}>{i18nText.settings.fsmonitorTitle}</b>
                 </label>
                 <div style={{ fontSize: "11px", color: "var(--mut)", paddingLeft: "24px" }}>
-                  Использует системный демон файловых событий для ускорения проверки статуса гигантских репозиториев.
+                  {i18nText.settings.fsmonitorDesc}
                 </div>
               </div>
 
@@ -330,10 +337,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                     checked={settings.enable_untracked_cache}
                     onChange={(e) => updateSettings({ enable_untracked_cache: e.target.checked })}
                   />
-                  <b style={{ fontSize: "12px" }}>Включить core.untrackedCache</b>
+                  <b style={{ fontSize: "12px" }}>{i18nText.settings.untrackedCacheTitle}</b>
                 </label>
                 <div style={{ fontSize: "11px", color: "var(--mut)", paddingLeft: "24px" }}>
-                  Кэширует список неотслеживаемых файлов для ускорения повторного вызова git status.
+                  {i18nText.settings.untrackedCacheDesc}
                 </div>
               </div>
             </div>
@@ -343,7 +350,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
           {activeTab === "hotkeys" && (
             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
               <div style={{ fontSize: "12px", color: "var(--mut)", marginBottom: "4px" }}>
-                Все основные действия Lode доступны с клавиатуры (раздел 13 CLAUDE.md):
+                {i18nText.settings.hotkeysDesc}
               </div>
               <div
                 style={{
@@ -357,37 +364,37 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                   border: "1px solid var(--line)",
                 }}
               >
-                <span>Палитра команд</span>
+                <span>{locale === "ru" ? "Палитра команд" : "Command Palette"}</span>
                 <span className="mono" style={{ color: "var(--acc)", fontWeight: 600 }}>Ctrl+K / Cmd+K</span>
 
-                <span>Открыть репозиторий</span>
+                <span>{locale === "ru" ? "Открыть репозиторий" : "Open Repository"}</span>
                 <span className="mono" style={{ color: "var(--acc)", fontWeight: 600 }}>Ctrl+O / Cmd+O</span>
 
-                <span>Вкладка «История»</span>
+                <span>{locale === "ru" ? "Вкладка «История»" : "History Tab"}</span>
                 <span className="mono" style={{ color: "var(--acc)", fontWeight: 600 }}>Ctrl+1</span>
 
-                <span>Вкладка «Изменения»</span>
+                <span>{locale === "ru" ? "Вкладка «Изменения»" : "Changes Tab"}</span>
                 <span className="mono" style={{ color: "var(--acc)", fontWeight: 600 }}>Ctrl+2</span>
 
-                <span>Вкладка «Конфликты»</span>
+                <span>{locale === "ru" ? "Вкладка «Конфликты»" : "Conflicts Tab"}</span>
                 <span className="mono" style={{ color: "var(--acc)", fontWeight: 600 }}>Ctrl+3</span>
 
-                <span>Настройки приложения</span>
+                <span>{locale === "ru" ? "Настройки приложения" : "Preferences"}</span>
                 <span className="mono" style={{ color: "var(--acc)", fontWeight: 600 }}>Ctrl+,</span>
 
-                <span>Добавить всё в индекс</span>
+                <span>{locale === "ru" ? "Добавить всё в индекс" : "Stage All"}</span>
                 <span className="mono" style={{ color: "var(--acc)", fontWeight: 600 }}>Ctrl+Shift+A</span>
 
-                <span>Закоммитить изменения</span>
+                <span>{locale === "ru" ? "Закоммитить изменения" : "Commit"}</span>
                 <span className="mono" style={{ color: "var(--acc)", fontWeight: 600 }}>Ctrl+Enter</span>
 
-                <span>Обновить состояние</span>
+                <span>{locale === "ru" ? "Обновить состояние" : "Refresh"}</span>
                 <span className="mono" style={{ color: "var(--acc)", fontWeight: 600 }}>F5</span>
 
-                <span>Предыдущий / следующий конфликт</span>
+                <span>{locale === "ru" ? "Предыдущий / следующий конфликт" : "Previous / Next Conflict"}</span>
                 <span className="mono" style={{ color: "var(--acc)", fontWeight: 600 }}>[ / ]</span>
 
-                <span>Навигация по спискам</span>
+                <span>{locale === "ru" ? "Навигация по спискам" : "List Navigation"}</span>
                 <span className="mono" style={{ color: "var(--acc)", fontWeight: 600 }}>J / K / ↑ / ↓</span>
               </div>
             </div>
@@ -400,10 +407,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                 Lode
               </div>
               <div style={{ fontSize: "12px", color: "var(--acc)", fontWeight: 600 }}>
-                Версия 0.1.0
+                {locale === "ru" ? "Версия 0.1.0" : "Version 0.1.0"}
               </div>
-              <div style={{ fontSize: "12px", color: "var(--mut)", textAlign: "center", maxWidth: "400px", lineHeight: 1.5 }}>
-                Минималистичный, быстрый десктопный Git-клиент на стеке Tauri 2 + Rust + React 18 + TypeScript + Vite.
+              <div style={{ fontSize: "12px", color: "var(--mut)", textAlign: "center", maxWidth: "420px", lineHeight: 1.5 }}>
+                {i18nText.settings.aboutDesc}
               </div>
               <div
                 style={{
@@ -415,7 +422,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                   color: "var(--mut)",
                 }}
               >
-                Лицензия MIT • Сборка: Windows / macOS / Linux
+                {i18nText.settings.aboutLicense}
               </div>
             </div>
           )}

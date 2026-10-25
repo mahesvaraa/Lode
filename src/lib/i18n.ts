@@ -98,12 +98,43 @@ export interface TranslationSchema {
   };
   settings: {
     title: string;
+    close: string;
+    tabs: {
+      appearance: string;
+      git: string;
+      performance: string;
+      hotkeys: string;
+      about: string;
+    };
     appearance: string;
     theme: string;
+    themeSystem: string;
+    themeDark: string;
+    themeLight: string;
     fontSize: string;
+    fontFamily: string;
+    codeFontFamily: string;
     language: string;
     gitAndTools: string;
     pullMode: string;
+    pullModeFfOnly: string;
+    pullModeMerge: string;
+    pullModeRebase: string;
+    gitPath: string;
+    gitPathPlaceholder: string;
+    checkBtn: string;
+    checkingBtn: string;
+    externalEditor: string;
+    editorNone: string;
+    performanceTitle: string;
+    performanceDesc: string;
+    fsmonitorTitle: string;
+    fsmonitorDesc: string;
+    untrackedCacheTitle: string;
+    untrackedCacheDesc: string;
+    hotkeysDesc: string;
+    aboutDesc: string;
+    aboutLicense: string;
   };
 }
 
@@ -204,13 +235,44 @@ export const ruTranslations: TranslationSchema = {
     committer: "Коммитер:",
   },
   settings: {
-    title: "Настройки",
+    title: "Настройки Lode",
+    close: "Закрыть",
+    tabs: {
+      appearance: "Внешний вид",
+      git: "Git и поведение",
+      performance: "Производительность",
+      hotkeys: "Горячие клавиши",
+      about: "О программе",
+    },
     appearance: "Внешний вид",
     theme: "Тема оформления",
-    fontSize: "Размер шрифта",
+    themeSystem: "Системная",
+    themeDark: "Тёмная",
+    themeLight: "Светлая",
+    fontSize: "Размер шрифта интерфейса",
+    fontFamily: "Шрифт интерфейса",
+    codeFontFamily: "Моноширинный шрифт (код, diff, хеши)",
     language: "Язык интерфейса",
     gitAndTools: "Git и утилиты",
     pullMode: "Режим Pull по умолчанию",
+    pullModeFfOnly: "Быстрая перемотка только (--ff-only, безопасно)",
+    pullModeMerge: "Создавать слияние (--merge)",
+    pullModeRebase: "Перебазировать (--rebase)",
+    gitPath: "Путь к исполняемому файлу Git",
+    gitPathPlaceholder: "Автоопределение из PATH / C:\\Program Files\\Git",
+    checkBtn: "Проверить",
+    checkingBtn: "Проверка...",
+    externalEditor: "Внешний редактор",
+    editorNone: "Не задан",
+    performanceTitle: "Оптимизация производительности",
+    performanceDesc: "Опции для работы с огромными репозиториями на 50 000+ файлов (раздел 14 CLAUDE.md).",
+    fsmonitorTitle: "Включить core.fsmonitor",
+    fsmonitorDesc: "Использует системный демон файловых событий для мгновенной проверки статуса гигантских репозиториев.",
+    untrackedCacheTitle: "Включить core.untrackedCache",
+    untrackedCacheDesc: "Кэширует список неотслеживаемых файлов для ускорения повторного вызова git status.",
+    hotkeysDesc: "Все основные действия Lode доступны с клавиатуры (раздел 13 CLAUDE.md):",
+    aboutDesc: "Минималистичный, быстрый десктопный Git-клиент на стеке Tauri 2 + Rust + React 18 + TypeScript + Vite.",
+    aboutLicense: "Лицензия MIT • Сборка: Windows / macOS / Linux",
   },
 };
 
@@ -311,13 +373,44 @@ export const enTranslations: TranslationSchema = {
     committer: "Committer:",
   },
   settings: {
-    title: "Settings",
+    title: "Lode Settings",
+    close: "Close",
+    tabs: {
+      appearance: "Appearance",
+      git: "Git & Behavior",
+      performance: "Performance",
+      hotkeys: "Hotkeys",
+      about: "About",
+    },
     appearance: "Appearance",
     theme: "Theme",
-    fontSize: "Font size",
-    language: "Language",
+    themeSystem: "System",
+    themeDark: "Dark",
+    themeLight: "Light",
+    fontSize: "UI Font Size",
+    fontFamily: "UI Font Family",
+    codeFontFamily: "Monospace Font (code, diff, hashes)",
+    language: "Interface Language",
     gitAndTools: "Git & Tools",
     pullMode: "Default Pull Mode",
+    pullModeFfOnly: "Fast-forward only (--ff-only, safe)",
+    pullModeMerge: "Create merge commit (--merge)",
+    pullModeRebase: "Rebase on pull (--rebase)",
+    gitPath: "Path to Git executable",
+    gitPathPlaceholder: "Auto-detect from PATH / C:\\Program Files\\Git",
+    checkBtn: "Check",
+    checkingBtn: "Checking...",
+    externalEditor: "External Editor",
+    editorNone: "None",
+    performanceTitle: "Performance Optimizations",
+    performanceDesc: "Optimization options for large repositories with 50,000+ files (CLAUDE.md sec 14).",
+    fsmonitorTitle: "Enable core.fsmonitor",
+    fsmonitorDesc: "Uses the system file events daemon to speed up status checks on giant repositories.",
+    untrackedCacheTitle: "Enable core.untrackedCache",
+    untrackedCacheDesc: "Caches untracked files list to accelerate repeated git status checks.",
+    hotkeysDesc: "All primary Lode actions are accessible via keyboard shortcuts (CLAUDE.md sec 13):",
+    aboutDesc: "Minimalist, high-performance desktop Git client built with Tauri 2 + Rust + React 18 + TypeScript + Vite.",
+    aboutLicense: "MIT License • Builds: Windows / macOS / Linux",
   },
 };
 

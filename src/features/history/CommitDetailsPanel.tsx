@@ -161,7 +161,10 @@ export const CommitDetailsPanel: React.FC = () => {
             <Button
               size="sm"
               variant="default"
+              data-ctx="commit"
+              data-id={commit.hash}
               onClick={(e) => {
+                e.stopPropagation();
                 const rect = e.currentTarget.getBoundingClientRect();
                 e.currentTarget.dispatchEvent(
                   new MouseEvent("contextmenu", {

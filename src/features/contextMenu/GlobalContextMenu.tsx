@@ -12,6 +12,10 @@ import {
   type MergeParentModalState,
   type UpstreamModalState,
   type ConfirmModalState,
+  type BlameModalState,
+  type InteractiveRebaseModalState,
+  type RewordModalState,
+  type EditRemoteUrlModalState,
 } from "./ContextMenuModals";
 import { useContextMenuDispatcher } from "./useContextMenuDispatcher";
 
@@ -54,6 +58,26 @@ export const GlobalContextMenu: React.FC = () => {
     message: "",
     onConfirm: async () => {},
   });
+  const [blameModal, setBlameModal] = useState<BlameModalState>({
+    isOpen: false,
+    filePath: "",
+  });
+  const [interactiveRebaseModal, setInteractiveRebaseModal] =
+    useState<InteractiveRebaseModalState>({
+      isOpen: false,
+      baseRef: "",
+    });
+  const [rewordModal, setRewordModal] = useState<RewordModalState>({
+    isOpen: false,
+    commitHash: "",
+    currentMessage: "",
+  });
+  const [editRemoteUrlModal, setEditRemoteUrlModal] =
+    useState<EditRemoteUrlModalState>({
+      isOpen: false,
+      remoteName: "",
+      currentUrl: "",
+    });
 
   const dialogSetters = useMemo(
     () => ({
@@ -64,6 +88,10 @@ export const GlobalContextMenu: React.FC = () => {
       setMergeParentModal,
       setUpstreamModal,
       setConfirmModal,
+      setBlameModal,
+      setInteractiveRebaseModal,
+      setRewordModal,
+      setEditRemoteUrlModal,
     }),
     []
   );
@@ -103,6 +131,14 @@ export const GlobalContextMenu: React.FC = () => {
         setUpstreamModal={setUpstreamModal}
         confirmModal={confirmModal}
         setConfirmModal={setConfirmModal}
+        blameModal={blameModal}
+        setBlameModal={setBlameModal}
+        interactiveRebaseModal={interactiveRebaseModal}
+        setInteractiveRebaseModal={setInteractiveRebaseModal}
+        rewordModal={rewordModal}
+        setRewordModal={setRewordModal}
+        editRemoteUrlModal={editRemoteUrlModal}
+        setEditRemoteUrlModal={setEditRemoteUrlModal}
       />
     </>
   );

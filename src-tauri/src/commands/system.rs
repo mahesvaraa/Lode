@@ -16,15 +16,18 @@ pub async fn show_in_file_manager(path: String) -> Result<(), AppError> {
     #[cfg(target_os = "windows")]
     {
         use std::os::windows::process::CommandExt;
-        const CREATE_NO_WINDOW: u32 = 0x08000000;
+
+        let mut clean_path = path.replace('/', "\\");
+        if let Some(stripped) = clean_path.strip_prefix(r"\\?\") {
+            clean_path = stripped.to_string();
+        }
 
         let mut cmd = Command::new("explorer");
         if target.is_file() {
-            cmd.arg(format!("/select,{}", target.display()));
+            cmd.raw_arg(format!("/select,\"{clean_path}\""));
         } else {
-            cmd.arg(target.display().to_string());
+            cmd.raw_arg(format!("\"{clean_path}\""));
         }
-        cmd.creation_flags(CREATE_NO_WINDOW);
         let _ = cmd.spawn();
     }
 
@@ -63,12 +66,13 @@ pub async fn open_in_terminal(path: String) -> Result<(), AppError> {
 
     #[cfg(target_os = "windows")]
     {
+        let clean_dir = dir.to_string_lossy().replace('/', "\\");
         let _ = Command::new("cmd")
-            .args(["/c", "start", "wt", "-d", &dir.display().to_string()])
+            .args(["/c", "start", "wt", "-d", &clean_dir])
             .spawn()
             .or_else(|_| {
                 Command::new("cmd")
-                    .args(["/c", "start", "powershell", "-NoExit", "-Command", &format!("Set-Location '{}'", dir.display())])
+                    .args(["/c", "start", "powershell", "-NoExit", "-Command", &format!("Set-Location -LiteralPath '{}'", clean_dir)])
                     .spawn()
             });
     }
@@ -104,8 +108,9 @@ pub async fn open_in_external_editor(repo_path: String, path: String) -> Result<
         use std::os::windows::process::CommandExt;
         const CREATE_NO_WINDOW: u32 = 0x08000000;
 
+        let clean_full = full_path.to_string_lossy().replace('/', "\\");
         let _ = Command::new("cmd")
-            .args(["/c", "start", "", &full_path.display().to_string()])
+            .args(["/c", "start", "", &clean_full])
             .creation_flags(CREATE_NO_WINDOW)
             .spawn();
     }

@@ -320,12 +320,14 @@ export async function listStashes(repoPath: string): Promise<StashItem[]> {
 export async function stashSave(
   repoPath: string,
   message?: string,
-  includeUntracked: boolean = true
+  includeUntracked: boolean = true,
+  paths?: string[]
 ): Promise<string> {
   return invoke<string>("stash_save", {
     repoPath,
     message: message || null,
     includeUntracked,
+    paths: paths && paths.length > 0 ? paths : null,
   });
 }
 
@@ -383,6 +385,21 @@ export async function resetRepo(
   mode: "soft" | "mixed" | "hard"
 ): Promise<void> {
   return invoke<void>("reset_repo", { repoPath, targetRef, mode });
+}
+
+export async function rebaseBranch(
+  repoPath: string,
+  onto: string
+): Promise<void> {
+  return invoke<void>("rebase_branch", { repoPath, onto });
+}
+
+export async function restoreFileFromCommit(
+  repoPath: string,
+  commitHash: string,
+  path: string
+): Promise<void> {
+  return invoke<void>("restore_file_from_commit", { repoPath, commitHash, path });
 }
 
 export async function getBlame(
@@ -557,7 +574,7 @@ export async function showInFileManager(
   relativePath?: string
 ): Promise<void> {
   const fullPath = relativePath
-    ? `${repoPathOrFull.replace(/[/\\]$/, "")}/${relativePath}`
+    ? `${repoPathOrFull.replace(/[/\\]+$/, "")}/${relativePath.replace(/^[/\\]+/, "")}`
     : repoPathOrFull;
   return invoke<void>("show_in_file_manager", { path: fullPath });
 }

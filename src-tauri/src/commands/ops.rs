@@ -27,6 +27,7 @@ pub async fn stash_save(
     repo_path: String,
     message: Option<String>,
     include_untracked: bool,
+    paths: Option<Vec<String>>,
     runner: State<'_, GitRunner>,
 ) -> Result<String, AppError> {
     let canonical = canonicalize_repo_path(&repo_path)?;
@@ -41,6 +42,17 @@ pub async fn stash_save(
             msg_str = msg;
             args.push("-m");
             args.push(&msg_str);
+        }
+    }
+
+    let path_strs;
+    if let Some(p_list) = paths {
+        if !p_list.is_empty() {
+            args.push("--");
+            path_strs = p_list;
+            for p in &path_strs {
+                args.push(p.as_str());
+            }
         }
     }
 
@@ -165,6 +177,36 @@ pub async fn reset_repo(
 
     runner
         .run_write(&canonical, &["reset", flag, "--", &target_ref])
+        .await?;
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn rebase_branch(
+    repo_path: String,
+    onto: String,
+    runner: State<'_, GitRunner>,
+) -> Result<(), AppError> {
+    let canonical = canonicalize_repo_path(&repo_path)?;
+    runner
+        .run_write(&canonical, &["rebase", "--", &onto])
+        .await?;
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn restore_file_from_commit(
+    repo_path: String,
+    commit_hash: String,
+    path: String,
+    runner: State<'_, GitRunner>,
+) -> Result<(), AppError> {
+    let canonical = canonicalize_repo_path(&repo_path)?;
+    runner
+        .run_write(
+            &canonical,
+            &["restore", "--source", &commit_hash, "--", &path],
+        )
         .await?;
     Ok(())
 }

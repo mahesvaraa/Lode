@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   CreateBranchModal,
   CreateTagModal,
@@ -15,7 +15,12 @@ import {
   resetBranch,
   cherryPick,
   revertCommit,
+  createCommit,
+  setRemoteUrl,
 } from "@/api/client";
+import { BlameModal } from "@/features/history/BlameModal";
+import { InteractiveRebaseModal } from "@/features/rebase/InteractiveRebaseModal";
+import { Modal, Input, Textarea } from "@/ui";
 import { useToastStore } from "@/store/toastStore";
 
 export interface BranchModalState {
@@ -64,6 +69,29 @@ export interface ConfirmModalState {
   onConfirm: () => Promise<void>;
 }
 
+export interface BlameModalState {
+  isOpen: boolean;
+  filePath: string;
+  initialTab?: "blame" | "history";
+}
+
+export interface InteractiveRebaseModalState {
+  isOpen: boolean;
+  baseRef: string;
+}
+
+export interface RewordModalState {
+  isOpen: boolean;
+  commitHash: string;
+  currentMessage: string;
+}
+
+export interface EditRemoteUrlModalState {
+  isOpen: boolean;
+  remoteName: string;
+  currentUrl: string;
+}
+
 interface ContextMenuModalsProps {
   currentRepoPath?: string;
   refreshAll: () => Promise<void>;
@@ -82,6 +110,14 @@ interface ContextMenuModalsProps {
   setUpstreamModal: React.Dispatch<React.SetStateAction<UpstreamModalState>>;
   confirmModal: ConfirmModalState;
   setConfirmModal: React.Dispatch<React.SetStateAction<ConfirmModalState>>;
+  blameModal: BlameModalState;
+  setBlameModal: React.Dispatch<React.SetStateAction<BlameModalState>>;
+  interactiveRebaseModal: InteractiveRebaseModalState;
+  setInteractiveRebaseModal: React.Dispatch<React.SetStateAction<InteractiveRebaseModalState>>;
+  rewordModal: RewordModalState;
+  setRewordModal: React.Dispatch<React.SetStateAction<RewordModalState>>;
+  editRemoteUrlModal: EditRemoteUrlModalState;
+  setEditRemoteUrlModal: React.Dispatch<React.SetStateAction<EditRemoteUrlModalState>>;
 }
 
 export const ContextMenuModals: React.FC<ContextMenuModalsProps> = ({
@@ -102,8 +138,31 @@ export const ContextMenuModals: React.FC<ContextMenuModalsProps> = ({
   setUpstreamModal,
   confirmModal,
   setConfirmModal,
+  blameModal,
+  setBlameModal,
+  interactiveRebaseModal,
+  setInteractiveRebaseModal,
+  rewordModal,
+  setRewordModal,
+  editRemoteUrlModal,
+  setEditRemoteUrlModal,
 }) => {
   const showToast = useToastStore((s) => s.showToast);
+
+  const [rewordText, setRewordText] = useState("");
+  const [remoteUrlInput, setRemoteUrlInput] = useState("");
+
+  useEffect(() => {
+    if (rewordModal.isOpen) {
+      setRewordText(rewordModal.currentMessage);
+    }
+  }, [rewordModal]);
+
+  useEffect(() => {
+    if (editRemoteUrlModal.isOpen) {
+      setRemoteUrlInput(editRemoteUrlModal.currentUrl);
+    }
+  }, [editRemoteUrlModal]);
 
   return (
     <>
@@ -198,6 +257,87 @@ export const ContextMenuModals: React.FC<ContextMenuModalsProps> = ({
         onClose={() => setConfirmModal((prev) => ({ ...prev, isOpen: false }))}
         onConfirm={confirmModal.onConfirm}
       />
+
+      {/* Blame / File History Modal */}
+      <BlameModal
+        isOpen={blameModal.isOpen}
+        filePath={blameModal.filePath}
+        onClose={() => setBlameModal({ isOpen: false, filePath: "" })}
+      />
+
+      {/* Interactive Rebase Modal */}
+      <InteractiveRebaseModal
+        isOpen={interactiveRebaseModal.isOpen}
+        baseRef={interactiveRebaseModal.baseRef}
+        onClose={() => setInteractiveRebaseModal({ isOpen: false, baseRef: "" })}
+      />
+
+      {/* Reword Commit Message Modal */}
+      <Modal
+        isOpen={rewordModal.isOpen}
+        title={`Изменить сообщение коммита (${rewordModal.commitHash.substring(0, 7)})`}
+        confirmLabel="Сохранить"
+        onClose={() => setRewordModal({ isOpen: false, commitHash: "", currentMessage: "" })}
+        onConfirm={async () => {
+          if (!currentRepoPath || !rewordText.trim()) return;
+          try {
+            await createCommit(currentRepoPath, rewordText.trim(), true);
+            await refreshAll();
+            showToast("Сообщение коммита обновлено");
+            setRewordModal({ isOpen: false, commitHash: "", currentMessage: "" });
+          } catch (err: unknown) {
+            const errObj = err as { message?: string };
+            showToast(errObj.message || "Ошибка изменения сообщения", "error");
+          }
+        }}
+      >
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+          <label style={{ fontSize: "12px", color: "var(--mut)" }}>
+            Новое сообщение коммита:
+          </label>
+          <Textarea
+            value={rewordText}
+            onChange={(e) => setRewordText(e.target.value)}
+            rows={4}
+            autoFocus
+          />
+        </div>
+      </Modal>
+
+      {/* Edit Remote URL Modal */}
+      <Modal
+        isOpen={editRemoteUrlModal.isOpen}
+        title={`Изменить URL для remote '${editRemoteUrlModal.remoteName}'`}
+        confirmLabel="Сохранить URL"
+        onClose={() =>
+          setEditRemoteUrlModal({ isOpen: false, remoteName: "", currentUrl: "" })
+        }
+        onConfirm={async () => {
+          if (!currentRepoPath || !remoteUrlInput.trim()) return;
+          try {
+            await setRemoteUrl(
+              currentRepoPath,
+              editRemoteUrlModal.remoteName,
+              remoteUrlInput.trim()
+            );
+            await refreshAll();
+            showToast(`URL remote '${editRemoteUrlModal.remoteName}' обновлён`);
+            setEditRemoteUrlModal({ isOpen: false, remoteName: "", currentUrl: "" });
+          } catch (err: unknown) {
+            const errObj = err as { message?: string };
+            showToast(errObj.message || "Ошибка обновления URL", "error");
+          }
+        }}
+      >
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+          <label style={{ fontSize: "12px", color: "var(--mut)" }}>URL репозитория:</label>
+          <Input
+            value={remoteUrlInput}
+            onChange={(e) => setRemoteUrlInput(e.target.value)}
+            autoFocus
+          />
+        </div>
+      </Modal>
     </>
   );
 };

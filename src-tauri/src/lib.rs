@@ -105,6 +105,8 @@ pub fn run() {
             commands::ops::cherry_pick,
             commands::ops::revert_commit,
             commands::ops::reset_repo,
+            commands::ops::rebase_branch,
+            commands::ops::restore_file_from_commit,
             commands::ops::get_blame,
             commands::ops::get_file_history,
             // Rebase commands

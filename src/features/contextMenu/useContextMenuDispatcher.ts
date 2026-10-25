@@ -50,7 +50,13 @@ import {
   openInExternalEditor,
   showInFileManager,
   openInTerminal,
+  rebaseBranch,
+  restoreFileFromCommit,
+  stashSave,
+  removeRemote,
 } from "@/api/client";
+import { useUiStore } from "@/store/uiStore";
+import { useConflictStore } from "@/store/conflictStore";
 import type {
   BranchModalState,
   TagModalState,
@@ -59,6 +65,10 @@ import type {
   MergeParentModalState,
   UpstreamModalState,
   ConfirmModalState,
+  BlameModalState,
+  InteractiveRebaseModalState,
+  RewordModalState,
+  EditRemoteUrlModalState,
 } from "./ContextMenuModals";
 
 export interface ContextMenuDialogSetters {
@@ -69,6 +79,10 @@ export interface ContextMenuDialogSetters {
   setMergeParentModal: React.Dispatch<React.SetStateAction<MergeParentModalState>>;
   setUpstreamModal: React.Dispatch<React.SetStateAction<UpstreamModalState>>;
   setConfirmModal: React.Dispatch<React.SetStateAction<ConfirmModalState>>;
+  setBlameModal: React.Dispatch<React.SetStateAction<BlameModalState>>;
+  setInteractiveRebaseModal: React.Dispatch<React.SetStateAction<InteractiveRebaseModalState>>;
+  setRewordModal: React.Dispatch<React.SetStateAction<RewordModalState>>;
+  setEditRemoteUrlModal: React.Dispatch<React.SetStateAction<EditRemoteUrlModalState>>;
 }
 
 export function useContextMenuDispatcher(dialogs: ContextMenuDialogSetters) {
@@ -113,6 +127,10 @@ export function useContextMenuDispatcher(dialogs: ContextMenuDialogSetters) {
     setMergeParentModal,
     setUpstreamModal,
     setConfirmModal,
+    setBlameModal,
+    setInteractiveRebaseModal,
+    setRewordModal,
+    setEditRemoteUrlModal,
   } = dialogs;
 
   const handleContextMenu = useCallback(
@@ -245,7 +263,12 @@ export function useContextMenuDispatcher(dialogs: ContextMenuDialogSetters) {
               }
             },
             onReword: (hash) => {
-              showToast(`Reword для ${hash.substring(0, 7)}`);
+              const c = commits.find((x) => x.hash === hash);
+              setRewordModal({
+                isOpen: true,
+                commitHash: hash,
+                currentMessage: c?.subject || "",
+              });
             },
             onRebaseOnto: (hash) => {
               setConfirmModal({
@@ -255,18 +278,30 @@ export function useContextMenuDispatcher(dialogs: ContextMenuDialogSetters) {
                 confirmLabel: "Rebase",
                 danger: false,
                 onConfirm: async () => {
-                  showToast("Rebase запущен");
+                  try {
+                    await rebaseBranch(currentRepo.path, hash);
+                    await refreshAll();
+                    showToast("Rebase успешно завершён");
+                  } catch (err: unknown) {
+                    const errObj = err as { message?: string };
+                    showToast(errObj.message || "Ошибка rebase", "error");
+                  }
                 },
               });
             },
             onInteractiveRebase: (hash) => {
-              showToast(`Interactive rebase от ${hash.substring(0, 7)}`);
+              setInteractiveRebaseModal({
+                isOpen: true,
+                baseRef: `${hash}^1`,
+              });
             },
             onCompareWithWorkingTree: (hash) => {
-              showToast(`Сравнение с рабочим каталогом: ${hash.substring(0, 7)}`);
+              useHistoryStore.getState().selectCommit(currentRepo.path, hash);
+              useUiStore.getState().setActiveView("hist");
             },
             onCompareWithHead: (hash) => {
-              showToast(`Сравнение с HEAD: ${hash.substring(0, 7)}`);
+              useHistoryStore.getState().selectCommit(currentRepo.path, hash);
+              useUiStore.getState().setActiveView("hist");
             },
             onReset: (hash) => {
               setResetModal({
@@ -470,7 +505,13 @@ export function useContextMenuDispatcher(dialogs: ContextMenuDialogSetters) {
                 await refreshAll();
                 showToast(`Fetch --prune '${r}' выполнен`);
               },
-              onEditUrl: (r) => showToast(`Изменение URL remote '${r}'`),
+              onEditUrl: (r) => {
+                setEditRemoteUrlModal({
+                  isOpen: true,
+                  remoteName: r,
+                  currentUrl: ctxEl.dataset.remoteUrl || "",
+                });
+              },
               onRemove: (r) => {
                 setConfirmModal({
                   isOpen: true,
@@ -479,7 +520,14 @@ export function useContextMenuDispatcher(dialogs: ContextMenuDialogSetters) {
                   danger: true,
                   confirmLabel: "Удалить remote",
                   onConfirm: async () => {
-                    showToast(`Remote '${r}' удалён`);
+                    try {
+                      await removeRemote(currentRepo.path, r);
+                      await refreshAll();
+                      showToast(`Remote '${r}' удалён`);
+                    } catch (err: unknown) {
+                      const errObj = err as { message?: string };
+                      showToast(errObj.message || "Ошибка удаления remote", "error");
+                    }
                   },
                 });
               },
@@ -608,9 +656,22 @@ export function useContextMenuDispatcher(dialogs: ContextMenuDialogSetters) {
                   },
                 });
               },
-              onStashFileOnly: (p) => showToast(`Stash только для '${p}'`),
-              onViewHistory: (p) => showToast(`История файла '${p}'`),
-              onViewBlame: (p) => showToast(`Blame файла '${p}'`),
+              onStashFileOnly: async (p) => {
+                try {
+                  await stashSave(currentRepo.path, `Stash file: ${p}`, true, [p]);
+                  await refreshAll();
+                  showToast(`Файл сохранён в stash: ${p}`);
+                } catch (err: unknown) {
+                  const errObj = err as { message?: string };
+                  showToast(errObj.message || "Ошибка сохранения в stash", "error");
+                }
+              },
+              onViewHistory: (p) => {
+                setBlameModal({ isOpen: true, filePath: p, initialTab: "history" });
+              },
+              onViewBlame: (p) => {
+                setBlameModal({ isOpen: true, filePath: p, initialTab: "blame" });
+              },
               onAddToGitignore: (pattern) => showToast(`Добавлено в .gitignore: ${pattern}`),
               onDeleteUntracked: (p) => {
                 setConfirmModal({
@@ -626,8 +687,24 @@ export function useContextMenuDispatcher(dialogs: ContextMenuDialogSetters) {
                   },
                 });
               },
-              onOpenConflictEditor: (_p) => showToast("Переход в редактор конфликтов"),
-              onTakeVersion: (_p, ver) => showToast(`Выбрана версия ${ver}`),
+              onOpenConflictEditor: (p) => {
+                useConflictStore.getState().selectConflictFile(currentRepo.path, p);
+                useUiStore.getState().setActiveView("conf");
+              },
+              onTakeVersion: async (p, ver) => {
+                try {
+                  await useConflictStore.getState().resolveByChoice(
+                    currentRepo.path,
+                    p,
+                    ver === "ours" ? "ours" : "theirs"
+                  );
+                  await refreshAll();
+                  showToast(`Версия '${ver}' успешно применена`);
+                } catch (err: unknown) {
+                  const errObj = err as { message?: string };
+                  showToast(errObj.message || "Ошибка применения версии", "error");
+                }
+              },
               onMarkResolved: async (p) => {
                 await stageFile(currentRepo.path, p);
                 await loadStatus(currentRepo.path);
@@ -649,9 +726,17 @@ export function useContextMenuDispatcher(dialogs: ContextMenuDialogSetters) {
           const filePath = ctxId;
           const cHash = ctxEl.dataset.commitHash || "HEAD";
           menuItems = buildCommitFileMenu(filePath, cHash, repoContext, {
-            onOpenDiff: (p, h) => showToast(`Diff: ${p} @ ${h.substring(0, 7)}`),
-            onViewHistory: (p) => showToast(`История: ${p}`),
-            onViewBlame: (p, h) => showToast(`Blame: ${p} @ ${h.substring(0, 7)}`),
+            onOpenDiff: (p, h) => {
+              useHistoryStore.getState().selectCommit(currentRepo.path, h);
+              useHistoryStore.getState().selectCommitFile(currentRepo.path, p);
+              useUiStore.getState().setActiveView("hist");
+            },
+            onViewHistory: (p) => {
+              setBlameModal({ isOpen: true, filePath: p, initialTab: "history" });
+            },
+            onViewBlame: (p, _h) => {
+              setBlameModal({ isOpen: true, filePath: p, initialTab: "blame" });
+            },
             onRestoreFromCommit: (p, h) => {
               setConfirmModal({
                 isOpen: true,
@@ -661,7 +746,14 @@ export function useContextMenuDispatcher(dialogs: ContextMenuDialogSetters) {
                 danger: true,
                 confirmLabel: "Восстановить",
                 onConfirm: async () => {
-                  showToast(`Файл восстановлен из ${h.substring(0, 7)}`);
+                  try {
+                    await restoreFileFromCommit(currentRepo.path, h, p);
+                    await refreshAll();
+                    showToast(`Файл восстановлен из ${h.substring(0, 7)}`);
+                  } catch (err: unknown) {
+                    const errObj = err as { message?: string };
+                    showToast(errObj.message || "Ошибка восстановления файла", "error");
+                  }
                 },
               });
             },
@@ -712,8 +804,13 @@ export function useContextMenuDispatcher(dialogs: ContextMenuDialogSetters) {
           const bHash = ctxId;
           const bPath = ctxEl.dataset.path || "";
           menuItems = buildBlameLineMenu(lNo, bHash, bPath, {
-            onShowCommit: (h) => showToast(`Коммит ${h.substring(0, 7)}`),
-            onBlamePrevious: (h, p) => showToast(`Blame ${h.substring(0, 7)}^ для ${p}`),
+            onShowCommit: (h) => {
+              useHistoryStore.getState().selectCommit(currentRepo.path, h);
+              useUiStore.getState().setActiveView("hist");
+            },
+            onBlamePrevious: (_h, p) => {
+              setBlameModal({ isOpen: true, filePath: p, initialTab: "blame" });
+            },
             showToast,
           });
           break;
@@ -727,11 +824,26 @@ export function useContextMenuDispatcher(dialogs: ContextMenuDialogSetters) {
             bIdx,
             { left: leftL, right: rightL },
             {
-              onTakeLeft: (idx) => showToast(`Взято левое: блок #${idx + 1}`),
-              onTakeRight: (idx) => showToast(`Взято правое: блок #${idx + 1}`),
-              onTakeBothLeftFirst: (idx) => showToast(`Обе стороны: блок #${idx + 1}`),
-              onTakeBothRightFirst: (idx) => showToast(`Обе стороны: блок #${idx + 1}`),
-              onRevertBlock: (idx) => showToast(`Откат блока #${idx + 1}`),
+              onTakeLeft: (idx) => {
+                useConflictStore.getState().setCurrentBlockIndex(idx);
+                useConflictStore.getState().applyBlockChoice("ours");
+              },
+              onTakeRight: (idx) => {
+                useConflictStore.getState().setCurrentBlockIndex(idx);
+                useConflictStore.getState().applyBlockChoice("theirs");
+              },
+              onTakeBothLeftFirst: (idx) => {
+                useConflictStore.getState().setCurrentBlockIndex(idx);
+                useConflictStore.getState().applyBlockChoice("both-ours-theirs");
+              },
+              onTakeBothRightFirst: (idx) => {
+                useConflictStore.getState().setCurrentBlockIndex(idx);
+                useConflictStore.getState().applyBlockChoice("both-theirs-ours");
+              },
+              onRevertBlock: (idx) => {
+                useConflictStore.getState().setCurrentBlockIndex(idx);
+                useConflictStore.getState().applyBlockChoice("base");
+              },
             }
           );
           break;
