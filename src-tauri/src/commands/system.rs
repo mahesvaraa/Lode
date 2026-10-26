@@ -127,3 +127,65 @@ pub async fn open_in_external_editor(repo_path: String, path: String) -> Result<
 
     Ok(())
 }
+
+fn to_base64(data: &[u8]) -> String {
+    const TABLE: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    let mut result = String::with_capacity(data.len().div_ceil(3) * 4);
+    for chunk in data.chunks(3) {
+        let b0 = chunk[0];
+        let b1 = if chunk.len() > 1 { chunk[1] } else { 0 };
+        let b2 = if chunk.len() > 2 { chunk[2] } else { 0 };
+
+        result.push(TABLE[(b0 >> 2) as usize] as char);
+        result.push(TABLE[(((b0 & 0x03) << 4) | (b1 >> 4)) as usize] as char);
+
+        if chunk.len() > 1 {
+            result.push(TABLE[(((b1 & 0x0f) << 2) | (b2 >> 6)) as usize] as char);
+        } else {
+            result.push('=');
+        }
+
+        if chunk.len() > 2 {
+            result.push(TABLE[(b2 & 0x3f) as usize] as char);
+        } else {
+            result.push('=');
+        }
+    }
+    result
+}
+
+#[tauri::command]
+pub async fn load_font_data(path: String) -> Result<String, AppError> {
+    let target = Path::new(&path);
+    if !target.exists() || !target.is_file() {
+        return Err(AppError::new(
+            ErrorKind::InvalidPath,
+            format!("Файл шрифта '{}' не найден", path),
+            None,
+        ));
+    }
+
+    let bytes = std::fs::read(target).map_err(|e| {
+        AppError::new(
+            ErrorKind::Io,
+            format!("Не удалось прочитать файл шрифта: {e}"),
+            None,
+        )
+    })?;
+
+    let ext = target
+        .extension()
+        .and_then(|s| s.to_str())
+        .unwrap_or("")
+        .to_lowercase();
+
+    let mime = match ext.as_str() {
+        "otf" => "font/otf",
+        "woff" => "font/woff",
+        "woff2" => "font/woff2",
+        _ => "font/truetype",
+    };
+
+    let b64 = to_base64(&bytes);
+    Ok(format!("data:{mime};charset=utf-8;base64,{b64}"))
+}

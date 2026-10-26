@@ -38,6 +38,8 @@ describe("settingsStore", () => {
     expect(DEFAULT_SETTINGS.code_font_family).toContain("Geist Mono");
     expect(DEFAULT_SETTINGS.enable_fsmonitor).toBe(false);
     expect(DEFAULT_SETTINGS.enable_untracked_cache).toBe(false);
+    expect(DEFAULT_SETTINGS.custom_font_path).toBe(null);
+    expect(DEFAULT_SETTINGS.custom_code_font_path).toBe(null);
   });
 
   it("should apply settings to DOM correctly", () => {

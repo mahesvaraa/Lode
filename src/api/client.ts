@@ -573,6 +573,29 @@ export async function pickFolder(): Promise<string | null> {
   return null;
 }
 
+export async function pickFontFile(): Promise<string | null> {
+  const selected = await openDialog({
+    directory: false,
+    multiple: false,
+    title: "Выберите файл шрифта (.ttf, .otf, .woff, .woff2)",
+    filters: [
+      {
+        name: "Font files",
+        extensions: ["ttf", "otf", "woff", "woff2"],
+      },
+    ],
+  });
+
+  if (typeof selected === "string") {
+    return selected;
+  }
+  return null;
+}
+
+export async function loadFontData(path: string): Promise<string> {
+  return invoke<string>("load_font_data", { path });
+}
+
 export async function discardHunk(
   repoPath: string,
   path: string,

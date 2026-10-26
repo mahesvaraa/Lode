@@ -15,6 +15,10 @@ pub struct AppSettings {
     pub font_size: u32,
     pub font_family: String,
     pub code_font_family: String,
+    #[serde(default)]
+    pub custom_font_path: Option<String>,
+    #[serde(default)]
+    pub custom_code_font_path: Option<String>,
     pub pull_mode: String,
     pub external_editor: Option<String>,
     pub enable_fsmonitor: bool,
@@ -30,6 +34,8 @@ impl Default for AppSettings {
             font_size: 13,
             font_family: "Geist, system-ui, sans-serif".to_string(),
             code_font_family: "Geist Mono, ui-monospace, monospace".to_string(),
+            custom_font_path: None,
+            custom_code_font_path: None,
             pull_mode: "ff-only".to_string(),
             external_editor: None,
             enable_fsmonitor: false,

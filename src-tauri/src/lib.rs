@@ -129,6 +129,7 @@ pub fn run() {
             commands::system::show_in_file_manager,
             commands::system::open_in_terminal,
             commands::system::open_in_external_editor,
+            commands::system::load_font_data,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

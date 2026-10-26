@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import { Button, Checkbox, Input, Modal, Select, CheckIcon } from "@/ui";
+import { Button, Checkbox, Input, Modal, Select, CheckIcon, FolderIcon, CloseIcon } from "@/ui";
 import { useSettingsStore } from "@/store/settingsStore";
 import { useI18n } from "@/lib/i18n";
-import { checkGit } from "@/api/client";
+import { checkGit, pickFontFile } from "@/api/client";
 import { useToastStore } from "@/store/toastStore";
 import type { GitInfo } from "@/api/types/git_info";
 
@@ -33,6 +33,30 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
       showToast(errObj.message || "Git check error", "error");
     } finally {
       setIsCheckingGit(false);
+    }
+  };
+
+  const handlePickCustomFont = async () => {
+    try {
+      const path = await pickFontFile();
+      if (path) {
+        await updateSettings({ custom_font_path: path });
+        showToast(`Шрифт интерфейса установлен: ${path.split(/[\\/]/).pop()}`);
+      }
+    } catch (err) {
+      console.error("Failed to pick font:", err);
+    }
+  };
+
+  const handlePickCustomCodeFont = async () => {
+    try {
+      const path = await pickFontFile();
+      if (path) {
+        await updateSettings({ custom_code_font_path: path });
+        showToast(`Шрифт кода установлен: ${path.split(/[\\/]/).pop()}`);
+      }
+    } catch (err) {
+      console.error("Failed to pick code font:", err);
     }
   };
 
@@ -192,9 +216,53 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
               </div>
 
               <div>
-                <label style={{ fontSize: "12px", fontWeight: 600, display: "block", marginBottom: "6px" }}>
-                  {i18nText.settings.fontFamily} (Шрифт интерфейса)
-                </label>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+                  <label style={{ fontSize: "12px", fontWeight: 600 }}>
+                    {i18nText.settings.fontFamily} (Шрифт интерфейса)
+                  </label>
+                  <Button
+                    size="sm"
+                    variant="default"
+                    onClick={handlePickCustomFont}
+                    style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "11px" }}
+                  >
+                    <FolderIcon size={12} />
+                    <span>Выбрать .ttf / .otf файл…</span>
+                  </Button>
+                </div>
+
+                {settings.custom_font_path && (
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      padding: "6px 10px",
+                      backgroundColor: "var(--bg3)",
+                      borderRadius: "var(--radius-base)",
+                      border: "1px solid var(--acc)",
+                      marginBottom: "8px",
+                      fontSize: "12px",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px", overflow: "hidden" }}>
+                      <span style={{ color: "var(--acc)", fontWeight: 600 }}>Файл:</span>
+                      <span className="mono" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={settings.custom_font_path}>
+                        {settings.custom_font_path.split(/[\\/]/).pop()}
+                      </span>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => updateSettings({ custom_font_path: null })}
+                      title="Сбросить файл шрифта"
+                      style={{ padding: "0 6px" }}
+                    >
+                      <CloseIcon size={12} />
+                    </Button>
+                  </div>
+                )}
+
                 <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "8px" }}>
                   {[
                     { label: "Inter", val: "Inter, sans-serif" },
@@ -207,22 +275,24 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                     <Button
                       key={preset.label}
                       size="sm"
-                      variant={settings.font_family.startsWith(preset.label) ? "primary" : "default"}
-                      onClick={() => updateSettings({ font_family: preset.val })}
+                      variant={!settings.custom_font_path && settings.font_family.startsWith(preset.label) ? "primary" : "default"}
+                      onClick={() => updateSettings({ font_family: preset.val, custom_font_path: null })}
                     >
                       {preset.label}
                     </Button>
                   ))}
                 </div>
+
                 <Input
                   value={settings.font_family}
-                  onChange={(e) => updateSettings({ font_family: e.target.value })}
-                  placeholder="Введите имя любого шрифта, например: Roboto, Segoe UI, Arial, PT Sans..."
+                  onChange={(e) => updateSettings({ font_family: e.target.value, custom_font_path: null })}
+                  placeholder="Имя системного шрифта (например: Roboto, Segoe UI, PT Sans...)"
                   style={{ width: "100%", fontSize: "12px", marginBottom: "6px" }}
                 />
+
                 <div
                   style={{
-                    fontFamily: settings.font_family,
+                    fontFamily: "var(--font-ui)",
                     fontSize: "12px",
                     padding: "6px 10px",
                     backgroundColor: "var(--bg3)",
@@ -236,9 +306,53 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
               </div>
 
               <div>
-                <label style={{ fontSize: "12px", fontWeight: 600, display: "block", marginBottom: "6px" }}>
-                  {i18nText.settings.codeFontFamily} (Моноширинный шрифт diff и кода)
-                </label>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+                  <label style={{ fontSize: "12px", fontWeight: 600 }}>
+                    {i18nText.settings.codeFontFamily} (Моноширинный шрифт diff и кода)
+                  </label>
+                  <Button
+                    size="sm"
+                    variant="default"
+                    onClick={handlePickCustomCodeFont}
+                    style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "11px" }}
+                  >
+                    <FolderIcon size={12} />
+                    <span>Выбрать .ttf / .otf файл…</span>
+                  </Button>
+                </div>
+
+                {settings.custom_code_font_path && (
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      padding: "6px 10px",
+                      backgroundColor: "var(--bg3)",
+                      borderRadius: "var(--radius-base)",
+                      border: "1px solid var(--acc)",
+                      marginBottom: "8px",
+                      fontSize: "12px",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px", overflow: "hidden" }}>
+                      <span style={{ color: "var(--acc)", fontWeight: 600 }}>Файл:</span>
+                      <span className="mono" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={settings.custom_code_font_path}>
+                        {settings.custom_code_font_path.split(/[\\/]/).pop()}
+                      </span>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => updateSettings({ custom_code_font_path: null })}
+                      title="Сбросить файл шрифта кода"
+                      style={{ padding: "0 6px" }}
+                    >
+                      <CloseIcon size={12} />
+                    </Button>
+                  </div>
+                )}
+
                 <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "8px" }}>
                   {[
                     { label: "Cascadia Code", val: "Cascadia Code, monospace" },
@@ -250,17 +364,18 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                     <Button
                       key={preset.label}
                       size="sm"
-                      variant={settings.code_font_family.startsWith(preset.label) ? "primary" : "default"}
-                      onClick={() => updateSettings({ code_font_family: preset.val })}
+                      variant={!settings.custom_code_font_path && settings.code_font_family.startsWith(preset.label) ? "primary" : "default"}
+                      onClick={() => updateSettings({ code_font_family: preset.val, custom_code_font_path: null })}
                     >
                       {preset.label}
                     </Button>
                   ))}
                 </div>
+
                 <Input
                   value={settings.code_font_family}
-                  onChange={(e) => updateSettings({ code_font_family: e.target.value })}
-                  placeholder="Введите имя моноширинного шрифта, например: Consolas, Cascadia Code..."
+                  onChange={(e) => updateSettings({ code_font_family: e.target.value, custom_code_font_path: null })}
+                  placeholder="Имя моноширинного шрифта (например: Consolas, Cascadia Code...)"
                   style={{ width: "100%", fontSize: "12px" }}
                 />
               </div>
