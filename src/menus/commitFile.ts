@@ -1,5 +1,6 @@
 import type { MenuItem } from "@/store/contextMenuStore";
 import type { RepoContext } from "./types";
+import { getFileManagerLabel, copyToClipboard } from "@/lib/platform";
 
 export interface CommitFileMenuCallbacks {
   onOpenDiff: (path: string, commitHash: string) => void;
@@ -17,13 +18,7 @@ export function buildCommitFileMenu(
   callbacks: CommitFileMenuCallbacks
 ): MenuItem[] {
   const shortHash = commitHash.substring(0, 7);
-  const isWindows = navigator.userAgent.includes("Windows");
-  const isMac = navigator.userAgent.includes("Mac");
-  const fileManagerLabel = isWindows
-    ? "Показать в Проводнике"
-    : isMac
-    ? "Показать в Finder"
-    : "Показать в файловом менеджере";
+  const fileManagerLabel = getFileManagerLabel();
 
   return [
     {
@@ -52,7 +47,7 @@ export function buildCommitFileMenu(
       id: "commit-file:copy-path",
       label: "Копировать путь к файлу",
       run: async () => {
-        await navigator.clipboard.writeText(filePath);
+        await copyToClipboard(filePath);
         callbacks.showToast(`Путь скопирован: ${filePath}`);
       },
     },

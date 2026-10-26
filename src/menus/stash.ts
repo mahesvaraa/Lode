@@ -1,5 +1,6 @@
 import type { MenuItem } from "@/store/contextMenuStore";
 import type { RepoContext } from "./types";
+import { copyToClipboard } from "@/lib/platform";
 
 export interface StashMenuCallbacks {
   onApply: (index: number) => void;
@@ -52,7 +53,7 @@ export function buildStashMenu(
       disabled: !message,
       run: async () => {
         if (message) {
-          await navigator.clipboard.writeText(message);
+          await copyToClipboard(message);
           callbacks.showToast("Сообщение stash скопировано");
         }
       },

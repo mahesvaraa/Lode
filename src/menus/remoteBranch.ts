@@ -1,5 +1,6 @@
 import type { MenuItem } from "@/store/contextMenuStore";
 import type { RepoContext } from "./types";
+import { copyToClipboard } from "@/lib/platform";
 
 export interface RemoteBranchMenuCallbacks {
   onCheckoutTracking: (remoteBranch: string) => void;
@@ -62,7 +63,7 @@ export function buildRemoteBranchMenu(
       id: "remote-branch:copy-name",
       label: "Копировать полное имя",
       run: async () => {
-        await navigator.clipboard.writeText(remoteBranch);
+        await copyToClipboard(remoteBranch);
         callbacks.showToast(`Скопировано: ${remoteBranch}`);
       },
     },

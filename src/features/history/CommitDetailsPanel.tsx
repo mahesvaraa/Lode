@@ -5,6 +5,7 @@ import { useRepoStore } from "@/store/repoStore";
 import { useToastStore } from "@/store/toastStore";
 import { BlameModal } from "./BlameModal";
 import { CommitComparisonView } from "./CommitComparisonView";
+import { copyToClipboard } from "@/lib/platform";
 import type { CommitFile } from "@/api/types/commit_file";
 
 export const CommitDetailsPanel: React.FC = () => {
@@ -188,8 +189,8 @@ export const CommitDetailsPanel: React.FC = () => {
             <Button
               size="sm"
               variant="ghost"
-              onClick={() => {
-                navigator.clipboard.writeText(commit.hash);
+              onClick={async () => {
+                await copyToClipboard(commit.hash);
                 showToast("SHA скопирован");
               }}
               title="Скопировать полный хеш коммита"

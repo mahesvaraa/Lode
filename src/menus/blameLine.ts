@@ -1,4 +1,5 @@
 import type { MenuItem } from "@/store/contextMenuStore";
+import { copyToClipboard } from "@/lib/platform";
 
 export interface BlameLineMenuCallbacks {
   onShowCommit: (hash: string) => void;
@@ -40,7 +41,7 @@ export function buildBlameLineMenu(
       label: "Копировать SHA коммита",
       disabled: isZeroHash,
       run: async () => {
-        await navigator.clipboard.writeText(hash);
+        await copyToClipboard(hash);
         callbacks.showToast(`SHA скопирован: ${shortHash}`);
       },
     },
@@ -49,7 +50,7 @@ export function buildBlameLineMenu(
       id: "blame:copy-line",
       label: `Копировать номер строки (${lineNo})`,
       run: async () => {
-        await navigator.clipboard.writeText(String(lineNo));
+        await copyToClipboard(String(lineNo));
         callbacks.showToast(`Номер строки скопирован: ${lineNo}`);
       },
     },

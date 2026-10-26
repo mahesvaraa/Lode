@@ -1,5 +1,6 @@
 import type { MenuItem } from "@/store/contextMenuStore";
 import type { RepoContext } from "./types";
+import { copyToClipboard } from "@/lib/platform";
 
 export interface RemoteMenuCallbacks {
   onFetch: (remoteName: string) => void;
@@ -46,7 +47,7 @@ export function buildRemoteMenu(
       disabledReason: "URL отсутствует",
       run: async () => {
         if (remoteUrl) {
-          await navigator.clipboard.writeText(remoteUrl);
+          await copyToClipboard(remoteUrl);
           callbacks.showToast(`URL '${remoteName}' скопирован`);
         }
       },

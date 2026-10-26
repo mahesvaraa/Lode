@@ -1,5 +1,6 @@
 import type { MenuItem } from "@/store/contextMenuStore";
 import type { RepoContext } from "./types";
+import { copyToClipboard } from "@/lib/platform";
 
 export interface BranchMenuCallbacks {
   onCheckout: (branchName: string) => void;
@@ -185,7 +186,7 @@ export function buildBranchMenu(
       id: "branch:copy-name",
       label: "Копировать имя ветки",
       run: async () => {
-        await navigator.clipboard.writeText(branchName);
+        await copyToClipboard(branchName);
         callbacks.showToast(`Имя ветки скопировано: ${branchName}`);
       },
     },

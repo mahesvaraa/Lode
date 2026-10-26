@@ -1,5 +1,6 @@
 import type { MenuItem } from "@/store/contextMenuStore";
 import type { RepoContext } from "./types";
+import { copyToClipboard } from "@/lib/platform";
 
 export interface CommitMenuCallbacks {
   onCheckout: (hash: string) => void;
@@ -77,7 +78,7 @@ export function buildCommitMenu(
         id: "commit:multi-copy-shas",
         label: "Копировать все SHA",
         run: async () => {
-          await navigator.clipboard.writeText(selectedHashes.join("\n"));
+          await copyToClipboard(selectedHashes.join("\n"));
           callbacks.showToast(`Скопировано ${selectedHashes.length} SHA`);
         },
       },
@@ -216,7 +217,7 @@ export function buildCommitMenu(
           label: "Полный SHA",
           shortcut: "Ctrl+C",
           run: async () => {
-            await navigator.clipboard.writeText(targetHash);
+            await copyToClipboard(targetHash);
             callbacks.showToast(`SHA скопирован: ${shortHash}`);
           },
         },
@@ -225,7 +226,7 @@ export function buildCommitMenu(
           id: "commit:copy-short-sha",
           label: "Короткий SHA (7 символов)",
           run: async () => {
-            await navigator.clipboard.writeText(shortHash);
+            await copyToClipboard(shortHash);
             callbacks.showToast(`Короткий SHA скопирован: ${shortHash}`);
           },
         },
@@ -239,7 +240,7 @@ export function buildCommitMenu(
               const fullMsg = commit.body
                 ? `${commit.subject}\n\n${commit.body}`
                 : commit.subject;
-              await navigator.clipboard.writeText(fullMsg);
+              await copyToClipboard(fullMsg);
               callbacks.showToast("Сообщение коммита скопировано");
             }
           },
@@ -251,7 +252,7 @@ export function buildCommitMenu(
           disabled: !commit?.author_name,
           run: async () => {
             if (commit) {
-              await navigator.clipboard.writeText(
+              await copyToClipboard(
                 `${commit.author_name} <${commit.author_email}>`
               );
               callbacks.showToast("Автор скопирован");

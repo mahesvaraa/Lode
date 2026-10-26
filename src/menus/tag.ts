@@ -1,5 +1,6 @@
 import type { MenuItem } from "@/store/contextMenuStore";
 import type { RepoContext } from "./types";
+import { copyToClipboard } from "@/lib/platform";
 
 export interface TagMenuCallbacks {
   onCheckout: (tagName: string) => void;
@@ -46,7 +47,7 @@ export function buildTagMenu(
       id: "tag:copy-name",
       label: "Копировать имя тега",
       run: async () => {
-        await navigator.clipboard.writeText(tagName);
+        await copyToClipboard(tagName);
         callbacks.showToast(`Тег скопирован: ${tagName}`);
       },
     },

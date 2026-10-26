@@ -1,4 +1,5 @@
 import type { MenuItem } from "@/store/contextMenuStore";
+import { getFileManagerLabel } from "@/lib/platform";
 
 export interface RepoHeaderMenuCallbacks {
   onShowInFileManager: (path: string) => void;
@@ -11,13 +12,7 @@ export function buildRepoHeaderMenu(
   repoPath: string,
   callbacks: RepoHeaderMenuCallbacks
 ): MenuItem[] {
-  const isWindows = navigator.userAgent.includes("Windows");
-  const isMac = navigator.userAgent.includes("Mac");
-  const fileManagerLabel = isWindows
-    ? "Показать в Проводнике"
-    : isMac
-    ? "Показать в Finder"
-    : "Показать в файловом менеджере";
+  const fileManagerLabel = getFileManagerLabel();
 
   return [
     {

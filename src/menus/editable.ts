@@ -1,4 +1,5 @@
 import type { MenuItem } from "@/store/contextMenuStore";
+import { copyToClipboard } from "@/lib/platform";
 
 export function buildEditableMenu(
   target: HTMLInputElement | HTMLTextAreaElement
@@ -45,7 +46,7 @@ export function buildEditableMenu(
         const selEnd = target.selectionEnd || 0;
         const text = target.value.substring(selStart, selEnd);
         if (text) {
-          await navigator.clipboard.writeText(text);
+          await copyToClipboard(text);
           if (!isReadOnly) {
             target.setRangeText("", selStart, selEnd, "end");
             target.dispatchEvent(new Event("input", { bubbles: true }));
@@ -66,7 +67,7 @@ export function buildEditableMenu(
         const selEnd = target.selectionEnd || 0;
         const text = target.value.substring(selStart, selEnd);
         if (text) {
-          await navigator.clipboard.writeText(text);
+          await copyToClipboard(text);
         }
       },
     },
@@ -80,12 +81,14 @@ export function buildEditableMenu(
       run: async () => {
         target.focus();
         try {
-          const text = await navigator.clipboard.readText();
-          if (text) {
-            const selStart = target.selectionStart || 0;
-            const selEnd = target.selectionEnd || 0;
-            target.setRangeText(text, selStart, selEnd, "end");
-            target.dispatchEvent(new Event("input", { bubbles: true }));
+          if (typeof navigator !== "undefined" && navigator.clipboard) {
+            const text = await navigator.clipboard.readText();
+            if (text) {
+              const selStart = target.selectionStart || 0;
+              const selEnd = target.selectionEnd || 0;
+              target.setRangeText(text, selStart, selEnd, "end");
+              target.dispatchEvent(new Event("input", { bubbles: true }));
+            }
           }
         } catch (err) {
           console.error("Paste failed:", err);

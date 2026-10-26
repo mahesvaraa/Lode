@@ -1,4 +1,5 @@
 import type { MenuItem } from "@/store/contextMenuStore";
+import { getFileManagerLabel, copyToClipboard } from "@/lib/platform";
 import type { RepoContext } from "./types";
 
 export interface WorkingFileMenuCallbacks {
@@ -61,7 +62,7 @@ export function buildWorkingFileMenu(
         id: "file:multi-copy-paths",
         label: "Копировать относительные пути",
         run: async () => {
-          await navigator.clipboard.writeText(selectedPaths.join("\n"));
+          await copyToClipboard(selectedPaths.join("\n"));
           callbacks.showToast(`Скопировано ${selectedPaths.length} путей`);
         },
       },
@@ -250,13 +251,7 @@ export function buildWorkingFileMenu(
   }
 
   // Common file actions
-  const isWindows = navigator.userAgent.includes("Windows");
-  const isMac = navigator.userAgent.includes("Mac");
-  const fileManagerLabel = isWindows
-    ? "Показать в Проводнике"
-    : isMac
-    ? "Показать в Finder"
-    : "Показать в файловом менеджере";
+  const fileManagerLabel = getFileManagerLabel();
 
   items.push(
     {
@@ -281,7 +276,7 @@ export function buildWorkingFileMenu(
           id: "file:copy-rel-path",
           label: "Относительный путь",
           run: async () => {
-            await navigator.clipboard.writeText(filePath);
+            await copyToClipboard(filePath);
             callbacks.showToast(`Путь скопирован: ${filePath}`);
           },
         },
@@ -291,7 +286,7 @@ export function buildWorkingFileMenu(
           label: "Абсолютный путь",
           run: async () => {
             const abs = `${context.repoPath.replace(/[/\\]$/, "")}/${filePath}`;
-            await navigator.clipboard.writeText(abs);
+            await copyToClipboard(abs);
             callbacks.showToast(`Абсолютный путь скопирован`);
           },
         },
@@ -300,7 +295,7 @@ export function buildWorkingFileMenu(
           id: "file:copy-name",
           label: "Имя файла",
           run: async () => {
-            await navigator.clipboard.writeText(filename);
+            await copyToClipboard(filename);
             callbacks.showToast(`Имя файла скопировано: ${filename}`);
           },
         },
