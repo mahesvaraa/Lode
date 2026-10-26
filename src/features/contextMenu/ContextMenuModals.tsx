@@ -92,32 +92,35 @@ export interface EditRemoteUrlModalState {
   currentUrl: string;
 }
 
-interface ContextMenuModalsProps {
+export interface ContextMenuDialogSetters {
+  setBranchModal: React.Dispatch<React.SetStateAction<BranchModalState>>;
+  setTagModal: React.Dispatch<React.SetStateAction<TagModalState>>;
+  setRenameModal: React.Dispatch<React.SetStateAction<RenameModalState>>;
+  setResetModal: React.Dispatch<React.SetStateAction<ResetModalState>>;
+  setMergeParentModal: React.Dispatch<React.SetStateAction<MergeParentModalState>>;
+  setUpstreamModal: React.Dispatch<React.SetStateAction<UpstreamModalState>>;
+  setConfirmModal: React.Dispatch<React.SetStateAction<ConfirmModalState>>;
+  setBlameModal: React.Dispatch<React.SetStateAction<BlameModalState>>;
+  setInteractiveRebaseModal: React.Dispatch<React.SetStateAction<InteractiveRebaseModalState>>;
+  setRewordModal: React.Dispatch<React.SetStateAction<RewordModalState>>;
+  setEditRemoteUrlModal: React.Dispatch<React.SetStateAction<EditRemoteUrlModalState>>;
+}
+
+export interface ContextMenuModalsProps extends ContextMenuDialogSetters {
   currentRepoPath?: string;
   refreshAll: () => Promise<void>;
   availableRemotes: string[];
   branchModal: BranchModalState;
-  setBranchModal: React.Dispatch<React.SetStateAction<BranchModalState>>;
   tagModal: TagModalState;
-  setTagModal: React.Dispatch<React.SetStateAction<TagModalState>>;
   renameModal: RenameModalState;
-  setRenameModal: React.Dispatch<React.SetStateAction<RenameModalState>>;
   resetModal: ResetModalState;
-  setResetModal: React.Dispatch<React.SetStateAction<ResetModalState>>;
   mergeParentModal: MergeParentModalState;
-  setMergeParentModal: React.Dispatch<React.SetStateAction<MergeParentModalState>>;
   upstreamModal: UpstreamModalState;
-  setUpstreamModal: React.Dispatch<React.SetStateAction<UpstreamModalState>>;
   confirmModal: ConfirmModalState;
-  setConfirmModal: React.Dispatch<React.SetStateAction<ConfirmModalState>>;
   blameModal: BlameModalState;
-  setBlameModal: React.Dispatch<React.SetStateAction<BlameModalState>>;
   interactiveRebaseModal: InteractiveRebaseModalState;
-  setInteractiveRebaseModal: React.Dispatch<React.SetStateAction<InteractiveRebaseModalState>>;
   rewordModal: RewordModalState;
-  setRewordModal: React.Dispatch<React.SetStateAction<RewordModalState>>;
   editRemoteUrlModal: EditRemoteUrlModalState;
-  setEditRemoteUrlModal: React.Dispatch<React.SetStateAction<EditRemoteUrlModalState>>;
 }
 
 export const ContextMenuModals: React.FC<ContextMenuModalsProps> = ({
