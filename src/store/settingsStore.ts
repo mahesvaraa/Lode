@@ -31,7 +31,11 @@ export const applySettingsToDom = (settings: AppSettings) => {
   const root = document.documentElement;
   root.style.setProperty("--font-size-base", `${settings.font_size}px`);
   root.style.setProperty("--font-sans", settings.font_family);
+  root.style.setProperty("--font-ui", settings.font_family);
   root.style.setProperty("--font-mono", settings.code_font_family);
+  if (document.body) {
+    document.body.style.fontFamily = settings.font_family;
+  }
 
   // Sync theme
   useUiStore.getState().setTheme(settings.theme as "system" | "dark" | "light");

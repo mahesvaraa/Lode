@@ -264,7 +264,7 @@ export const Header: React.FC = () => {
 
         <Button
           size="sm"
-          variant="ghost"
+          variant="default"
           title="Закрыть репозиторий"
           onClick={closeRepo}
         >

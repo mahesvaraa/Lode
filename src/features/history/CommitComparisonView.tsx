@@ -3,7 +3,15 @@ import { Button, EmptyState, Skeleton, Splitter, CloseIcon } from "@/ui";
 import { useHistoryStore } from "@/store/historyStore";
 import type { FileDiff } from "@/api/types/file_diff";
 
-export const CommitComparisonView: React.FC = () => {
+interface CommitComparisonViewProps {
+  showCommits?: boolean;
+  onToggleCommits?: () => void;
+}
+
+export const CommitComparisonView: React.FC<CommitComparisonViewProps> = ({
+  showCommits,
+  onToggleCommits,
+}) => {
   const baseHash = useHistoryStore((s) => s.comparisonBaseHash);
   const targetHash = useHistoryStore((s) => s.comparisonTargetHash);
   const diffs = useHistoryStore((s) => s.comparisonDiffs);
@@ -32,7 +40,7 @@ export const CommitComparisonView: React.FC = () => {
       {/* Header */}
       <div
         style={{
-          padding: "12px 16px",
+          padding: "8px 14px",
           borderBottom: "1px solid var(--line)",
           backgroundColor: "var(--bg2)",
           display: "flex",
@@ -43,8 +51,8 @@ export const CommitComparisonView: React.FC = () => {
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: "8px", overflow: "hidden" }}>
-          <span style={{ fontWeight: 600, fontSize: "13px", color: "var(--tx)" }}>
-            Сравнение коммитов:
+          <span style={{ fontWeight: 600, fontSize: "12px", color: "var(--tx)" }}>
+            Сравнение:
           </span>
           <code
             className="mono"
@@ -58,7 +66,7 @@ export const CommitComparisonView: React.FC = () => {
           >
             {baseHash.substring(0, 7)}
           </code>
-          <span style={{ color: "var(--mut)" }}>→</span>
+          <span style={{ color: "var(--mut)" }}>↔</span>
           <code
             className="mono"
             style={{
@@ -78,15 +86,27 @@ export const CommitComparisonView: React.FC = () => {
           )}
         </div>
 
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={clearComparison}
-          style={{ display: "flex", alignItems: "center", gap: "5px" }}
-        >
-          <CloseIcon size={12} />
-          <span>Закрыть сравнение</span>
-        </Button>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          {onToggleCommits && (
+            <Button
+              size="sm"
+              variant="default"
+              onClick={onToggleCommits}
+              title="Переключить видимость списка коммитов"
+            >
+              {showCommits ? "Скрыть граф" : "Показать граф"}
+            </Button>
+          )}
+          <Button
+            size="sm"
+            variant="default"
+            onClick={clearComparison}
+            style={{ display: "flex", alignItems: "center", gap: "5px" }}
+          >
+            <CloseIcon size={12} />
+            <span>Выйти из сравнения</span>
+          </Button>
+        </div>
       </div>
 
       {isLoading ? (
@@ -193,7 +213,7 @@ export const CommitComparisonView: React.FC = () => {
                       style={{
                         marginBottom: "16px",
                         border: "1px solid var(--line)",
-                        borderRadius: "4px",
+                        borderRadius: "var(--radius-base)",
                         overflow: "hidden",
                         backgroundColor: "var(--bg2)",
                       }}
@@ -214,9 +234,9 @@ export const CommitComparisonView: React.FC = () => {
                         {hunk.lines.map((l, lIdx) => {
                           const bg =
                             l.kind === "Addition"
-                              ? "rgba(76, 194, 106, 0.12)"
+                              ? "var(--addbg)"
                               : l.kind === "Deletion"
-                              ? "rgba(255, 107, 102, 0.12)"
+                              ? "var(--delbg)"
                               : "transparent";
                           const prefix =
                             l.kind === "Addition" ? "+" : l.kind === "Deletion" ? "-" : " ";

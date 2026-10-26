@@ -1,5 +1,5 @@
 import React from "react";
-import { Button } from "@/ui";
+import { Button, PlusIcon } from "@/ui";
 import type { StashItem } from "@/api/types/stash_item";
 
 interface StashesSectionProps {
@@ -54,10 +54,10 @@ export const StashesSection: React.FC<StashesSectionProps> = ({
           size="sm"
           variant="ghost"
           onClick={onOpenStashModal}
-          style={{ padding: "1px 6px", fontSize: "11px" }}
+          style={{ padding: "1px 6px" }}
           title="Управление Stash"
         >
-          {stashes.length > 0 ? "Открыть" : "+"}
+          <PlusIcon size={12} />
         </Button>
       </div>
 

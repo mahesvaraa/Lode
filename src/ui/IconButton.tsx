@@ -12,9 +12,11 @@ export const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
       <Button
         ref={ref}
         style={{
-          padding: "5px",
+          width: "26px",
+          height: "26px",
           minWidth: "26px",
           minHeight: "26px",
+          padding: 0,
           ...style,
         }}
         {...props}

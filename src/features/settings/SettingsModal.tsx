@@ -193,35 +193,74 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
 
               <div>
                 <label style={{ fontSize: "12px", fontWeight: 600, display: "block", marginBottom: "6px" }}>
-                  {i18nText.settings.fontFamily}
+                  {i18nText.settings.fontFamily} (Шрифт интерфейса)
                 </label>
-                <Select
+                <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "8px" }}>
+                  {[
+                    { label: "Inter", val: "Inter, sans-serif" },
+                    { label: "Segoe UI", val: "Segoe UI, sans-serif" },
+                    { label: "Roboto", val: "Roboto, sans-serif" },
+                    { label: "Arial", val: "Arial, sans-serif" },
+                    { label: "JetBrains", val: "JetBrains Mono, monospace" },
+                    { label: "Системный", val: "system-ui, sans-serif" },
+                  ].map((preset) => (
+                    <Button
+                      key={preset.label}
+                      size="sm"
+                      variant={settings.font_family.startsWith(preset.label) ? "primary" : "default"}
+                      onClick={() => updateSettings({ font_family: preset.val })}
+                    >
+                      {preset.label}
+                    </Button>
+                  ))}
+                </div>
+                <Input
                   value={settings.font_family}
                   onChange={(e) => updateSettings({ font_family: e.target.value })}
-                  options={[
-                    { value: "Geist, system-ui, sans-serif", label: "Geist" },
-                    { value: "Inter, system-ui, sans-serif", label: "Inter" },
-                    { value: "Segoe UI, system-ui, sans-serif", label: "Segoe UI" },
-                    { value: "system-ui, sans-serif", label: "System UI" },
-                  ]}
-                  style={{ width: "100%", fontSize: "12px" }}
+                  placeholder="Введите имя любого шрифта, например: Roboto, Segoe UI, Arial, PT Sans..."
+                  style={{ width: "100%", fontSize: "12px", marginBottom: "6px" }}
                 />
+                <div
+                  style={{
+                    fontFamily: settings.font_family,
+                    fontSize: "12px",
+                    padding: "6px 10px",
+                    backgroundColor: "var(--bg3)",
+                    borderRadius: "var(--radius-base)",
+                    color: "var(--tx)",
+                    border: "1px solid var(--line)",
+                  }}
+                >
+                  Съешь же ещё этих мягких французских булок, да выпей чаю. The quick brown fox jumps over the lazy dog. 1234567890
+                </div>
               </div>
 
               <div>
                 <label style={{ fontSize: "12px", fontWeight: 600, display: "block", marginBottom: "6px" }}>
-                  {i18nText.settings.codeFontFamily}
+                  {i18nText.settings.codeFontFamily} (Моноширинный шрифт diff и кода)
                 </label>
-                <Select
+                <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "8px" }}>
+                  {[
+                    { label: "Cascadia Code", val: "Cascadia Code, monospace" },
+                    { label: "JetBrains Mono", val: "JetBrains Mono, monospace" },
+                    { label: "Fira Code", val: "Fira Code, monospace" },
+                    { label: "Consolas", val: "Consolas, monospace" },
+                    { label: "Системный", val: "ui-monospace, monospace" },
+                  ].map((preset) => (
+                    <Button
+                      key={preset.label}
+                      size="sm"
+                      variant={settings.code_font_family.startsWith(preset.label) ? "primary" : "default"}
+                      onClick={() => updateSettings({ code_font_family: preset.val })}
+                    >
+                      {preset.label}
+                    </Button>
+                  ))}
+                </div>
+                <Input
                   value={settings.code_font_family}
                   onChange={(e) => updateSettings({ code_font_family: e.target.value })}
-                  options={[
-                    { value: "Geist Mono, ui-monospace, monospace", label: "Geist Mono" },
-                    { value: "JetBrains Mono, ui-monospace, monospace", label: "JetBrains Mono" },
-                    { value: "Fira Code, ui-monospace, monospace", label: "Fira Code" },
-                    { value: "Consolas, ui-monospace, monospace", label: "Consolas" },
-                    { value: "ui-monospace, monospace", label: "System Monospace" },
-                  ]}
+                  placeholder="Введите имя моноширинного шрифта, например: Consolas, Cascadia Code..."
                   style={{ width: "100%", fontSize: "12px" }}
                 />
               </div>

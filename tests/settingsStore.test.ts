@@ -54,6 +54,7 @@ describe("settingsStore", () => {
     const root = document.documentElement;
     expect(root.style.getPropertyValue("--font-size-base")).toBe("16px");
     expect(root.style.getPropertyValue("--font-sans")).toBe("Inter, sans-serif");
+    expect(root.style.getPropertyValue("--font-ui")).toBe("Inter, sans-serif");
     expect(root.style.getPropertyValue("--font-mono")).toBe("Fira Code, monospace");
     expect(useUiStore.getState().theme).toBe("dark");
   });

@@ -2,25 +2,24 @@
 
 /* Base variables & Light theme */
 :root {
-  /* Requested palette:
-     #d4dde1: main light bg / dark text font
-     #2d3033: main dark bg / light text font
-     #335252: auxiliary green
+  /* Clean neutral light background with requested accents:
+     #335252: auxiliary/accent green
      #aa4b41: auxiliary red
+     #2d3033: text font color
   */
-  --bg: #d4dde1;
-  --bg2: #c6d1d6;
-  --bg3: #b7c5cb;
-  --line: #a1b2b9;
+  --bg: #fdfdfd;
+  --bg2: #f4f5f7;
+  --bg3: #e6e9ec;
+  --line: #d2d7dc;
   --tx: #2d3033;
-  --mut: #546067;
+  --mut: #5e666d;
   --acc: #335252;
-  --pur: #4a5c68;
+  --pur: #596a75;
   --add: #335252;
   --del: #aa4b41;
-  --addbg: rgba(51, 82, 82, 0.16);
-  --delbg: rgba(170, 75, 65, 0.16);
-  --sel: rgba(51, 82, 82, 0.18);
+  --addbg: rgba(51, 82, 82, 0.12);
+  --delbg: rgba(170, 75, 65, 0.12);
+  --sel: rgba(51, 82, 82, 0.12);
 
   /* 8-color branch palette (accessible, high contrast, matched to style) */
   --branch-0: #335252;
@@ -120,19 +119,19 @@
 
 /* Explicit light theme */
 :root[data-theme="light"] {
-  --bg: #d4dde1;
-  --bg2: #c6d1d6;
-  --bg3: #b7c5cb;
-  --line: #a1b2b9;
+  --bg: #fdfdfd;
+  --bg2: #f4f5f7;
+  --bg3: #e6e9ec;
+  --line: #d2d7dc;
   --tx: #2d3033;
-  --mut: #546067;
+  --mut: #5e666d;
   --acc: #335252;
-  --pur: #4a5c68;
+  --pur: #596a75;
   --add: #335252;
   --del: #aa4b41;
-  --addbg: rgba(51, 82, 82, 0.16);
-  --delbg: rgba(170, 75, 65, 0.16);
-  --sel: rgba(51, 82, 82, 0.18);
+  --addbg: rgba(51, 82, 82, 0.12);
+  --delbg: rgba(170, 75, 65, 0.12);
+  --sel: rgba(51, 82, 82, 0.12);
 
   --branch-0: #335252;
   --branch-1: #aa4b41;

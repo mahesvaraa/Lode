@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { Button, EmptyState, Input, Skeleton, Splitter, CloseIcon } from "@/ui";
+import { Button, EmptyState, Input, Skeleton, Splitter } from "@/ui";
 import { CommitRow } from "./CommitRow";
 import { CommitDetailsPanel } from "./CommitDetailsPanel";
+import { CommitComparisonView } from "./CommitComparisonView";
 import { useHistoryStore, type DateFilterPeriod } from "@/store/historyStore";
 import { useRepoStore } from "@/store/repoStore";
 import { useStatusStore } from "@/store/statusStore";
@@ -24,7 +25,6 @@ export const HistoryView: React.FC = () => {
   const comparisonBaseHash = useHistoryStore((s) => s.comparisonBaseHash);
   const comparisonTargetHash = useHistoryStore((s) => s.comparisonTargetHash);
   const compareCommits = useHistoryStore((s) => s.compareCommits);
-  const clearComparison = useHistoryStore((s) => s.clearComparison);
 
   const loadInitial = useHistoryStore((s) => s.loadInitial);
   const loadMore = useHistoryStore((s) => s.loadMore);
@@ -38,6 +38,8 @@ export const HistoryView: React.FC = () => {
   const currentUser = useHistoryStore((s) => s.currentUser);
 
   const [detailsPanelWidth, setDetailsPanelWidth] = useState(440);
+  const [commitsPanelWidth, setCommitsPanelWidth] = useState(340);
+  const [showCommitsInComparison, setShowCommitsInComparison] = useState(false);
   const [searchInput, setSearchInput] = useState("");
   const parentRef = useRef<HTMLDivElement>(null);
 
@@ -209,157 +211,238 @@ export const HistoryView: React.FC = () => {
         </span>
       </div>
 
-      {/* Comparison Banner */}
-      {comparisonBaseHash && comparisonTargetHash && (
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: "8px 14px",
-            backgroundColor: "rgba(140, 151, 255, 0.12)",
-            borderBottom: "1px solid var(--acc)",
-            fontSize: "12px",
-            color: "var(--tx)",
-            flexShrink: 0,
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <span style={{ fontWeight: 600 }}>Режим сравнения коммитов:</span>
-            <code className="mono" style={{ color: "var(--acc)", fontWeight: 600 }}>
-              {comparisonBaseHash.substring(0, 7)}
-            </code>
-            <span style={{ color: "var(--mut)" }}>↔</span>
-            <code className="mono" style={{ color: "var(--acc)", fontWeight: 600 }}>
-              {comparisonTargetHash.substring(0, 7)}
-            </code>
-            <span style={{ fontSize: "11px", color: "var(--mut)" }}>
-              (удерживайте Shift/Ctrl для выбора другого коммита)
-            </span>
-          </div>
-
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={clearComparison}
-            style={{ display: "flex", alignItems: "center", gap: "5px" }}
-          >
-            <CloseIcon size={12} />
-            <span>Выйти из сравнения</span>
-          </Button>
-        </div>
-      )}
-
       {/* Main View Area */}
-      <div style={{ flex: 1, display: "flex", minHeight: 0, overflow: "hidden" }}>
-        {/* Left: Virtualized Commit List */}
-        <div
-          ref={parentRef}
-          data-empty-history="true"
-          style={{
-            flex: 1,
-            height: "100%",
-            overflow: "auto",
-            position: "relative",
-            outline: "none",
-          }}
-        >
-          {error ? (
-            <EmptyState title="Ошибка истории" description={error} />
-          ) : commits.length === 0 && !isLoading ? (
-            <EmptyState
-              title="Нет коммитов"
-              description="В выбранной ветке или по заданному поисковому запросу коммитов не найдено"
-            />
-          ) : (
+      {comparisonBaseHash && comparisonTargetHash && !showCommitsInComparison ? (
+        <div style={{ flex: 1, display: "flex", minHeight: 0, overflow: "hidden" }}>
+          <CommitComparisonView
+            showCommits={false}
+            onToggleCommits={() => setShowCommitsInComparison(true)}
+          />
+        </div>
+      ) : comparisonBaseHash && comparisonTargetHash && showCommitsInComparison ? (
+        <div style={{ flex: 1, display: "flex", minHeight: 0, overflow: "hidden" }}>
+          <div
+            style={{
+              width: `${commitsPanelWidth}px`,
+              height: "100%",
+              flexShrink: 0,
+              overflow: "hidden",
+            }}
+          >
             <div
+              ref={parentRef}
+              data-empty-history="true"
               style={{
-                height: `${rowVirtualizer.getTotalSize()}px`,
                 width: "100%",
+                height: "100%",
+                overflow: "auto",
                 position: "relative",
+                outline: "none",
               }}
             >
-              {virtualItems.map((virtualRow) => {
-                const commit = commits[virtualRow.index];
-                const node = graphNodes[virtualRow.index];
-                if (!commit || !node) return null;
+              {error ? (
+                <EmptyState title="Ошибка истории" description={error} />
+              ) : commits.length === 0 && !isLoading ? (
+                <EmptyState
+                  title="Нет коммитов"
+                  description="В выбранной ветке или по заданному поисковому запросу коммитов не найдено"
+                />
+              ) : (
+                <div
+                  style={{
+                    height: `${rowVirtualizer.getTotalSize()}px`,
+                    width: "100%",
+                    position: "relative",
+                  }}
+                >
+                  {virtualItems.map((virtualRow) => {
+                    const commit = commits[virtualRow.index];
+                    const node = graphNodes[virtualRow.index];
+                    if (!commit || !node) return null;
 
-                const isSelected = selectedCommitHash === commit.hash;
-                const isCompared =
-                  commit.hash === comparisonBaseHash || commit.hash === comparisonTargetHash;
-                const comparedRole =
-                  commit.hash === comparisonBaseHash
-                    ? "base"
-                    : commit.hash === comparisonTargetHash
-                    ? "target"
-                    : undefined;
+                    const isSelected = selectedCommitHash === commit.hash;
+                    const isCompared =
+                      commit.hash === comparisonBaseHash || commit.hash === comparisonTargetHash;
+                    const comparedRole =
+                      commit.hash === comparisonBaseHash
+                        ? "base"
+                        : commit.hash === comparisonTargetHash
+                        ? "target"
+                        : undefined;
 
-                return (
-                  <div
-                    key={commit.hash}
-                    data-ctx="commit"
-                    data-id={commit.hash}
-                    style={{
-                      position: "absolute",
-                      top: 0,
-                      left: 0,
-                      width: "100%",
-                      height: `${virtualRow.size}px`,
-                      transform: `translateY(${virtualRow.start}px)`,
-                    }}
-                  >
-                    <CommitRow
-                      commit={commit}
-                      node={node}
-                      isSelected={isSelected}
-                      isCompared={isCompared}
-                      comparedRole={comparedRole}
-                      onSelect={(e) => {
-                        if (!currentRepo) return;
-                        if (
-                          (e.shiftKey || e.ctrlKey || e.metaKey) &&
-                          selectedCommitHash &&
-                          selectedCommitHash !== commit.hash
-                        ) {
-                          compareCommits(currentRepo.path, selectedCommitHash, commit.hash);
-                        } else {
-                          selectCommit(currentRepo.path, commit.hash);
-                        }
+                    return (
+                      <div
+                        key={commit.hash}
+                        data-ctx="commit"
+                        data-id={commit.hash}
+                        style={{
+                          position: "absolute",
+                          top: 0,
+                          left: 0,
+                          width: "100%",
+                          height: `${virtualRow.size}px`,
+                          transform: `translateY(${virtualRow.start}px)`,
+                        }}
+                      >
+                        <CommitRow
+                          commit={commit}
+                          node={node}
+                          isSelected={isSelected}
+                          isCompared={isCompared}
+                          comparedRole={comparedRole}
+                          onSelect={(e) => {
+                            if (!currentRepo) return;
+                            if (
+                              (e.shiftKey || e.ctrlKey || e.metaKey) &&
+                              selectedCommitHash &&
+                              selectedCommitHash !== commit.hash
+                            ) {
+                              compareCommits(currentRepo.path, selectedCommitHash, commit.hash);
+                            } else {
+                              selectCommit(currentRepo.path, commit.hash);
+                            }
+                          }}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {isLoading && commits.length === 0 && (
+                <div style={{ padding: "16px", display: "flex", flexDirection: "column", gap: "10px" }}>
+                  <Skeleton height="34px" width="100%" />
+                  <Skeleton height="34px" width="100%" />
+                  <Skeleton height="34px" width="100%" />
+                  <Skeleton height="34px" width="100%" />
+                </div>
+              )}
+            </div>
+          </div>
+
+          <Splitter
+            direction="horizontal"
+            onResize={(delta) => setCommitsPanelWidth((prev) => Math.max(220, Math.min(600, prev + delta)))}
+          />
+
+          <div style={{ flex: 1, minWidth: 0, height: "100%", overflow: "hidden" }}>
+            <CommitComparisonView
+              showCommits={true}
+              onToggleCommits={() => setShowCommitsInComparison(false)}
+            />
+          </div>
+        </div>
+      ) : (
+        <div style={{ flex: 1, display: "flex", minHeight: 0, overflow: "hidden" }}>
+          {/* Left: Virtualized Commit List */}
+          <div
+            ref={parentRef}
+            data-empty-history="true"
+            style={{
+              flex: 1,
+              height: "100%",
+              overflow: "auto",
+              position: "relative",
+              outline: "none",
+            }}
+          >
+            {error ? (
+              <EmptyState title="Ошибка истории" description={error} />
+            ) : commits.length === 0 && !isLoading ? (
+              <EmptyState
+                title="Нет коммитов"
+                description="В выбранной ветке или по заданному поисковому запросу коммитов не найдено"
+              />
+            ) : (
+              <div
+                style={{
+                  height: `${rowVirtualizer.getTotalSize()}px`,
+                  width: "100%",
+                  position: "relative",
+                }}
+              >
+                {virtualItems.map((virtualRow) => {
+                  const commit = commits[virtualRow.index];
+                  const node = graphNodes[virtualRow.index];
+                  if (!commit || !node) return null;
+
+                  const isSelected = selectedCommitHash === commit.hash;
+                  const isCompared =
+                    commit.hash === comparisonBaseHash || commit.hash === comparisonTargetHash;
+                  const comparedRole =
+                    commit.hash === comparisonBaseHash
+                      ? "base"
+                      : commit.hash === comparisonTargetHash
+                      ? "target"
+                      : undefined;
+
+                  return (
+                    <div
+                      key={commit.hash}
+                      data-ctx="commit"
+                      data-id={commit.hash}
+                      style={{
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        width: "100%",
+                        height: `${virtualRow.size}px`,
+                        transform: `translateY(${virtualRow.start}px)`,
                       }}
-                    />
-                  </div>
-                );
-              })}
-            </div>
-          )}
+                    >
+                      <CommitRow
+                        commit={commit}
+                        node={node}
+                        isSelected={isSelected}
+                        isCompared={isCompared}
+                        comparedRole={comparedRole}
+                        onSelect={(e) => {
+                          if (!currentRepo) return;
+                          if (
+                            (e.shiftKey || e.ctrlKey || e.metaKey) &&
+                            selectedCommitHash &&
+                            selectedCommitHash !== commit.hash
+                          ) {
+                            compareCommits(currentRepo.path, selectedCommitHash, commit.hash);
+                          } else {
+                            selectCommit(currentRepo.path, commit.hash);
+                          }
+                        }}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            )}
 
-          {isLoading && commits.length === 0 && (
-            <div style={{ padding: "16px", display: "flex", flexDirection: "column", gap: "10px" }}>
-              <Skeleton height="34px" width="100%" />
-              <Skeleton height="34px" width="100%" />
-              <Skeleton height="34px" width="100%" />
-              <Skeleton height="34px" width="100%" />
-            </div>
-          )}
+            {isLoading && commits.length === 0 && (
+              <div style={{ padding: "16px", display: "flex", flexDirection: "column", gap: "10px" }}>
+                <Skeleton height="34px" width="100%" />
+                <Skeleton height="34px" width="100%" />
+                <Skeleton height="34px" width="100%" />
+                <Skeleton height="34px" width="100%" />
+              </div>
+            )}
+          </div>
+
+          {/* Resizable Splitter */}
+          <Splitter direction="horizontal" onResize={handleResize} />
+
+          {/* Right: Commit Details Panel */}
+          <div
+            style={{
+              width: `${detailsPanelWidth}px`,
+              height: "100%",
+              flexShrink: 0,
+              borderLeft: "1px solid var(--line)",
+              backgroundColor: "var(--bg2)",
+              overflow: "hidden",
+            }}
+          >
+            <CommitDetailsPanel />
+          </div>
         </div>
-
-        {/* Resizable Splitter */}
-        <Splitter direction="horizontal" onResize={handleResize} />
-
-        {/* Right: Commit Details Panel */}
-        <div
-          style={{
-            width: `${detailsPanelWidth}px`,
-            height: "100%",
-            flexShrink: 0,
-            borderLeft: "1px solid var(--line)",
-            backgroundColor: "var(--bg2)",
-            overflow: "hidden",
-          }}
-        >
-          <CommitDetailsPanel />
-        </div>
-      </div>
+      )}
     </div>
   );
 };
