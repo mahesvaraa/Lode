@@ -596,6 +596,10 @@ export async function loadFontData(path: string): Promise<string> {
   return invoke<string>("load_font_data", { path });
 }
 
+export async function loadFontBytes(path: string): Promise<number[]> {
+  return invoke<number[]>("load_font_bytes", { path });
+}
+
 export async function discardHunk(
   repoPath: string,
   path: string,

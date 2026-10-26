@@ -41,10 +41,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
       const path = await pickFontFile();
       if (path) {
         await updateSettings({ custom_font_path: path });
-        showToast(`Шрифт интерфейса установлен: ${path.split(/[\\/]/).pop()}`);
+        showToast(`Шрифт интерфейса применён: ${path.split(/[\\/]/).pop()}`);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       console.error("Failed to pick font:", err);
+      const msg = err instanceof Error ? err.message : String(err);
+      showToast(`Ошибка загрузки шрифта: ${msg}`, "error");
     }
   };
 
@@ -53,10 +55,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
       const path = await pickFontFile();
       if (path) {
         await updateSettings({ custom_code_font_path: path });
-        showToast(`Шрифт кода установлен: ${path.split(/[\\/]/).pop()}`);
+        showToast(`Шрифт кода применён: ${path.split(/[\\/]/).pop()}`);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       console.error("Failed to pick code font:", err);
+      const msg = err instanceof Error ? err.message : String(err);
+      showToast(`Ошибка загрузки шрифта кода: ${msg}`, "error");
     }
   };
 

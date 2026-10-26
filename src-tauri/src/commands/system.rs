@@ -154,9 +154,24 @@ fn to_base64(data: &[u8]) -> String {
     result
 }
 
+fn resolve_font_path(path: &str) -> std::path::PathBuf {
+    #[cfg(windows)]
+    {
+        let mut clean = path.replace('/', "\\");
+        if let Some(stripped) = clean.strip_prefix(r"\\?\") {
+            clean = stripped.to_string();
+        }
+        std::path::PathBuf::from(clean)
+    }
+    #[cfg(not(windows))]
+    {
+        std::path::PathBuf::from(path)
+    }
+}
+
 #[tauri::command]
-pub async fn load_font_data(path: String) -> Result<String, AppError> {
-    let target = Path::new(&path);
+pub async fn load_font_bytes(path: String) -> Result<Vec<u8>, AppError> {
+    let target = resolve_font_path(&path);
     if !target.exists() || !target.is_file() {
         return Err(AppError::new(
             ErrorKind::InvalidPath,
@@ -165,7 +180,29 @@ pub async fn load_font_data(path: String) -> Result<String, AppError> {
         ));
     }
 
-    let bytes = std::fs::read(target).map_err(|e| {
+    let bytes = std::fs::read(&target).map_err(|e| {
+        AppError::new(
+            ErrorKind::Io,
+            format!("Не удалось прочитать файл шрифта: {e}"),
+            None,
+        )
+    })?;
+
+    Ok(bytes)
+}
+
+#[tauri::command]
+pub async fn load_font_data(path: String) -> Result<String, AppError> {
+    let target = resolve_font_path(&path);
+    if !target.exists() || !target.is_file() {
+        return Err(AppError::new(
+            ErrorKind::InvalidPath,
+            format!("Файл шрифта '{}' не найден", path),
+            None,
+        ));
+    }
+
+    let bytes = std::fs::read(&target).map_err(|e| {
         AppError::new(
             ErrorKind::Io,
             format!("Не удалось прочитать файл шрифта: {e}"),
@@ -183,9 +220,9 @@ pub async fn load_font_data(path: String) -> Result<String, AppError> {
         "otf" => "font/otf",
         "woff" => "font/woff",
         "woff2" => "font/woff2",
-        _ => "font/truetype",
+        _ => "font/ttf",
     };
 
     let b64 = to_base64(&bytes);
-    Ok(format!("data:{mime};charset=utf-8;base64,{b64}"))
+    Ok(format!("data:{mime};base64,{b64}"))
 }

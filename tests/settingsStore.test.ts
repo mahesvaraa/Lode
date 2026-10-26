@@ -9,6 +9,9 @@ describe("settingsStore", () => {
     const attrs: Record<string, string> = {};
 
     (globalThis as unknown as { document: unknown }).document = {
+      getElementById: () => null,
+      createElement: () => ({ setAttribute: () => {}, remove: () => {}, style: {} }),
+      head: { appendChild: () => {} },
       documentElement: {
         style: {
           setProperty: (prop: string, val: string) => {
