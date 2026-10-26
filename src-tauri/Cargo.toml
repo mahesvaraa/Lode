@@ -10,10 +10,6 @@ default-run = "lode"
 name = "lode"
 path = "src/main.rs"
 
-[[bin]]
-name = "rebase_helper"
-path = "src/bin/rebase_helper.rs"
-
 [lib]
 name = "lode_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]

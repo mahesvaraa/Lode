@@ -215,19 +215,23 @@ fn resolve_helper_exe() -> Result<PathBuf, AppError> {
         )
     })?;
 
-    // Check sibling directory or parent directory for rebase_helper(.exe)
+    // Check sibling directory or parent directory for lode(.exe) or rebase_helper(.exe)
     if let Some(dir) = current_exe.parent() {
-        let exe_name = if cfg!(windows) { "rebase_helper.exe" } else { "rebase_helper" };
-        let candidate = dir.join(exe_name);
-        if candidate.exists() {
-            return Ok(candidate);
-        }
+        let lode_name = if cfg!(windows) { "lode.exe" } else { "lode" };
+        let helper_name = if cfg!(windows) { "rebase_helper.exe" } else { "rebase_helper" };
 
-        if dir.ends_with("deps") {
-            if let Some(parent) = dir.parent() {
-                let candidate = parent.join(exe_name);
-                if candidate.exists() {
-                    return Ok(candidate);
+        for name in [lode_name, helper_name] {
+            let candidate = dir.join(name);
+            if candidate.exists() {
+                return Ok(candidate);
+            }
+
+            if dir.ends_with("deps") {
+                if let Some(parent) = dir.parent() {
+                    let candidate = parent.join(name);
+                    if candidate.exists() {
+                        return Ok(candidate);
+                    }
                 }
             }
         }
