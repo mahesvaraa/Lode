@@ -8,13 +8,17 @@ interface CommitRowProps {
   commit: Commit;
   node: GraphNode;
   isSelected: boolean;
-  onSelect: () => void;
+  isCompared?: boolean;
+  comparedRole?: "base" | "target";
+  onSelect: (e: React.MouseEvent) => void;
 }
 
 export const CommitRow: React.FC<CommitRowProps> = ({
   commit,
   node,
   isSelected,
+  isCompared,
+  comparedRole,
   onSelect,
 }) => {
   const hasParent = commit.parents.length > 0;
@@ -43,14 +47,20 @@ export const CommitRow: React.FC<CommitRowProps> = ({
   return (
     <div
       onClick={onSelect}
-      className={`row ${isSelected ? "on" : ""}`}
+      className={`row ${isSelected ? "on" : ""} ${isCompared ? "compared" : ""}`}
       style={{
         display: "flex",
         alignItems: "center",
         height: "var(--row-height)",
         paddingRight: "10px",
         cursor: "pointer",
-        backgroundColor: isSelected ? "var(--sel)" : "transparent",
+        backgroundColor: isSelected
+          ? "var(--sel)"
+          : isCompared
+          ? "rgba(140, 151, 255, 0.12)"
+          : "transparent",
+        outline: isCompared ? "1px solid var(--acc)" : "none",
+        outlineOffset: "-1px",
         userSelect: "none",
         fontSize: "var(--font-size-base)",
         overflow: "hidden",
@@ -58,6 +68,25 @@ export const CommitRow: React.FC<CommitRowProps> = ({
     >
       {/* Git Graph Visualizer */}
       <GraphSvg node={node} hasParent={hasParent} />
+
+      {comparedRole && (
+        <span
+          style={{
+            fontSize: "10px",
+            fontWeight: 700,
+            color: "var(--acc)",
+            backgroundColor: "var(--bg3)",
+            border: "1px solid var(--acc)",
+            borderRadius: "3px",
+            padding: "0 4px",
+            marginRight: "6px",
+            lineHeight: "16px",
+            flexShrink: 0,
+          }}
+        >
+          {comparedRole === "base" ? "A" : "B"}
+        </span>
+      )}
 
       {/* Ref Chips (HEAD, branches, tags) */}
       {commit.refs.length > 0 && (

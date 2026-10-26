@@ -10,6 +10,7 @@ import { computeGraph, type GraphNode } from "@/lib/graph";
 import type { Commit } from "@/api/types/commit";
 import type { CommitDetails } from "@/api/types/commit_details";
 import type { FileDiff } from "@/api/types/file_diff";
+import { useOperationStore } from "./operationStore";
 
 const PAGE_SIZE = 500;
 
@@ -262,6 +263,10 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
       comparisonDiffs: null,
       selectedComparisonFileIndex: 0,
     });
+    const targetLabel = targetHash === "WORKTREE" || !targetHash ? "рабочей копией" : targetHash.substring(0, 7);
+    useOperationStore
+      .getState()
+      .startOperation(`Сравнение ${baseHash.substring(0, 7)}…${targetLabel}`, repoPath, true);
 
     try {
       const diffs = await getRevisionDiff(repoPath, baseHash, targetHash);
@@ -276,6 +281,8 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
         isLoadingComparison: false,
         error: errorObj.message || "Ошибка сравнения коммитов",
       });
+    } finally {
+      useOperationStore.getState().endOperation();
     }
   },
 

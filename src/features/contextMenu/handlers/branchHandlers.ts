@@ -4,11 +4,13 @@ import {
   switchBranch,
   deleteBranch,
   mergeBranch,
+  rebaseBranch,
   push,
   pull,
   fetch as apiFetch,
 } from "@/api/client";
 import { useRepoStore } from "@/store/repoStore";
+import { useOperationStore } from "@/store/operationStore";
 import type { MenuHandlerContext } from "./handlerContext";
 
 export function handleBranchContextMenu(
@@ -35,6 +37,9 @@ export function handleBranchContextMenu(
       bName: string,
       mode: "normal" | "no-ff" | "squash" | "ff-only"
     ) => {
+      useOperationStore
+        .getState()
+        .startOperation(`Слияние ветки '${bName}'…`, currentRepo.path, true);
       try {
         await mergeBranch(
           currentRepo.path,
@@ -46,6 +51,8 @@ export function handleBranchContextMenu(
       } catch (err: unknown) {
         const errObj = err as { message?: string };
         showToast(errObj.message || "Ошибка слияния", "error");
+      } finally {
+        useOperationStore.getState().endOperation();
       }
     },
     onRebaseCurrentOnto: (bName: string) => {
@@ -56,7 +63,19 @@ export function handleBranchContextMenu(
         confirmLabel: "Rebase",
         danger: false,
         onConfirm: async () => {
-          showToast("Rebase запущен");
+          useOperationStore
+            .getState()
+            .startOperation(`Rebase на '${bName}'…`, currentRepo.path, true);
+          try {
+            await rebaseBranch(currentRepo.path, bName);
+            await refreshAll();
+            showToast(`Rebase на '${bName}' успешно завершён`);
+          } catch (err: unknown) {
+            const errObj = err as { message?: string };
+            showToast(errObj.message || "Ошибка rebase", "error");
+          } finally {
+            useOperationStore.getState().endOperation();
+          }
         },
       });
     },

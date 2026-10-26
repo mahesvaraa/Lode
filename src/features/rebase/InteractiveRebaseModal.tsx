@@ -6,6 +6,7 @@ import { useRefsStore } from "@/store/refsStore";
 import { useHistoryStore } from "@/store/historyStore";
 import { useUiStore } from "@/store/uiStore";
 import { useToastStore } from "@/store/toastStore";
+import { useOperationStore } from "@/store/operationStore";
 import { getRebaseTodoList, startInteractiveRebase } from "@/api/client";
 import { shortenHash } from "@/lib/format";
 import type { RebaseActionKind } from "@/api/types/rebase_action_kind";
@@ -121,6 +122,9 @@ export const InteractiveRebaseModal: React.FC<InteractiveRebaseModalProps> = ({
     if (!currentRepo || items.length === 0) return;
     setIsStarting(true);
     setError(null);
+    useOperationStore
+      .getState()
+      .startOperation("Интерактивный rebase…", currentRepo.path, true);
     try {
       const state = await startInteractiveRebase(currentRepo.path, baseRef, items);
       await refreshAll();
@@ -137,6 +141,7 @@ export const InteractiveRebaseModal: React.FC<InteractiveRebaseModalProps> = ({
       setError(errObj.message || "Ошибка выполнения интерактивного rebase");
     } finally {
       setIsStarting(false);
+      useOperationStore.getState().endOperation();
     }
   };
 

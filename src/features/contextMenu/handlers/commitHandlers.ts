@@ -10,6 +10,7 @@ import {
 import { useRepoStore } from "@/store/repoStore";
 import { useHistoryStore } from "@/store/historyStore";
 import { useUiStore } from "@/store/uiStore";
+import { useOperationStore } from "@/store/operationStore";
 import type { MenuHandlerContext } from "./handlerContext";
 
 export function handleCommitContextMenu(
@@ -119,6 +120,9 @@ export function handleCommitContextMenu(
         confirmLabel: "Rebase",
         danger: false,
         onConfirm: async () => {
+          useOperationStore
+            .getState()
+            .startOperation(`Rebase на ${hash.substring(0, 7)}…`, currentRepo.path, true);
           try {
             await rebaseBranch(currentRepo.path, hash);
             await refreshAll();
@@ -126,6 +130,8 @@ export function handleCommitContextMenu(
           } catch (err: unknown) {
             const errObj = err as { message?: string };
             showToast(errObj.message || "Ошибка rebase", "error");
+          } finally {
+            useOperationStore.getState().endOperation();
           }
         },
       });
@@ -137,14 +143,19 @@ export function handleCommitContextMenu(
       });
     },
     onCompareWithWorkingTree: (hash) => {
-      useHistoryStore.getState().compareCommits(currentRepo.path, hash, "HEAD");
+      useHistoryStore.getState().compareCommits(currentRepo.path, hash, "WORKTREE");
       useUiStore.getState().setActiveView("hist");
-      showToast(`Сравнение коммита ${hash.substring(0, 7)} с рабочей копией / HEAD`);
+      showToast(`Сравнение коммита ${hash.substring(0, 7)} с рабочей копией`);
     },
     onCompareWithHead: (hash) => {
       useHistoryStore.getState().compareCommits(currentRepo.path, hash, "HEAD");
       useUiStore.getState().setActiveView("hist");
       showToast(`Сравнение коммита ${hash.substring(0, 7)} с HEAD`);
+    },
+    onCompareTwoCommits: (hashA, hashB) => {
+      useHistoryStore.getState().compareCommits(currentRepo.path, hashA, hashB);
+      useUiStore.getState().setActiveView("hist");
+      showToast(`Сравнение коммитов ${hashA.substring(0, 7)}…${hashB.substring(0, 7)}`);
     },
     onReset: (hash) => {
       dialogs.setResetModal({

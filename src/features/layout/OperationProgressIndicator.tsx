@@ -1,7 +1,9 @@
 import React from "react";
 import { useOperationStore } from "@/store/operationStore";
+import { useI18n } from "@/lib/i18n";
 
 export const OperationProgressIndicator: React.FC = () => {
+  const t = useI18n((s) => s.t);
   const activeOperation = useOperationStore((s) => s.activeOperation);
   const isCancelling = useOperationStore((s) => s.isCancelling);
   const cancelActiveOperation = useOperationStore(
@@ -35,13 +37,13 @@ export const OperationProgressIndicator: React.FC = () => {
         }}
       />
       <span style={{ fontWeight: 500 }}>
-        {isCancelling ? "Прерывание команды…" : activeOperation.title}
+        {isCancelling ? t.operations.cancelling : activeOperation.title}
       </span>
       {activeOperation.canCancel && !isCancelling && (
         <button
           type="button"
           onClick={cancelActiveOperation}
-          title="Прервать текущую операцию Git (kill process)"
+          title={t.operations.cancelTooltip}
           style={{
             background: "transparent",
             border: "1px solid var(--del)",
@@ -54,7 +56,7 @@ export const OperationProgressIndicator: React.FC = () => {
             lineHeight: "16px",
           }}
         >
-          Отмена
+          {t.operations.cancelBtn}
         </button>
       )}
     </div>

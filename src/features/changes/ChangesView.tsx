@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Button, Checkbox, Chip, EmptyState, Modal, Splitter, Textarea } from "@/ui";
 import { DiffView } from "./DiffView";
 import {
@@ -43,10 +43,25 @@ export const ChangesView: React.FC = () => {
 
   const headCommit = commits.length > 0 ? commits[0] : null;
 
+  useEffect(() => {
+    if (currentRepo && commits.length === 0) {
+      useHistoryStore.getState().loadInitial(currentRepo.path);
+    }
+  }, [currentRepo, commits.length]);
+
   const isHeadPublished = useMemo(() => {
-    if (!headCommit || !refs) return false;
-    return refs.remote_branches.some((rb) => rb.target_hash === headCommit.hash);
-  }, [headCommit, refs]);
+    if (!headCommit) return false;
+    if (
+      status?.branch?.upstream &&
+      (status.branch.ahead === 0 || status.branch.ahead === undefined)
+    ) {
+      return true;
+    }
+    if (refs && refs.remote_branches.some((rb) => rb.target_hash === headCommit.hash)) {
+      return true;
+    }
+    return false;
+  }, [headCommit, refs, status]);
 
   const handleResize = (delta: number) => {
     setPanelWidth((w) => Math.min(Math.max(220, w + delta), 500));

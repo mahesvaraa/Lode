@@ -21,6 +21,10 @@ export const HistoryView: React.FC = () => {
 
   const selectedCommitHash = useHistoryStore((s) => s.selectedCommitHash);
   const selectCommit = useHistoryStore((s) => s.selectCommit);
+  const comparisonBaseHash = useHistoryStore((s) => s.comparisonBaseHash);
+  const comparisonTargetHash = useHistoryStore((s) => s.comparisonTargetHash);
+  const compareCommits = useHistoryStore((s) => s.compareCommits);
+  const clearComparison = useHistoryStore((s) => s.clearComparison);
 
   const loadInitial = useHistoryStore((s) => s.loadInitial);
   const loadMore = useHistoryStore((s) => s.loadMore);
@@ -205,6 +209,41 @@ export const HistoryView: React.FC = () => {
         </span>
       </div>
 
+      {/* Comparison Banner */}
+      {comparisonBaseHash && comparisonTargetHash && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "8px 14px",
+            backgroundColor: "rgba(140, 151, 255, 0.12)",
+            borderBottom: "1px solid var(--acc)",
+            fontSize: "12px",
+            color: "var(--tx)",
+            flexShrink: 0,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <span style={{ fontWeight: 600 }}>Режим сравнения коммитов:</span>
+            <code className="mono" style={{ color: "var(--acc)", fontWeight: 600 }}>
+              {comparisonBaseHash.substring(0, 7)}
+            </code>
+            <span style={{ color: "var(--mut)" }}>↔</span>
+            <code className="mono" style={{ color: "var(--acc)", fontWeight: 600 }}>
+              {comparisonTargetHash.substring(0, 7)}
+            </code>
+            <span style={{ fontSize: "11px", color: "var(--mut)" }}>
+              (удерживайте Shift/Ctrl для выбора другого коммита)
+            </span>
+          </div>
+
+          <Button size="sm" variant="ghost" onClick={clearComparison}>
+            ✕ Выйти из сравнения
+          </Button>
+        </div>
+      )}
+
       {/* Main View Area */}
       <div style={{ flex: 1, display: "flex", minHeight: 0, overflow: "hidden" }}>
         {/* Left: Virtualized Commit List */}
@@ -240,6 +279,14 @@ export const HistoryView: React.FC = () => {
                 if (!commit || !node) return null;
 
                 const isSelected = selectedCommitHash === commit.hash;
+                const isCompared =
+                  commit.hash === comparisonBaseHash || commit.hash === comparisonTargetHash;
+                const comparedRole =
+                  commit.hash === comparisonBaseHash
+                    ? "base"
+                    : commit.hash === comparisonTargetHash
+                    ? "target"
+                    : undefined;
 
                 return (
                   <div
@@ -259,7 +306,20 @@ export const HistoryView: React.FC = () => {
                       commit={commit}
                       node={node}
                       isSelected={isSelected}
-                      onSelect={() => currentRepo && selectCommit(currentRepo.path, commit.hash)}
+                      isCompared={isCompared}
+                      comparedRole={comparedRole}
+                      onSelect={(e) => {
+                        if (!currentRepo) return;
+                        if (
+                          (e.shiftKey || e.ctrlKey || e.metaKey) &&
+                          selectedCommitHash &&
+                          selectedCommitHash !== commit.hash
+                        ) {
+                          compareCommits(currentRepo.path, selectedCommitHash, commit.hash);
+                        } else {
+                          selectCommit(currentRepo.path, commit.hash);
+                        }
+                      }}
                     />
                   </div>
                 );

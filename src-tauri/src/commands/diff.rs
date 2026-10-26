@@ -131,8 +131,6 @@ pub async fn get_revision_diff(
     runner: State<'_, GitRunner>,
 ) -> Result<Vec<FileDiff>, AppError> {
     let canonical = canonicalize_repo_path(&repo_path)?;
-    let range = format!("{base_ref}..{target_ref}");
-
     let mut args: Vec<&str> = vec![
         "diff",
         "-M",
@@ -146,6 +144,12 @@ pub async fn get_revision_diff(
         args.push("--ignore-all-space");
     }
 
+    let is_worktree = target_ref.is_empty() || target_ref == "WORKTREE";
+    let range = if is_worktree {
+        base_ref
+    } else {
+        format!("{base_ref}..{target_ref}")
+    };
     args.push(&range);
 
     let output = runner.run_read(Some(&canonical), &args).await?;

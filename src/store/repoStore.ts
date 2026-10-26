@@ -11,6 +11,7 @@ import {
 import type { GitInfo } from "@/api/types/git_info";
 import type { RepoDetails } from "@/api/types/repo_details";
 import { useUiStore, type ThemeMode } from "./uiStore";
+import { useOperationStore } from "./operationStore";
 
 interface RepoState {
   currentRepo: RepoDetails | null;
@@ -124,6 +125,9 @@ export const useRepoStore = create<RepoState>((set, get) => ({
 
   cloneRepository: async (url: string, targetPath: string) => {
     set({ isLoadingRepo: true, repoError: null });
+    useOperationStore
+      .getState()
+      .startOperation(`Клонирование ${url}…`, targetPath, true);
     try {
       const details = await cloneRepo(url, targetPath);
       const settings = await getSettings();
@@ -144,6 +148,8 @@ export const useRepoStore = create<RepoState>((set, get) => ({
         repoError: errorObj.message || "Не удалось клонировать репозиторий",
       });
       return false;
+    } finally {
+      useOperationStore.getState().endOperation();
     }
   },
 

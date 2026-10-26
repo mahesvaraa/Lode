@@ -64,6 +64,11 @@ export interface TranslationSchema {
     commit: string;
     showGitOutput: string;
   };
+  operations: {
+    cancelling: string;
+    cancelTooltip: string;
+    cancelBtn: string;
+  };
   theme: {
     system: string;
     dark: string;
@@ -202,6 +207,11 @@ export const ruTranslations: TranslationSchema = {
     commit: "Закоммитить",
     showGitOutput: "Показать вывод Git",
   },
+  operations: {
+    cancelling: "Прерывание команды…",
+    cancelTooltip: "Прервать текущую операцию Git (kill process)",
+    cancelBtn: "Отмена",
+  },
   theme: {
     system: "Системная",
     dark: "Тёмная",
@@ -339,6 +349,11 @@ export const enTranslations: TranslationSchema = {
     stageAll: "Stage All",
     commit: "Commit",
     showGitOutput: "Show Git Output",
+  },
+  operations: {
+    cancelling: "Aborting command…",
+    cancelTooltip: "Abort active Git operation (kill process)",
+    cancelBtn: "Cancel",
   },
   theme: {
     system: "System",
