@@ -70,3 +70,20 @@ jobs:
 
       - name: Build Frontend
         run: npm run build
+
+      - name: Build Tauri Desktop Application
+        run: npm run tauri build
+
+      - name: Upload Application Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: lode-${{ matrix.os }}
+          path: |
+            src-tauri/target/release/bundle/**/*.exe
+            src-tauri/target/release/bundle/**/*.msi
+            src-tauri/target/release/bundle/**/*.deb
+            src-tauri/target/release/bundle/**/*.AppImage
+            src-tauri/target/release/bundle/**/*.dmg
+            src-tauri/target/release/lode.exe
+            src-tauri/target/release/lode
+          if-no-files-found: warn
