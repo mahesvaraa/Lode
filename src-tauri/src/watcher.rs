@@ -62,7 +62,7 @@ impl RepoWatcher {
             *stop_lock = Some(stop_sender);
         }
 
-        let (event_sender, mut event_receiver) = mpsc::channel::<()>(100);
+        let (event_sender, mut event_receiver) = mpsc::channel::<Vec<PathBuf>>(100);
         let suppressed = Arc::clone(&self.state.is_suppressed);
         let app = self.app_handle.clone();
         let repo_root = canonical.clone();
@@ -78,7 +78,7 @@ impl RepoWatcher {
                     }
                     if let Ok(event) = res {
                         if should_process_event(&event, &root_for_closure) {
-                            let _ = event_tx.blocking_send(());
+                            let _ = event_tx.blocking_send(event.paths);
                         }
                     }
                 },
@@ -107,15 +107,30 @@ impl RepoWatcher {
                     _ = stop_receiver.recv() => {
                         break;
                     }
-                    Some(_) = event_receiver.recv() => {
+                    Some(first_paths) = event_receiver.recv() => {
                         // Drain pending events in the debounce window
+                        let mut collected_paths = first_paths;
                         tokio::time::sleep(Duration::from_millis(200)).await;
-                        while event_receiver.try_recv().is_ok() {}
+                        while let Ok(paths) = event_receiver.try_recv() {
+                            collected_paths.extend(paths);
+                        }
+
+                        // Determine affected scopes
+                        let mut scopes = vec!["status".to_string(), "state".to_string()];
+                        for p in &collected_paths {
+                            let s = p.to_string_lossy();
+                            if s.contains("HEAD") || s.contains("refs") || s.contains("packed-refs") {
+                                if !scopes.contains(&"refs".to_string()) {
+                                    scopes.push("refs".to_string());
+                                }
+                                if !scopes.contains(&"history".to_string()) {
+                                    scopes.push("history".to_string());
+                                }
+                            }
+                        }
 
                         // Emit event to frontend
-                        let event = RepoChangedEvent {
-                            scopes: vec!["status".to_string(), "state".to_string()],
-                        };
+                        let event = RepoChangedEvent { scopes };
                         let _ = app.emit("repo:changed", event);
                     }
                 }

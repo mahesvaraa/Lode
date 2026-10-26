@@ -13,6 +13,7 @@ import { useStatusStore } from "@/store/statusStore";
 import { useRefsStore } from "@/store/refsStore";
 import { useHistoryStore } from "@/store/historyStore";
 import { useToastStore } from "@/store/toastStore";
+import { useOperationStore } from "@/store/operationStore";
 import { Splitter } from "@/ui";
 import { listenToRepoChanged, stageAll } from "@/api/client";
 
@@ -48,18 +49,49 @@ export const MainLayout: React.FC = () => {
     if (!currentRepo) return;
 
     loadStatus(currentRepo.path);
+    loadRepoState(currentRepo.path);
 
     let unlistenFn: (() => void) | undefined;
-    listenToRepoChanged((_event) => {
+    listenToRepoChanged((event) => {
       loadStatus(currentRepo.path);
-    }).then((unlisten) => {
-      unlistenFn = unlisten;
-    }).catch(console.error);
+      loadRepoState(currentRepo.path);
+      if (event.scopes.includes("refs")) {
+        loadRefs(currentRepo.path);
+      }
+      if (event.scopes.includes("history")) {
+        loadHistory(currentRepo.path);
+      }
+    })
+      .then((unlisten) => {
+        unlistenFn = unlisten;
+      })
+      .catch(console.error);
+
+    // Window Focus Sync: auto-refresh when user switches back to Lode
+    const onWindowFocus = () => {
+      if (!currentRepo || useOperationStore.getState().activeOperation) return;
+      loadStatus(currentRepo.path);
+      loadRepoState(currentRepo.path);
+      loadRefs(currentRepo.path);
+      if (useUiStore.getState().activeView === "hist") {
+        loadHistory(currentRepo.path);
+      }
+    };
+    window.addEventListener("focus", onWindowFocus);
+
+    // Periodic Background Sync: keep status updated every 5 seconds
+    const intervalTimer = setInterval(() => {
+      if (!currentRepo || useOperationStore.getState().activeOperation) return;
+      loadStatus(currentRepo.path);
+      loadRepoState(currentRepo.path);
+    }, 5000);
 
     return () => {
       if (unlistenFn) unlistenFn();
+      window.removeEventListener("focus", onWindowFocus);
+      clearInterval(intervalTimer);
     };
-  }, [currentRepo, loadStatus]);
+  }, [currentRepo, loadStatus, loadRepoState, loadRefs, loadHistory]);
 
   // Global Keyboard Shortcuts (Section 13 of CLAUDE.md)
   useEffect(() => {
