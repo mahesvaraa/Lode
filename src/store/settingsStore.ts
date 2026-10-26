@@ -30,90 +30,36 @@ interface SettingsState {
 let loadedUiFontFace: FontFace | null = null;
 let loadedCodeFontFace: FontFace | null = null;
 
-export const applyCustomFont = async (path: string | null | undefined, isCode: boolean) => {
+export const applyCustomFont = async (path: string, isCode: boolean, fallbackFamily: string) => {
   if (typeof document === "undefined") return;
   const root = document.documentElement;
   const styleId = isCode ? "custom-code-font-style" : "custom-ui-font-style";
-  let existingStyle = document.getElementById(styleId);
+  const fontName = isCode ? "UserCustomCodeFont" : "UserCustomUiFont";
 
-  if (!path) {
-    if (existingStyle) {
-      existingStyle.remove();
-    }
-    if (isCode) {
-      if (typeof FontFace !== "undefined" && loadedCodeFontFace) {
-        document.fonts.delete(loadedCodeFontFace);
-        loadedCodeFontFace = null;
-      }
-      root.style.setProperty("--font-mono", DEFAULT_SETTINGS.code_font_family);
-    } else {
-      if (typeof FontFace !== "undefined" && loadedUiFontFace) {
-        document.fonts.delete(loadedUiFontFace);
-        loadedUiFontFace = null;
-      }
-      root.style.setProperty("--font-ui", DEFAULT_SETTINGS.font_family);
-      root.style.setProperty("--font-sans", DEFAULT_SETTINGS.font_family);
-      if (document.body) {
-        document.body.style.fontFamily = DEFAULT_SETTINGS.font_family;
-      }
-    }
-    return;
+  // Clean up previous custom style
+  const existingStyle = document.getElementById(styleId);
+  if (existingStyle) {
+    existingStyle.remove();
   }
 
   try {
     const dataUrl = await loadFontData(path);
-    const fontName = isCode ? "UserCustomCodeFont" : "UserCustomUiFont";
 
-    if (!existingStyle) {
-      existingStyle = document.createElement("style");
-      existingStyle.id = styleId;
-      document.head.appendChild(existingStyle);
-    }
-
-    if (isCode) {
-      existingStyle.textContent = `
-        @font-face {
-          font-family: '${fontName}';
-          src: url('${dataUrl}');
-          font-weight: 100 900;
-          font-style: normal;
-          font-display: swap;
-        }
-        :root {
-          --font-mono: '${fontName}', monospace !important;
-        }
-        .mono, .hash, pre, code, .cm-editor, .cm-content, .cm-line {
-          font-family: '${fontName}', monospace !important;
-        }
-      `;
-      root.style.setProperty("--font-mono", `'${fontName}', monospace`);
-    } else {
-      existingStyle.textContent = `
-        @font-face {
-          font-family: '${fontName}';
-          src: url('${dataUrl}');
-          font-weight: 100 900;
-          font-style: normal;
-          font-display: swap;
-        }
-        :root {
-          --font-ui: '${fontName}', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
-          --font-sans: '${fontName}', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
-        }
-        body, button, input, select, textarea, div, span, p, label, a, table, th, td {
-          font-family: '${fontName}', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
-        }
-        .mono, .hash, pre, code, .cm-editor, .cm-content, .cm-line {
-          font-family: var(--font-mono) !important;
-        }
-      `;
-      root.style.setProperty("--font-ui", `'${fontName}', sans-serif`);
-      root.style.setProperty("--font-sans", `'${fontName}', sans-serif`);
-      if (document.body) {
-        document.body.style.fontFamily = `'${fontName}', sans-serif`;
+    // Register via @font-face CSS
+    const styleEl = document.createElement("style");
+    styleEl.id = styleId;
+    styleEl.textContent = `
+      @font-face {
+        font-family: '${fontName}';
+        src: url('${dataUrl}');
+        font-weight: 100 900;
+        font-style: normal;
+        font-display: swap;
       }
-    }
+    `;
+    document.head.appendChild(styleEl);
 
+    // Also register via Font Loading API
     if (typeof FontFace !== "undefined") {
       try {
         const fontFace = new FontFace(fontName, `url(${dataUrl})`, {
@@ -130,11 +76,22 @@ export const applyCustomFont = async (path: string | null | undefined, isCode: b
         if (isCode) loadedCodeFontFace = loaded;
         else loadedUiFontFace = loaded;
       } catch (fontErr) {
-        console.warn("FontFace API registration note:", fontErr);
+        console.warn("FontFace load note:", fontErr);
+      }
+    }
+
+    const fullStack = `'${fontName}', ${fallbackFamily}`;
+    if (isCode) {
+      root.style.setProperty("--font-mono", fullStack);
+    } else {
+      root.style.setProperty("--font-ui", fullStack);
+      root.style.setProperty("--font-sans", fullStack);
+      if (document.body) {
+        document.body.style.fontFamily = fullStack;
       }
     }
   } catch (err) {
-    console.error("Failed to load custom font from file:", err);
+    console.error("Failed to load custom font file:", err);
     throw err;
   }
 };
@@ -145,9 +102,18 @@ export const applySettingsToDom = (settings: AppSettings) => {
   const root = document.documentElement;
   root.style.setProperty("--font-size-base", `${settings.font_size}px`);
 
+  // 1. UI Font
   if (settings.custom_font_path) {
-    applyCustomFont(settings.custom_font_path, false);
+    applyCustomFont(settings.custom_font_path, false, settings.font_family);
   } else {
+    const customUiStyle = document.getElementById("custom-ui-font-style");
+    if (customUiStyle) {
+      customUiStyle.remove();
+    }
+    if (typeof FontFace !== "undefined" && loadedUiFontFace) {
+      document.fonts.delete(loadedUiFontFace);
+      loadedUiFontFace = null;
+    }
     root.style.setProperty("--font-sans", settings.font_family);
     root.style.setProperty("--font-ui", settings.font_family);
     if (document.body) {
@@ -155,9 +121,18 @@ export const applySettingsToDom = (settings: AppSettings) => {
     }
   }
 
+  // 2. Code Font
   if (settings.custom_code_font_path) {
-    applyCustomFont(settings.custom_code_font_path, true);
+    applyCustomFont(settings.custom_code_font_path, true, settings.code_font_family);
   } else {
+    const customCodeStyle = document.getElementById("custom-code-font-style");
+    if (customCodeStyle) {
+      customCodeStyle.remove();
+    }
+    if (typeof FontFace !== "undefined" && loadedCodeFontFace) {
+      document.fonts.delete(loadedCodeFontFace);
+      loadedCodeFontFace = null;
+    }
     root.style.setProperty("--font-mono", settings.code_font_family);
   }
 
