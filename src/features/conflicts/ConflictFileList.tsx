@@ -64,7 +64,7 @@ export const ConflictFileList: React.FC<ConflictFileListProps> = ({
                   fontSize: "11px",
                   fontWeight: 600,
                   padding: "2px 5px",
-                  borderRadius: "4px",
+                  borderRadius: "var(--radius-base)",
                   backgroundColor: "var(--del)",
                   color: "#fff",
                 }}

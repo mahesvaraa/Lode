@@ -1,5 +1,5 @@
 import React from "react";
-import { Button } from "@/ui";
+import { Button, PlusIcon, CloseIcon, TagIcon } from "@/ui";
 import { useI18n } from "@/lib/i18n";
 import type { GitRef } from "@/api/types/git_ref";
 import type { RepoRefs } from "@/api/types/repo_refs";
@@ -45,10 +45,10 @@ export const TagsSection: React.FC<TagsSectionProps> = ({
           size="sm"
           variant="ghost"
           onClick={onOpenCreateTag}
-          style={{ padding: "1px 6px", fontSize: "11px" }}
+          style={{ padding: "1px 6px" }}
           title="Создать тег"
         >
-          +
+          <PlusIcon size={12} />
         </Button>
       </div>
 
@@ -74,7 +74,7 @@ export const TagsSection: React.FC<TagsSectionProps> = ({
                 color: "var(--tx)",
               }}
             >
-              <span style={{ fontSize: "11px" }}>🏷</span>
+              <TagIcon size={12} style={{ color: "var(--mut)", flexShrink: 0 }} />
               <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {tag.name}
               </span>
@@ -83,9 +83,9 @@ export const TagsSection: React.FC<TagsSectionProps> = ({
                 variant="ghost"
                 title="Удалить тег"
                 onClick={() => onSelectTagToDelete(tag)}
-                style={{ padding: "0 4px", fontSize: "11px" }}
+                style={{ padding: "0 4px" }}
               >
-                ✕
+                <CloseIcon size={12} />
               </Button>
             </div>
           ))

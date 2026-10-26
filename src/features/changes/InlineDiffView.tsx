@@ -190,7 +190,7 @@ export const InlineDiffView: React.FC<HunkProps> = ({ hunks, filePath, isStaged 
                       lineHeight: "20px",
                     }}
                   >
-                    {isChangeable ? (isSelected ? "✔" : "·") : ""}
+                    {isChangeable ? (isSelected ? "+" : " ") : ""}
                   </span>
 
                   {/* Old line number */}

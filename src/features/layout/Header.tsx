@@ -1,5 +1,14 @@
 import React, { useState } from "react";
-import { Button, Checkbox, IconButton, Chip, Modal } from "@/ui";
+import {
+  Button,
+  Checkbox,
+  IconButton,
+  Chip,
+  Modal,
+  SettingsIcon,
+  ThemeIcon,
+  CommandIcon,
+} from "@/ui";
 import { useI18n } from "@/lib/i18n";
 import { useRepoStore } from "@/store/repoStore";
 import { useUiStore } from "@/store/uiStore";
@@ -187,15 +196,15 @@ export const Header: React.FC = () => {
           {branchBehind > 0 && (
             <b
               style={{
-                fontSize: "11px",
+                fontSize: "10px",
                 backgroundColor: "var(--acc)",
                 color: "#fff",
-                borderRadius: "10px",
-                padding: "0 5px",
-                lineHeight: "15px",
+                borderRadius: "var(--radius-base)",
+                padding: "1px 5px",
+                lineHeight: "14px",
               }}
             >
-              ↓{branchBehind}
+              -{branchBehind}
             </b>
           )}
         </Button>
@@ -213,15 +222,15 @@ export const Header: React.FC = () => {
           {branchAhead > 0 && (
             <b
               style={{
-                fontSize: "11px",
+                fontSize: "10px",
                 backgroundColor: "rgba(255, 255, 255, 0.3)",
                 color: "#fff",
-                borderRadius: "10px",
-                padding: "0 5px",
-                lineHeight: "15px",
+                borderRadius: "var(--radius-base)",
+                padding: "1px 5px",
+                lineHeight: "14px",
               }}
             >
-              ↑{branchAhead}
+              +{branchAhead}
             </b>
           )}
         </Button>
@@ -231,15 +240,17 @@ export const Header: React.FC = () => {
           variant="default"
           title="Палитра команд (Ctrl+K)"
           onClick={() => setCommandPaletteOpen(true)}
+          style={{ display: "flex", alignItems: "center", gap: "4px" }}
         >
-          ⌘K
+          <CommandIcon size={12} />
+          <span>K</span>
         </Button>
 
         <IconButton
           size="sm"
           aria-label="Настройки"
           title="Настройки (Ctrl+,)"
-          icon={<span>⚙</span>}
+          icon={<SettingsIcon size={14} />}
           onClick={() => setSettingsOpen(true)}
         />
 
@@ -247,7 +258,7 @@ export const Header: React.FC = () => {
           size="sm"
           aria-label={t.header.themeToggle}
           title={`${t.header.themeToggle} (${theme})`}
-          icon={<span>◐</span>}
+          icon={<ThemeIcon size={14} />}
           onClick={toggleTheme}
         />
 

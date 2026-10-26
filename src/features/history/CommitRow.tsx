@@ -1,5 +1,5 @@
 import React from "react";
-import { Chip } from "@/ui";
+import { Chip, TagIcon } from "@/ui";
 import { GraphSvg } from "./GraphSvg";
 import type { Commit } from "@/api/types/commit";
 import type { GraphNode } from "@/lib/graph";
@@ -101,8 +101,19 @@ export const CommitRow: React.FC<CommitRowProps> = ({
             }
             if (ref.kind === "Tag") {
               return (
-                <Chip key={idx} variant="tag" style={{ color: "#ca8a04", borderColor: "#ca8a04" }}>
-                  🏷 {ref.name}
+                <Chip
+                  key={idx}
+                  variant="tag"
+                  style={{
+                    color: "var(--tx)",
+                    borderColor: "var(--line)",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "3px",
+                  }}
+                >
+                  <TagIcon size={10} style={{ color: "var(--mut)" }} />
+                  <span>{ref.name}</span>
                 </Chip>
               );
             }

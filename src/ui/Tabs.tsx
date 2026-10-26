@@ -71,8 +71,8 @@ export const Tabs: React.FC<TabsProps> = ({
                   fontSize: "var(--font-size-xs)",
                   background: item.badgeWarning ? "var(--del)" : "var(--bg3)",
                   color: item.badgeWarning ? "#fff" : "var(--tx)",
-                  borderRadius: "9px",
-                  padding: "0 6px",
+                  borderRadius: "var(--radius-base)",
+                  padding: "0 5px",
                   lineHeight: "16px",
                 }}
               >

@@ -16,3 +16,4 @@ export * from "./Skeleton";
 export * from "./EmptyState";
 export * from "./Splitter";
 export * from "./ErrorBoundary";
+export * from "./Icons";

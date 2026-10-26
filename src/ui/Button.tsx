@@ -36,7 +36,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     if (variant === "primary") {
       baseStyle.background = "var(--acc)";
       baseStyle.borderColor = "var(--acc)";
-      baseStyle.color = "var(--bg)";
+      baseStyle.color = "#ffffff";
     } else if (variant === "ghost") {
       baseStyle.background = "transparent";
       baseStyle.borderColor = "transparent";

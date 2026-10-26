@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Button, EmptyState, Skeleton, Splitter } from "@/ui";
+import { Button, EmptyState, Skeleton, Splitter, CloseIcon } from "@/ui";
 import { useHistoryStore } from "@/store/historyStore";
 import type { FileDiff } from "@/api/types/file_diff";
 
@@ -51,7 +51,7 @@ export const CommitComparisonView: React.FC = () => {
             style={{
               backgroundColor: "var(--bg3)",
               padding: "2px 6px",
-              borderRadius: "4px",
+              borderRadius: "var(--radius-base)",
               fontSize: "12px",
               color: "var(--acc)",
             }}
@@ -64,7 +64,7 @@ export const CommitComparisonView: React.FC = () => {
             style={{
               backgroundColor: "var(--bg3)",
               padding: "2px 6px",
-              borderRadius: "4px",
+              borderRadius: "var(--radius-base)",
               fontSize: "12px",
               color: "var(--acc)",
             }}
@@ -78,8 +78,14 @@ export const CommitComparisonView: React.FC = () => {
           )}
         </div>
 
-        <Button size="sm" variant="ghost" onClick={clearComparison}>
-          ✕ Закрыть сравнение
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={clearComparison}
+          style={{ display: "flex", alignItems: "center", gap: "5px" }}
+        >
+          <CloseIcon size={12} />
+          <span>Закрыть сравнение</span>
         </Button>
       </div>
 

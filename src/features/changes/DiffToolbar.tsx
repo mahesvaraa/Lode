@@ -110,7 +110,7 @@ export const DiffToolbar: React.FC<DiffToolbarProps> = ({
         style={{ padding: "2px 8px", fontSize: "11px" }}
         title={t.diff.ignoreWhitespace}
       >
-        {ignoreWhitespace ? "✓ " : ""}{t.diff.ignoreWhitespace}
+        {t.diff.ignoreWhitespace}
       </Button>
     </div>
   );

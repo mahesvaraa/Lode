@@ -6,6 +6,7 @@ import React, {
   useCallback,
 } from "react";
 import { type MenuItem, useContextMenuStore } from "@/store/contextMenuStore";
+import { CheckIcon } from "./Icons";
 
 export { type MenuItem };
 
@@ -375,7 +376,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
           top: `${coords.y}px`,
           backgroundColor: "var(--bg2)",
           border: "1px solid var(--line)",
-          borderRadius: "8px",
+          borderRadius: "var(--radius-base)",
           padding: "4px",
           minWidth: "210px",
           maxWidth: "340px",
@@ -450,7 +451,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                 justifyContent: "space-between",
                 height: "28px",
                 padding: "0 12px",
-                borderRadius: "4px",
+                borderRadius: "var(--radius-base)",
                 cursor: item.disabled ? "not-allowed" : "pointer",
                 backgroundColor: isHovered || isSubmenuOpen
                   ? item.disabled
@@ -482,12 +483,12 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                   <span
                     style={{
                       width: "14px",
-                      display: "inline-block",
-                      fontWeight: "bold",
+                      display: "inline-flex",
+                      alignItems: "center",
                       color: "var(--acc)",
                     }}
                   >
-                    {item.checked ? "✓" : ""}
+                    {item.checked ? <CheckIcon size={12} /> : null}
                   </span>
                 )}
                 {item.icon && (
@@ -638,7 +639,7 @@ const Submenu = React.forwardRef<HTMLDivElement, SubmenuProps>(
           top: `${subCoords.y}px`,
           backgroundColor: "var(--bg2)",
           border: "1px solid var(--line)",
-          borderRadius: "8px",
+          borderRadius: "var(--radius-base)",
           padding: "4px",
           minWidth: "190px",
           maxWidth: "320px",
@@ -708,7 +709,7 @@ const Submenu = React.forwardRef<HTMLDivElement, SubmenuProps>(
                 justifyContent: "space-between",
                 height: "28px",
                 padding: "0 10px",
-                borderRadius: "4px",
+                borderRadius: "var(--radius-base)",
                 cursor: subItem.disabled ? "not-allowed" : "pointer",
                 backgroundColor: isHovered
                   ? subItem.disabled

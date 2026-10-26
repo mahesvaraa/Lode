@@ -1,5 +1,5 @@
 import React from "react";
-import { Button } from "@/ui";
+import { Button, PlusIcon } from "@/ui";
 import { useI18n } from "@/lib/i18n";
 import type { RepoRefs } from "@/api/types/repo_refs";
 
@@ -44,10 +44,10 @@ export const BranchesSection: React.FC<BranchesSectionProps> = ({
           size="sm"
           variant="ghost"
           onClick={onOpenCreateModal}
-          style={{ padding: "1px 6px", fontSize: "11px" }}
+          style={{ padding: "1px 6px" }}
           title="Создать новую ветку"
         >
-          +
+          <PlusIcon size={12} />
         </Button>
       </div>
 
@@ -56,7 +56,7 @@ export const BranchesSection: React.FC<BranchesSectionProps> = ({
           const isCurrent = branch.is_head;
           const tracking =
             branch.ahead > 0 || branch.behind > 0
-              ? `${branch.ahead > 0 ? `↑${branch.ahead}` : ""} ${branch.behind > 0 ? `↓${branch.behind}` : ""}`.trim()
+              ? `${branch.ahead > 0 ? `+${branch.ahead}` : ""} ${branch.behind > 0 ? `-${branch.behind}` : ""}`.trim()
               : undefined;
 
           return (

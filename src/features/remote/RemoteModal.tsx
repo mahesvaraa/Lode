@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Button, Input, Modal } from "@/ui";
+import { Button, Input, Modal, CloseIcon } from "@/ui";
 import { useRemoteStore } from "@/store/remoteStore";
 import { useRepoStore } from "@/store/repoStore";
 import type { Remote } from "@/api/types/remote";
@@ -187,9 +187,9 @@ export const RemoteModal: React.FC<RemoteModalProps> = ({ isOpen, onClose }) => 
                           setDeletingRemote(remote);
                           setError(null);
                         }}
-                        style={{ padding: "2px 6px", fontSize: "11px", color: "var(--del)" }}
+                        style={{ padding: "2px 6px", color: "var(--del)" }}
                       >
-                        ✕
+                        <CloseIcon size={12} />
                       </Button>
                     </div>
                   </div>

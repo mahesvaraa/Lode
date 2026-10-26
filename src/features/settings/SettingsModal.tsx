@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Button, Checkbox, Input, Modal, Select } from "@/ui";
+import { Button, Checkbox, Input, Modal, Select, CheckIcon } from "@/ui";
 import { useSettingsStore } from "@/store/settingsStore";
 import { useI18n } from "@/lib/i18n";
 import { checkGit } from "@/api/client";
@@ -263,8 +263,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                   </Button>
                 </div>
                 {gitCheckInfo && (
-                  <div style={{ fontSize: "11px", color: "var(--add)", marginTop: "4px" }}>
-                    ✓ Git v{gitCheckInfo.version || "ok"} ({gitCheckInfo.path || "PATH"})
+                  <div style={{ fontSize: "11px", color: "var(--add)", marginTop: "4px", display: "flex", alignItems: "center", gap: "4px" }}>
+                    <CheckIcon size={12} style={{ color: "var(--add)" }} />
+                    <span>Git v{gitCheckInfo.version || "ok"} ({gitCheckInfo.path || "PATH"})</span>
                   </div>
                 )}
               </div>

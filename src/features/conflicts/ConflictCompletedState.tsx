@@ -1,5 +1,5 @@
 import React from "react";
-import { Button, Input } from "@/ui";
+import { Button, Input, CheckIcon } from "@/ui";
 import type { RepoState } from "@/api/types/repo_state";
 
 interface ConflictCompletedStateProps {
@@ -45,7 +45,9 @@ export const ConflictCompletedState: React.FC<ConflictCompletedStateProps> = ({
           gap: "16px",
         }}
       >
-        <div style={{ fontSize: "36px" }}>🎉</div>
+        <div style={{ display: "flex", justifyContent: "center" }}>
+          <CheckIcon size={36} style={{ color: "var(--add)" }} />
+        </div>
         <h3 style={{ margin: 0, fontSize: "var(--font-size-lg)", color: "var(--tx)" }}>
           Все конфликты разрешены!
         </h3>

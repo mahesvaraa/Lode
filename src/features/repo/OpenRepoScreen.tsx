@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Button, Input, IconButton, Banner, Modal } from "@/ui";
+import { Button, Input, IconButton, Banner, Modal, PlusIcon, PullIcon, FolderIcon } from "@/ui";
 import { useI18n } from "@/lib/i18n";
 import { useRepoStore } from "@/store/repoStore";
 import { useUiStore } from "@/store/uiStore";
@@ -199,9 +199,14 @@ export const OpenRepoScreen: React.FC = () => {
                 padding: "10px 16px",
                 fontSize: "var(--font-size-md)",
                 fontWeight: 500,
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "8px",
               }}
             >
-              {isLoading ? "Открытие…" : t.openRepo.chooseFolder}
+              <FolderIcon size={16} />
+              <span>{isLoading ? "Открытие…" : t.openRepo.chooseFolder}</span>
             </Button>
 
             <div style={{ display: "flex", gap: "8px", marginTop: "4px" }}>
@@ -228,15 +233,19 @@ export const OpenRepoScreen: React.FC = () => {
                 variant="default"
                 disabled={isLoading}
                 onClick={() => setIsInitModalOpen(true)}
+                style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "6px" }}
               >
-                + {t.openRepo.initRepo}
+                <PlusIcon size={13} />
+                <span>{t.openRepo.initRepo}</span>
               </Button>
               <Button
                 variant="default"
                 disabled={isLoading}
                 onClick={() => setIsCloneModalOpen(true)}
+                style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "6px" }}
               >
-                ↓ {t.openRepo.cloneRepo}
+                <PullIcon size={13} />
+                <span>{t.openRepo.cloneRepo}</span>
               </Button>
             </div>
           </div>

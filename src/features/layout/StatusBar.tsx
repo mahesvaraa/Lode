@@ -3,6 +3,7 @@ import { useContextMenuStore } from "@/store/contextMenuStore";
 import { useRepoStore } from "@/store/repoStore";
 import { useRefsStore } from "@/store/refsStore";
 import { useStatusStore } from "@/store/statusStore";
+import { BranchIcon, CommandIcon, CheckIcon } from "@/ui";
 import { OperationProgressIndicator } from "./OperationProgressIndicator";
 
 export const StatusBar: React.FC = () => {
@@ -46,13 +47,14 @@ export const StatusBar: React.FC = () => {
               color: "var(--tx)",
             }}
           >
-            <span style={{ color: "var(--acc)", fontWeight: 600 }}>⚡ Команда:</span>
+            <CommandIcon size={12} style={{ color: "var(--acc)" }} />
+            <span style={{ color: "var(--acc)", fontWeight: 600 }}>Команда:</span>
             <code
               className="mono"
               style={{
                 backgroundColor: "var(--bg3)",
                 padding: "1px 6px",
-                borderRadius: "3px",
+                borderRadius: "var(--radius-base)",
                 color: "var(--tx)",
               }}
             >
@@ -61,18 +63,18 @@ export const StatusBar: React.FC = () => {
           </div>
         ) : (
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-              <span>⎇</span>
+            <span style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+              <BranchIcon size={13} style={{ color: "var(--mut)" }} />
               <b style={{ color: "var(--tx)" }}>{currentBranch}</b>
             </span>
 
             {isStateActive && (
               <span
                 style={{
-                  backgroundColor: "rgba(255, 107, 102, 0.15)",
+                  backgroundColor: "rgba(170, 75, 65, 0.18)",
                   color: "var(--del)",
-                  padding: "1px 6px",
-                  borderRadius: "3px",
+                  padding: "1px 5px",
+                  borderRadius: "var(--radius-base)",
                   fontWeight: 600,
                   fontSize: "10px",
                 }}
@@ -82,10 +84,10 @@ export const StatusBar: React.FC = () => {
             )}
 
             {status?.branch?.ahead !== undefined && status.branch.ahead > 0 && (
-              <span style={{ color: "var(--acc)" }}>↑{status.branch.ahead}</span>
+              <span style={{ color: "var(--acc)", fontWeight: 600 }}>+{status.branch.ahead}</span>
             )}
             {status?.branch?.behind !== undefined && status.branch.behind > 0 && (
-              <span style={{ color: "var(--del)" }}>↓{status.branch.behind}</span>
+              <span style={{ color: "var(--del)", fontWeight: 600 }}>-{status.branch.behind}</span>
             )}
           </div>
         )}
@@ -96,11 +98,25 @@ export const StatusBar: React.FC = () => {
 
       {/* Right side: Repo Status & Git version */}
       <div style={{ display: "flex", alignItems: "center", gap: "12px", flexShrink: 0 }}>
-        <span>
+        <span style={{ display: "flex", alignItems: "center", gap: "5px" }}>
           {isDirty ? (
-            <span style={{ color: "var(--del)" }}>● Изменения не закоммичены</span>
+            <>
+              <span
+                style={{
+                  width: "6px",
+                  height: "6px",
+                  backgroundColor: "var(--del)",
+                  borderRadius: "var(--radius-base)",
+                  display: "inline-block",
+                }}
+              />
+              <span style={{ color: "var(--del)" }}>Изменения не закоммичены</span>
+            </>
           ) : (
-            <span style={{ color: "var(--add)" }}>✓ Рабочее дерево чисто</span>
+            <>
+              <CheckIcon size={12} style={{ color: "var(--add)" }} />
+              <span style={{ color: "var(--add)" }}>Рабочее дерево чисто</span>
+            </>
           )}
         </span>
 

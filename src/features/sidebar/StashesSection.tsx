@@ -41,7 +41,7 @@ export const StashesSection: React.FC<StashesSectionProps> = ({
                 fontSize: "10px",
                 backgroundColor: "var(--bg3)",
                 color: "var(--tx)",
-                borderRadius: "9px",
+                borderRadius: "var(--radius-base)",
                 padding: "0 5px",
                 lineHeight: "14px",
               }}

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Button, Checkbox, Input, Modal } from "@/ui";
+import { Button, Checkbox, Input, Modal, CloseIcon } from "@/ui";
 import { useStashStore } from "@/store/stashStore";
 import { useRepoStore } from "@/store/repoStore";
 import { useStatusStore } from "@/store/statusStore";
@@ -227,9 +227,9 @@ export const StashModal: React.FC<StashModalProps> = ({ isOpen, onClose }) => {
                           variant="ghost"
                           title="Удалить из stash"
                           onClick={() => setStashToDrop(s)}
-                          style={{ padding: "2px 6px", fontSize: "11px", color: "var(--del)" }}
+                          style={{ padding: "2px 6px", color: "var(--del)" }}
                         >
-                          ✕
+                          <CloseIcon size={12} />
                         </Button>
                       </div>
                     </div>
@@ -256,7 +256,7 @@ export const StashModal: React.FC<StashModalProps> = ({ isOpen, onClose }) => {
                   Diff для {selectedSelector}:
                 </span>
                 <Button size="sm" variant="ghost" onClick={clearDiff} style={{ padding: "1px 6px" }}>
-                  ✕
+                  <CloseIcon size={12} />
                 </Button>
               </div>
               <pre

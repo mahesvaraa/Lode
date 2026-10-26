@@ -20,7 +20,7 @@ export const OperationProgressIndicator: React.FC = () => {
         gap: "8px",
         backgroundColor: "var(--bg3)",
         border: "1px solid var(--line)",
-        borderRadius: "4px",
+        borderRadius: "var(--radius-base)",
         padding: "1px 8px",
         fontSize: "11px",
         color: "var(--tx)",

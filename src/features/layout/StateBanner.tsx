@@ -1,5 +1,5 @@
 import React from "react";
-import { Button } from "@/ui";
+import { Button, AlertIcon } from "@/ui";
 import { useRefsStore } from "@/store/refsStore";
 import { useRepoStore } from "@/store/repoStore";
 import { useStatusStore } from "@/store/statusStore";
@@ -56,7 +56,7 @@ export const StateBanner: React.FC = () => {
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-        <span style={{ fontSize: "16px" }}>⚠️</span>
+        <AlertIcon size={16} style={{ color: "#ffffff" }} />
         <b style={{ fontWeight: 600 }}>{repoState.message}</b>
         {repoState.kind === "Merge" && (
           <span style={{ opacity: 0.85 }}>

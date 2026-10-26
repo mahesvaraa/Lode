@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Button, Modal, Textarea } from "@/ui";
+import { Button, Modal, Textarea, AlertIcon } from "@/ui";
 import { useRepoStore } from "@/store/repoStore";
 import { useStatusStore } from "@/store/statusStore";
 import { useRefsStore } from "@/store/refsStore";
@@ -182,8 +182,13 @@ export const InteractiveRebaseModal: React.FC<InteractiveRebaseModalProps> = ({
                 lineHeight: 1.4,
               }}
             >
-              ⚠️ <b>Внимание:</b> цепочка содержит опубликованные на remote коммиты. Переписывание истории
-              изменит их хеши и потребует <code>git push --force-with-lease</code>.
+              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <AlertIcon size={14} style={{ color: "var(--del)", flexShrink: 0 }} />
+                <span>
+                  <b>Внимание:</b> цепочка содержит опубликованные на remote коммиты. Переписывание истории
+                  изменит их хеши и потребует <code>git push --force-with-lease</code>.
+                </span>
+              </div>
             </div>
           )}
 
@@ -362,7 +367,7 @@ export const InteractiveRebaseModal: React.FC<InteractiveRebaseModalProps> = ({
                           color: "var(--mut)",
                           backgroundColor: "var(--bg3)",
                           padding: "1px 5px",
-                          borderRadius: "4px",
+                          borderRadius: "var(--radius-base)",
                           whiteSpace: "nowrap",
                         }}
                         title="Коммит присутствует на удалённом сервере"
@@ -379,7 +384,7 @@ export const InteractiveRebaseModal: React.FC<InteractiveRebaseModalProps> = ({
                       style={{ padding: "2px 6px", fontSize: "11px" }}
                       title="Изменить сообщение коммита"
                     >
-                      {item.action === "Reword" ? "Текст..." : "✎"}
+                      {item.action === "Reword" ? "Текст..." : "Правка"}
                     </Button>
                   </div>
                 );

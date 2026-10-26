@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Button, EmptyState, Modal, Skeleton } from "@/ui";
+import { Button, EmptyState, Modal, Skeleton, FolderIcon } from "@/ui";
 import { useStatusStore } from "@/store/statusStore";
 import { useRepoStore } from "@/store/repoStore";
 import { useI18n } from "@/lib/i18n";
@@ -157,7 +157,7 @@ export const DiffView: React.FC = () => {
               gap: "8px",
             }}
           >
-            <div style={{ fontSize: "32px", color: "var(--mut)" }}>💾</div>
+            <FolderIcon size={32} style={{ color: "var(--mut)", marginBottom: "4px" }} />
             <h4 style={{ margin: 0 }}>{t.diff.binaryFile}</h4>
             <p style={{ margin: 0, color: "var(--mut)", fontSize: "var(--font-size-sm)" }}>
               Размер: {formatFileSize(diff.raw_size_bytes)}. {t.diff.binaryDesc}

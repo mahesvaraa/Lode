@@ -1,5 +1,5 @@
 import React from "react";
-import { Button } from "@/ui";
+import { Button, PlusIcon, CloseIcon, FolderIcon } from "@/ui";
 import type { WorktreeInfo } from "@/api/types/worktree_info";
 
 interface WorktreesSectionProps {
@@ -47,7 +47,7 @@ export const WorktreesSection: React.FC<WorktreesSectionProps> = ({
                 fontSize: "10px",
                 backgroundColor: "var(--bg3)",
                 color: "var(--tx)",
-                borderRadius: "9px",
+                borderRadius: "var(--radius-base)",
                 padding: "0 5px",
                 lineHeight: "14px",
               }}
@@ -60,10 +60,10 @@ export const WorktreesSection: React.FC<WorktreesSectionProps> = ({
           size="sm"
           variant="ghost"
           onClick={onOpenCreateWorktree}
-          style={{ padding: "1px 6px", fontSize: "11px" }}
+          style={{ padding: "1px 6px" }}
           title="Добавить рабочее дерево"
         >
-          +
+          <PlusIcon size={12} />
         </Button>
       </div>
 
@@ -98,7 +98,7 @@ export const WorktreesSection: React.FC<WorktreesSectionProps> = ({
                 }}
                 title={`${wt.path} (${wt.branch || wt.head.substring(0, 7)})`}
               >
-                <span style={{ fontSize: "12px" }}>📁</span>
+                <FolderIcon size={12} style={{ color: "var(--mut)", flexShrink: 0 }} />
                 <span
                   style={{
                     flex: 1,
@@ -122,10 +122,10 @@ export const WorktreesSection: React.FC<WorktreesSectionProps> = ({
 
                 {wt.is_locked && (
                   <span
-                    style={{ fontSize: "10px", color: "var(--del)" }}
+                    style={{ fontSize: "10px", color: "var(--del)", fontWeight: 600 }}
                     title={wt.lock_reason || "Заблокировано"}
                   >
-                    🔒
+                    locked
                   </span>
                 )}
 
@@ -145,7 +145,7 @@ export const WorktreesSection: React.FC<WorktreesSectionProps> = ({
                     }}
                     title="Удалить worktree"
                   >
-                    ✕
+                    <CloseIcon size={11} />
                   </Button>
                 )}
               </div>

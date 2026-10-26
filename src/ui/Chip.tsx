@@ -20,8 +20,8 @@ export const Chip: React.FC<ChipProps> = ({
     display: "inline-flex",
     alignItems: "center",
     justifyContent: "center",
-    padding: "0 7px",
-    borderRadius: "10px",
+    padding: "0 6px",
+    borderRadius: "var(--radius-base)",
     fontSize: "var(--font-size-xs)",
     lineHeight: "18px",
     whiteSpace: "nowrap",
@@ -34,7 +34,7 @@ export const Chip: React.FC<ChipProps> = ({
 
   if (variant === "head") {
     baseStyle.background = "var(--acc)";
-    baseStyle.color = "var(--bg)";
+    baseStyle.color = "#ffffff";
     baseStyle.fontWeight = 500;
   } else if (variant === "tag") {
     baseStyle.background = "var(--bg3)";

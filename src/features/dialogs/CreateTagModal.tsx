@@ -106,7 +106,7 @@ export const CreateTagModal: React.FC<CreateTagModalProps> = ({
         )}
 
         {error && (
-          <div style={{ color: "var(--del)", fontSize: "12px", backgroundColor: "var(--bg3)", padding: "6px 10px", borderRadius: "4px" }}>
+          <div style={{ color: "var(--del)", fontSize: "12px", backgroundColor: "var(--bg3)", padding: "6px 10px", borderRadius: "var(--radius-base)" }}>
             {error}
           </div>
         )}

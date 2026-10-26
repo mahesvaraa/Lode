@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { Button, EmptyState, Input, Skeleton, Splitter } from "@/ui";
+import { Button, EmptyState, Input, Skeleton, Splitter, CloseIcon } from "@/ui";
 import { CommitRow } from "./CommitRow";
 import { CommitDetailsPanel } from "./CommitDetailsPanel";
 import { useHistoryStore, type DateFilterPeriod } from "@/store/historyStore";
@@ -173,7 +173,7 @@ export const HistoryView: React.FC = () => {
           }
           style={{ height: "26px", padding: "0 10px", fontSize: "11px" }}
         >
-          {onlyMyCommits ? "✓ Только мои" : "Только мои"}
+          Только мои
         </Button>
 
         {/* Date Filter */}
@@ -238,8 +238,14 @@ export const HistoryView: React.FC = () => {
             </span>
           </div>
 
-          <Button size="sm" variant="ghost" onClick={clearComparison}>
-            ✕ Выйти из сравнения
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={clearComparison}
+            style={{ display: "flex", alignItems: "center", gap: "5px" }}
+          >
+            <CloseIcon size={12} />
+            <span>Выйти из сравнения</span>
           </Button>
         </div>
       )}

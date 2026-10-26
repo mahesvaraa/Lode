@@ -1,5 +1,5 @@
 import React from "react";
-import { Button } from "@/ui";
+import { Button, FolderIcon } from "@/ui";
 import type { SubmoduleInfo } from "@/api/types/submodule_info";
 
 interface SubmodulesSectionProps {
@@ -47,7 +47,7 @@ export const SubmodulesSection: React.FC<SubmodulesSectionProps> = ({
                 fontSize: "10px",
                 backgroundColor: "var(--bg3)",
                 color: "var(--tx)",
-                borderRadius: "9px",
+                borderRadius: "var(--radius-base)",
                 padding: "0 5px",
                 lineHeight: "14px",
               }}
@@ -91,7 +91,7 @@ export const SubmodulesSection: React.FC<SubmodulesSectionProps> = ({
               }}
               title={`${sub.path} (${sub.describe || sub.head.substring(0, 7)})`}
             >
-              <span style={{ fontSize: "12px" }}>📦</span>
+              <FolderIcon size={12} style={{ color: "var(--mut)", flexShrink: 0 }} />
               <span
                 style={{
                   flex: 1,

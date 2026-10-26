@@ -8,6 +8,7 @@ import { useRemoteStore } from "@/store/remoteStore";
 import { useSettingsStore } from "@/store/settingsStore";
 import { useToastStore } from "@/store/toastStore";
 import { continueOperation, abortMerge, stageAll, unstageAll, checkGit } from "@/api/client";
+import { SearchIcon } from "@/ui";
 import { buildPaletteCommands, type PaletteCommand } from "./paletteCommands";
 
 export { type PaletteCommand };
@@ -283,7 +284,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
             gap: "10px",
           }}
         >
-          <span style={{ fontSize: "14px", color: "var(--mut)" }}>🔍</span>
+          <SearchIcon size={14} style={{ color: "var(--mut)", flexShrink: 0 }} />
           <input
             ref={inputRef}
             type="text"
@@ -307,7 +308,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
               backgroundColor: "var(--bg3)",
               color: "var(--mut)",
               border: "1px solid var(--line)",
-              borderRadius: "4px",
+              borderRadius: "var(--radius-base)",
               padding: "2px 6px",
             }}
           >
@@ -340,7 +341,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                     alignItems: "center",
                     gap: "10px",
                     padding: "8px 12px",
-                    borderRadius: "6px",
+                    borderRadius: "var(--radius-base)",
                     cursor: "pointer",
                     backgroundColor: isSelected ? "var(--sel)" : "transparent",
                     transition: "background-color 0.05s",
@@ -352,7 +353,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                       color: "var(--mut)",
                       backgroundColor: "var(--bg3)",
                       padding: "2px 6px",
-                      borderRadius: "4px",
+                      borderRadius: "var(--radius-base)",
                       minWidth: "75px",
                       textAlign: "center",
                     }}
@@ -389,7 +390,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                         backgroundColor: "var(--bg3)",
                         color: "var(--mut)",
                         border: "1px solid var(--line)",
-                        borderRadius: "4px",
+                        borderRadius: "var(--radius-base)",
                         padding: "2px 6px",
                         fontFamily: "var(--font-mono)",
                       }}

@@ -1,5 +1,5 @@
 import React from "react";
-import { Button } from "@/ui";
+import { Button, SettingsIcon, BranchIcon } from "@/ui";
 import { useI18n } from "@/lib/i18n";
 import type { RepoRefs } from "@/api/types/repo_refs";
 
@@ -42,10 +42,10 @@ export const RemotesSection: React.FC<RemotesSectionProps> = ({
           size="sm"
           variant="ghost"
           onClick={onOpenRemoteModal}
-          style={{ padding: "1px 6px", fontSize: "11px" }}
+          style={{ padding: "1px 6px" }}
           title="Управление удалёнными репозиториями"
         >
-          ⚙
+          <SettingsIcon size={12} />
         </Button>
       </div>
 
@@ -73,7 +73,7 @@ export const RemotesSection: React.FC<RemotesSectionProps> = ({
               }}
               title={remote.name}
             >
-              <span style={{ fontSize: "11px" }}>🌐</span>
+              <BranchIcon size={12} style={{ color: "var(--mut)", flexShrink: 0 }} />
               <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis" }}>
                 {remote.name}
               </span>

@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { Button, Checkbox, Chip, EmptyState, Modal, Splitter, Textarea } from "@/ui";
+import { Button, Checkbox, Chip, EmptyState, Modal, Splitter, Textarea, CloseIcon } from "@/ui";
 import { DiffView } from "./DiffView";
 import {
   useStatusStore,
@@ -400,7 +400,7 @@ export const ChangesView: React.FC = () => {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <b style={{ color: "var(--del)" }}>Ошибка Git / Hook</b>
               <Button size="sm" variant="ghost" onClick={clearOperationError} style={{ padding: "0 4px" }}>
-                ✕
+                <CloseIcon size={12} />
               </Button>
             </div>
             <pre style={{ margin: 0, whiteSpace: "pre-wrap", maxHeight: "100px", overflow: "auto", fontSize: "11px" }}>

@@ -1,5 +1,5 @@
 import React from "react";
-import { Textarea } from "@/ui";
+import { Textarea, AlertIcon } from "@/ui";
 import type { ConflictBlock } from "@/api/types/conflict_block";
 import type { SideLabels } from "@/store/conflictStore";
 
@@ -134,8 +134,9 @@ export const ThreeWayConflictPane: React.FC<ThreeWayConflictPaneProps> = ({
             Итоговый результат (редактируемый)
           </span>
           {hasMarkersLeft && (
-            <span style={{ fontSize: "11px", color: "var(--del)", fontWeight: 500 }}>
-              ⚠️ Содержит неразрешённые маркеры конфликта
+            <span style={{ fontSize: "11px", color: "var(--del)", fontWeight: 500, display: "inline-flex", alignItems: "center", gap: "4px" }}>
+              <AlertIcon size={12} style={{ color: "var(--del)" }} />
+              <span>Содержит неразрешённые маркеры конфликта</span>
             </span>
           )}
         </div>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Button, EmptyState, Modal } from "@/ui";
+import { Button, EmptyState, Modal, CloseIcon } from "@/ui";
 import { useStatusStore } from "@/store/statusStore";
 import { useRepoStore } from "@/store/repoStore";
 import { useRefsStore } from "@/store/refsStore";
@@ -158,7 +158,7 @@ export const ConflictsView: React.FC = () => {
           >
             <span>{error}</span>
             <Button size="sm" variant="ghost" onClick={clearError}>
-              ✕
+              <CloseIcon size={12} />
             </Button>
           </div>
         )}
