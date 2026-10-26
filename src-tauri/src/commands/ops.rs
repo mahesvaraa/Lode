@@ -255,6 +255,14 @@ pub async fn get_file_history(
     Ok(parse_git_log(&out.stdout))
 }
 
+#[tauri::command]
+pub async fn cancel_operation(
+    runner: State<'_, GitRunner>,
+) -> Result<(), AppError> {
+    runner.cancel_active_operations().await;
+    Ok(())
+}
+
 fn canonicalize_repo_path(repo_path: &str) -> Result<PathBuf, AppError> {
     let raw = PathBuf::from(repo_path);
     if !raw.exists() {

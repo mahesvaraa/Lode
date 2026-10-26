@@ -3,6 +3,7 @@ import { useContextMenuStore } from "@/store/contextMenuStore";
 import { useRepoStore } from "@/store/repoStore";
 import { useRefsStore } from "@/store/refsStore";
 import { useStatusStore } from "@/store/statusStore";
+import { OperationProgressIndicator } from "./OperationProgressIndicator";
 
 export const StatusBar: React.FC = () => {
   const currentRepo = useRepoStore((s) => s.currentRepo);
@@ -89,6 +90,9 @@ export const StatusBar: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Middle: Active background operation with Cancel button */}
+      <OperationProgressIndicator />
 
       {/* Right side: Repo Status & Git version */}
       <div style={{ display: "flex", alignItems: "center", gap: "12px", flexShrink: 0 }}>

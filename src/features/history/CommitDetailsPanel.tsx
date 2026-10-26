@@ -4,6 +4,7 @@ import { useHistoryStore } from "@/store/historyStore";
 import { useRepoStore } from "@/store/repoStore";
 import { useToastStore } from "@/store/toastStore";
 import { BlameModal } from "./BlameModal";
+import { CommitComparisonView } from "./CommitComparisonView";
 import type { CommitFile } from "@/api/types/commit_file";
 
 export const CommitDetailsPanel: React.FC = () => {
@@ -21,6 +22,11 @@ export const CommitDetailsPanel: React.FC = () => {
 
   const [panelSplit, setPanelSplit] = useState(280);
   const [blameFilePath, setBlameFilePath] = useState<string | null>(null);
+
+  const comparisonBaseHash = useHistoryStore((s) => s.comparisonBaseHash);
+  if (comparisonBaseHash) {
+    return <CommitComparisonView />;
+  }
 
   if (!selectedHash) {
     return (

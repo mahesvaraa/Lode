@@ -36,6 +36,7 @@ pub struct GitOutput {
 pub struct GitRunner {
     git_path: Arc<tokio::sync::RwLock<Option<PathBuf>>>,
     queue: RepoQueue,
+    active_pids: Arc<tokio::sync::Mutex<Vec<u32>>>,
 }
 
 impl GitRunner {
@@ -43,6 +44,34 @@ impl GitRunner {
         Self {
             git_path: Arc::new(tokio::sync::RwLock::new(None)),
             queue,
+            active_pids: Arc::new(tokio::sync::Mutex::new(Vec::new())),
+        }
+    }
+
+    pub async fn cancel_active_operations(&self) {
+        let pids = {
+            let mut lock = self.active_pids.lock().await;
+            let list = lock.clone();
+            lock.clear();
+            list
+        };
+
+        for pid in pids {
+            #[cfg(target_os = "windows")]
+            {
+                use std::os::windows::process::CommandExt;
+                const CREATE_NO_WINDOW: u32 = 0x08000000;
+                let _ = std::process::Command::new("taskkill")
+                    .args(["/F", "/T", "/PID", &pid.to_string()])
+                    .creation_flags(CREATE_NO_WINDOW)
+                    .output();
+            }
+            #[cfg(not(target_os = "windows"))]
+            {
+                let _ = std::process::Command::new("kill")
+                    .args(["-9", &pid.to_string()])
+                    .output();
+            }
         }
     }
 
@@ -242,6 +271,11 @@ impl GitRunner {
             )
         })?;
 
+        let pid = child.id();
+        if let Some(p) = pid {
+            self.active_pids.lock().await.push(p);
+        }
+
         if let Some(mut stdin) = child.stdin.take() {
             stdin.write_all(input).await.map_err(|e| {
                 AppError::new(
@@ -275,6 +309,10 @@ impl GitRunner {
                 ));
             }
         };
+
+        if let Some(p) = pid {
+            self.active_pids.lock().await.retain(|&x| x != p);
+        }
 
         let duration_ms = start.elapsed().as_millis() as u64;
 
@@ -394,6 +432,11 @@ impl GitRunner {
             )
         })?;
 
+        let pid = child.id();
+        if let Some(p) = pid {
+            self.active_pids.lock().await.push(p);
+        }
+
         let output = match timeout(timeout_dur, child.wait_with_output()).await {
             Ok(res) => res.map_err(|e| {
                 AppError::new(
@@ -410,6 +453,10 @@ impl GitRunner {
                 ));
             }
         };
+
+        if let Some(p) = pid {
+            self.active_pids.lock().await.retain(|&x| x != p);
+        }
 
         let duration_ms = start.elapsed().as_millis() as u64;
         let stderr_str = String::from_utf8_lossy(&output.stderr).to_string();

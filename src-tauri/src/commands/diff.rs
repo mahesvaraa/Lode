@@ -122,6 +122,37 @@ pub async fn get_commit_diff(
     }
 }
 
+#[tauri::command]
+pub async fn get_revision_diff(
+    repo_path: String,
+    base_ref: String,
+    target_ref: String,
+    ignore_whitespace: Option<bool>,
+    runner: State<'_, GitRunner>,
+) -> Result<Vec<FileDiff>, AppError> {
+    let canonical = canonicalize_repo_path(&repo_path)?;
+    let range = format!("{base_ref}..{target_ref}");
+
+    let mut args: Vec<&str> = vec![
+        "diff",
+        "-M",
+        "--no-ext-diff",
+        "--no-color",
+        "-p",
+        "--unified=3",
+    ];
+
+    if ignore_whitespace.unwrap_or(false) {
+        args.push("--ignore-all-space");
+    }
+
+    args.push(&range);
+
+    let output = runner.run_read(Some(&canonical), &args).await?;
+    let parsed_files = parse_unified_diff(&output.stdout);
+    Ok(parsed_files)
+}
+
 fn canonicalize_repo_path(repo_path: &str) -> Result<PathBuf, AppError> {
     let raw = PathBuf::from(repo_path);
     if !raw.exists() {

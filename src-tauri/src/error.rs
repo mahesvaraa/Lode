@@ -85,7 +85,17 @@ impl AppError {
             ErrorKind::Unknown
         };
 
-        let message = if kind == ErrorKind::PushRejected {
+        let message = if kind == ErrorKind::AuthFailed {
+            if trimmed.contains("publickey") {
+                "Ошибка SSH: ключ отклонён сервером (Permission denied). Проверьте `ssh-add -l` и добавьте публичный ключ в GitHub/GitLab.".to_string()
+            } else {
+                "Ошибка авторизации Git (HTTP 401/403): неверный логин, пароль или токен. Проверьте Git Credential Manager / персональный access token.".to_string()
+            }
+        } else if kind == ErrorKind::NetworkUnavailable {
+            "Сеть недоступна: невозможно связаться с удалённым репозиторием Git. Проверьте интернет-соединение и доступность хоста.".to_string()
+        } else if kind == ErrorKind::LockFile {
+            "Репозиторий заблокирован: обнаружен index.lock. Возможно, параллельно работает другая команда Git. Если это не так, удалите .git/index.lock.".to_string()
+        } else if kind == ErrorKind::PushRejected {
             "Отклонено сервером: удалённая ветка содержит коммиты, которых нет локально. Сначала выполните pull.".to_string()
         } else if let Some(first_line) = trimmed.lines().next() {
             if let Some(msg) = first_line.strip_prefix("fatal: ") {

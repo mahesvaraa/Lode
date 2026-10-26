@@ -52,6 +52,7 @@ pub fn run() {
             commands::status::get_status,
             commands::diff::get_diff,
             commands::diff::get_commit_diff,
+            commands::diff::get_revision_diff,
             // Log commands
             commands::log::get_commits,
             commands::log::get_commit_details,
@@ -107,6 +108,7 @@ pub fn run() {
             commands::ops::reset_repo,
             commands::ops::rebase_branch,
             commands::ops::restore_file_from_commit,
+            commands::ops::cancel_operation,
             commands::ops::get_blame,
             commands::ops::get_file_history,
             // Rebase commands

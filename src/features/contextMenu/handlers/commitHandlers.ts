@@ -137,12 +137,14 @@ export function handleCommitContextMenu(
       });
     },
     onCompareWithWorkingTree: (hash) => {
-      useHistoryStore.getState().selectCommit(currentRepo.path, hash);
+      useHistoryStore.getState().compareCommits(currentRepo.path, hash, "HEAD");
       useUiStore.getState().setActiveView("hist");
+      showToast(`Сравнение коммита ${hash.substring(0, 7)} с рабочей копией / HEAD`);
     },
     onCompareWithHead: (hash) => {
-      useHistoryStore.getState().selectCommit(currentRepo.path, hash);
+      useHistoryStore.getState().compareCommits(currentRepo.path, hash, "HEAD");
       useUiStore.getState().setActiveView("hist");
+      showToast(`Сравнение коммита ${hash.substring(0, 7)} с HEAD`);
     },
     onReset: (hash) => {
       dialogs.setResetModal({

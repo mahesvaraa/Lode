@@ -12,6 +12,8 @@ import {
 import type { Remote } from "@/api/types/remote";
 import type { PullMode } from "@/api/types/pull_mode";
 
+import { useOperationStore } from "@/store/operationStore";
+
 interface RemoteState {
   remotes: Remote[];
   isLoading: boolean;
@@ -116,6 +118,9 @@ export const useRemoteStore = create<RemoteState>((set, get) => ({
 
   fetch: async (repoPath, prune = true) => {
     set({ isFetching: true, error: null, operationMessage: null });
+    useOperationStore
+      .getState()
+      .startOperation("Получение обновлений (git fetch)...", repoPath, true);
     try {
       const res = await fetchAll(repoPath, prune);
       set({ isFetching: false, operationMessage: res || "Получение обновлений (fetch) завершено" });
@@ -125,12 +130,17 @@ export const useRemoteStore = create<RemoteState>((set, get) => ({
       const msg = errorObj.message || "Ошибка fetch";
       set({ isFetching: false, error: msg });
       throw err;
+    } finally {
+      useOperationStore.getState().endOperation();
     }
   },
 
   pull: async (repoPath, remote, branch) => {
     const { pullMode } = get();
     set({ isPulling: true, error: null, operationMessage: null });
+    useOperationStore
+      .getState()
+      .startOperation("Слияние с сервером (git pull)...", repoPath, true);
     try {
       const res = await pull(repoPath, remote, branch, pullMode);
       set({ isPulling: false, operationMessage: res || "Слияние с сервером (pull) завершено" });
@@ -140,11 +150,16 @@ export const useRemoteStore = create<RemoteState>((set, get) => ({
       const msg = errorObj.message || "Ошибка pull";
       set({ isPulling: false, error: msg });
       throw err;
+    } finally {
+      useOperationStore.getState().endOperation();
     }
   },
 
   push: async (repoPath, remote, branch, setUpstream = false, forceWithLease = false) => {
     set({ isPushing: true, error: null, operationMessage: null });
+    useOperationStore
+      .getState()
+      .startOperation("Отправка на сервер (git push)...", repoPath, true);
     try {
       const res = await push(repoPath, remote, branch, setUpstream, forceWithLease);
       set({ isPushing: false, operationMessage: res || "Отправка на сервер (push) завершена" });
@@ -154,6 +169,8 @@ export const useRemoteStore = create<RemoteState>((set, get) => ({
       const msg = errorObj.message || "Ошибка push";
       set({ isPushing: false, error: msg });
       throw err;
+    } finally {
+      useOperationStore.getState().endOperation();
     }
   },
 

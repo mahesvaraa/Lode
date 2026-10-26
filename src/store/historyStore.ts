@@ -1,5 +1,11 @@
 import { create } from "zustand";
-import { getCommits, getCommitDetails, getCommitDiff, getGitUser } from "@/api/client";
+import {
+  getCommits,
+  getCommitDetails,
+  getCommitDiff,
+  getRevisionDiff,
+  getGitUser,
+} from "@/api/client";
 import { computeGraph, type GraphNode } from "@/lib/graph";
 import type { Commit } from "@/api/types/commit";
 import type { CommitDetails } from "@/api/types/commit_details";
@@ -40,6 +46,12 @@ interface HistoryState {
   commitFileDiff: FileDiff | null;
   isLoadingFileDiff: boolean;
 
+  comparisonBaseHash: string | null;
+  comparisonTargetHash: string | null;
+  comparisonDiffs: FileDiff[] | null;
+  isLoadingComparison: boolean;
+  selectedComparisonFileIndex: number | null;
+
   searchQuery: string;
   selectedBranch: string;
   authorFilter: string;
@@ -51,6 +63,13 @@ interface HistoryState {
   loadMore: (repoPath: string) => Promise<void>;
   selectCommit: (repoPath: string, hash: string | null) => Promise<void>;
   selectCommitFile: (repoPath: string, path: string | null) => Promise<void>;
+  compareCommits: (
+    repoPath: string,
+    baseHash: string,
+    targetHash: string
+  ) => Promise<void>;
+  selectComparisonFile: (index: number | null) => void;
+  clearComparison: () => void;
   setSearchQuery: (repoPath: string, query: string) => Promise<void>;
   setSelectedBranch: (repoPath: string, branch: string) => Promise<void>;
   setAuthorFilter: (repoPath: string, author: string) => Promise<void>;
@@ -74,6 +93,12 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
   selectedCommitFile: null,
   commitFileDiff: null,
   isLoadingFileDiff: false,
+
+  comparisonBaseHash: null,
+  comparisonTargetHash: null,
+  comparisonDiffs: null,
+  isLoadingComparison: false,
+  selectedComparisonFileIndex: null,
 
   searchQuery: "",
   selectedBranch: "ALL",
@@ -225,6 +250,49 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
     }
   },
 
+  compareCommits: async (
+    repoPath: string,
+    baseHash: string,
+    targetHash: string
+  ) => {
+    set({
+      comparisonBaseHash: baseHash,
+      comparisonTargetHash: targetHash,
+      isLoadingComparison: true,
+      comparisonDiffs: null,
+      selectedComparisonFileIndex: 0,
+    });
+
+    try {
+      const diffs = await getRevisionDiff(repoPath, baseHash, targetHash);
+      set({
+        comparisonDiffs: diffs,
+        isLoadingComparison: false,
+        selectedComparisonFileIndex: diffs.length > 0 ? 0 : null,
+      });
+    } catch (err: unknown) {
+      const errorObj = err as { message?: string };
+      set({
+        isLoadingComparison: false,
+        error: errorObj.message || "Ошибка сравнения коммитов",
+      });
+    }
+  },
+
+  selectComparisonFile: (index: number | null) => {
+    set({ selectedComparisonFileIndex: index });
+  },
+
+  clearComparison: () => {
+    set({
+      comparisonBaseHash: null,
+      comparisonTargetHash: null,
+      comparisonDiffs: null,
+      isLoadingComparison: false,
+      selectedComparisonFileIndex: null,
+    });
+  },
+
   setSearchQuery: async (repoPath: string, query: string) => {
     set({ searchQuery: query });
     await get().loadInitial(repoPath);
@@ -264,6 +332,11 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
       selectedCommitFile: null,
       commitFileDiff: null,
       isLoadingFileDiff: false,
+      comparisonBaseHash: null,
+      comparisonTargetHash: null,
+      comparisonDiffs: null,
+      isLoadingComparison: false,
+      selectedComparisonFileIndex: null,
       searchQuery: "",
       selectedBranch: "ALL",
       authorFilter: "",

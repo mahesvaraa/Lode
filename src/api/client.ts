@@ -85,6 +85,24 @@ export async function getCommitDiff(
   });
 }
 
+export async function getRevisionDiff(
+  repoPath: string,
+  baseRef: string,
+  targetRef: string,
+  ignoreWhitespace?: boolean
+): Promise<FileDiff[]> {
+  return invoke<FileDiff[]>("get_revision_diff", {
+    repoPath,
+    baseRef,
+    targetRef,
+    ignoreWhitespace: ignoreWhitespace ?? false,
+  });
+}
+
+export async function cancelOperation(): Promise<void> {
+  return invoke<void>("cancel_operation");
+}
+
 export async function getCommits(
   repoPath: string,
   skip: number,
